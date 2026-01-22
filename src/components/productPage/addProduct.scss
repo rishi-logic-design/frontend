@@ -1,0 +1,186 @@
+.add-product-page {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f5f7;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
+
+  .page-header {
+    background: #2c3e50;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-radius: 16px 16px 0 0;
+    margin: -24px -24px 0 -24px;
+
+    @media (max-width: 768px) {
+      margin: 0;
+      border-radius: 0;
+      padding: 16px 20px;
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      @media (max-width: 768px) {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: white;
+      margin: 0;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
+    }
+  }
+
+  .page-content {
+    background: white;
+    padding: 40px;
+    border-radius: 0 0 16px 16px;
+
+    @media (max-width: 768px) {
+      padding: 20px;
+      border-radius: 0;
+    }
+
+    .product-form {
+      max-width: 700px;
+      margin: 0 auto;
+
+      .form-section {
+        margin-bottom: 32px;
+
+        @media (max-width: 768px) {
+          margin-bottom: 24px;
+        }
+
+        .form-group {
+          margin-bottom: 24px;
+
+          label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+
+            @media (max-width: 768px) {
+              font-size: 13px;
+            }
+          }
+
+          .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: #1d1d1f;
+            background: #f9f9f9;
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            font-family: inherit;
+
+            @media (max-width: 768px) {
+              font-size: 14px;
+              padding: 11px 14px;
+            }
+
+            &::placeholder {
+              color: #86868b;
+            }
+
+            &:focus {
+              outline: none;
+              background: white;
+              border-color: #2c3e50;
+            }
+
+            &:hover {
+              border-color: #d1d1d6;
+            }
+          }
+
+          select.form-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+          }
+        }
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+
+        .cancel-btn,
+        .save-btn {
+          padding: 16px;
+          font-size: 16px;
+          font-weight: 600;
+          border: none;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .cancel-btn {
+          color: #2c3e50;
+          background: white;
+          border: 1px solid #e5e5e7;
+
+          &:hover {
+            background: #f9f9f9;
+            border-color: #2c3e50;
+          }
+        }
+
+        .save-btn {
+          color: white;
+          background: #2c3e50;
+
+          &:hover {
+            background: #1a252f;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+  }
+}

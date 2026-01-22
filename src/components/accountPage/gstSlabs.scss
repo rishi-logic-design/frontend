@@ -1,0 +1,92 @@
+// GST SLABS Page
+.gst-slabs-page {
+  min-height: 100vh;
+  background-color: #1e293b;
+
+  .page-header {
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .back-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+      }
+    }
+
+    .add-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .slabs-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px;
+
+    .slab-item {
+      background: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .slab-name {
+        font-size: 16px;
+        font-weight: 500;
+        color: #1a1a1a;
+      }
+
+      .slab-actions {
+        display: flex;
+        gap: 12px;
+
+        button {
+          background: none;
+          border: none;
+          padding: 8px;
+          cursor: pointer;
+          font-size: 18px;
+          color: #666;
+          transition: color 0.2s;
+
+          &:hover {
+            color: #1e293b;
+          }
+
+          &.delete-btn:hover {
+            color: #dc3545;
+          }
+        }
+      }
+    }
+  }
+}
