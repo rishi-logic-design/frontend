@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./addCustomer.scss";
+import customerService from "../../services/customerService";
 
 const AddCustomer = () => {
   const navigate = useNavigate();
+  const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+  const vendorId = vendorData?.id;
   const [formData, setFormData] = useState({
     customerName: "",
     mobileNumber: "",
@@ -27,40 +30,71 @@ const AddCustomer = () => {
     aadharNumber: "",
     price: "",
     priceValue: "",
+    customerImage: null,
   });
 
   const [avatar, setAvatar] = useState("👨‍💼");
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddressChange = (addressType, field, value) => {
+  const handleAddressChange = (type, field, value) => {
     setFormData((prev) => ({
       ...prev,
-      [addressType]: {
-        ...prev[addressType],
-        [field]: value,
-      },
+      [type]: { ...prev[type], [field]: value },
     }));
   };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Handle avatar upload
-      console.log("Avatar file:", file);
-    }
+    if (!file) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      customerImage: file,
+    }));
+
+    setAvatar(URL.createObjectURL(file));
   };
 
-  const handleSave = () => {
-    console.log("Customer Data:", formData);
-    // Add your save logic here
-    navigate("/vendor/customer");
+  const handleSave = async () => {
+    if (!vendorId) return alert("Vendor not found");
+    console.log("Form Data to be submitted:", formData);
+    try {
+      setLoading(true);
+
+      const fd = new FormData();
+
+      fd.append("vendorId", vendorId);
+      fd.append("customerName", formData.customerName);
+      fd.append("mobileNumber", formData.mobileNumber);
+      fd.append("businessName", formData.businessName);
+      fd.append("gstNumber", formData.gstNumber);
+      fd.append("aadharNumber", formData.aadharNumber);
+      fd.append("pricePerProduct", Number(formData.priceValue || 0));
+
+      fd.append("homeAddress", JSON.stringify(formData.homeAddress));
+      fd.append("officeAddress", JSON.stringify(formData.officeAddress));
+
+      fd.append("price", formData.price);
+      fd.append("priceValue", formData.priceValue);
+
+      if (formData.customerImage) {
+        fd.append("customerImage", formData.customerImage);
+      }
+
+      await customerService.createCustomer(fd);
+
+      navigate("/vendor/customer");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create customer");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,7 +111,11 @@ const AddCustomer = () => {
           {/* Avatar Section */}
           <div className="avatar-section">
             <div className="avatar-display">
-              <span className="avatar-icon">{avatar}</span>
+              {avatar && avatar.startsWith("blob") ? (
+                <img src={avatar} alt="avatar" className="avatar-icon" />
+              ) : (
+                <span className="avatar-icon">{avatar}</span>
+              )}
               <label htmlFor="avatar-upload" className="avatar-edit">
                 📷
               </label>
@@ -368,23 +406,6 @@ const AddCustomer = () => {
                 className="form-input"
               />
             </div>
-
-            <div className="form-group">
-              <label htmlFor="price">Price</label>
-              <select
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="form-input"
-              >
-                <option value="">Select Product</option>
-                <option value="cotton">Cotton Fabric</option>
-                <option value="denim">Denim Fabric</option>
-                <option value="silk">Silk Fabric</option>
-              </select>
-            </div>
-
             <div className="form-group">
               <label htmlFor="priceValue">Enter Price</label>
               <input

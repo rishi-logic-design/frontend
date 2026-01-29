@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./addProduct.scss";
+import productService from "../../services/productService";
 
 const AddProduct = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     productName: "",
-    category: "",
-    size: "",
+    categoryId: "",
+    sizeId: "",
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,10 +25,36 @@ const AddProduct = () => {
     navigate(-1);
   };
 
-  const handleSave = () => {
-    console.log("Product Data:", formData);
-    // Add your save logic here
-    navigate("/vendor/product");
+  const handleSave = async () => {
+    if (!formData.productName || !formData.categoryId || !formData.sizeId) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        name: formData.productName,
+        categoryId: Number(formData.categoryId),
+        productSizes: [
+          {
+            sizeId: Number(formData.sizeId),
+            price: 0,
+            stock: 0,
+          },
+        ],
+      };
+
+      await productService.createProduct(payload);
+
+      navigate("/vendor/product");
+    } catch (error) {
+      console.error("Create product error:", error);
+      alert("Failed to create product");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,8 +128,12 @@ const AddProduct = () => {
             <button className="cancel-btn" onClick={handleCancel}>
               Cancel
             </button>
-            <button className="save-btn" onClick={handleSave}>
-              Save
+            <button
+              className="save-btn"
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

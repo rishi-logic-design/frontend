@@ -14,9 +14,9 @@ const productService = {
     try {
       const params = vendorId ? { vendorId } : {};
       const response = await api.get("/api/products/categories", { params });
-
+      
       console.log("API Response for categories:", response.data);
-
+      
       // Handle different response formats
       if (response.data.data) {
         return response.data.data;
@@ -66,9 +66,9 @@ const productService = {
     try {
       const params = vendorId ? { vendorId } : {};
       const response = await api.get("/api/products/sizes", { params });
-
+      
       console.log("API Response for sizes:", response.data);
-
+      
       // Handle different response formats
       if (response.data.data) {
         return response.data.data;

@@ -1,13 +1,38 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import "./accountPage.scss";
+import { useNavigate } from "react-router-dom";
+import vendorService from "../services/vendorService";
+import vendorProfileImageService from "../services/vendorProfileImageService";
 
 const AccountPage = () => {
   const navigate = useNavigate();
-  const [userData] = useState({
-    name: "Mr. John Doe",
-    phone: "+91 8956481245",
-  });
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const getVendorId = () => {
+    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+    return vendorData?.id || null;
+  };
+  useEffect(() => {
+    const loadVendor = async () => {
+      try {
+        const vendorId = getVendorId();
+        if (!vendorId) return;
+
+        const res = await vendorService.getVendorById(vendorId);
+
+        setUserData(res.data || res);
+      } catch (err) {
+        console.error("Failed to load vendor:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVendor();
+  }, []);
+  const profileImageUrl = vendorProfileImageService.getImageUrl(
+    userData?.profileImage,
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("vendorToken");
@@ -22,14 +47,37 @@ const AccountPage = () => {
         {/* Profile Card */}
         <div className="profile-card">
           <div className="profile-info">
-            <div className="avatar">
-              <span>JD</span>
+            <div className={`avatar ${profileImageUrl ? "has-image" : ""}`}>
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  className="avatar-img"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "";
+                  }}
+                />
+              ) : (
+                <span>
+                  {userData?.vendorName?.charAt(0)?.toUpperCase() || "👤"}
+                </span>
+              )}
             </div>
+
+            {/* 👇 ADD THIS BLOCK */}
             <div className="user-details">
-              <h2>{userData.name}</h2>
-              <p>{userData.phone}</p>
+              {loading ? (
+                <p>Loading...</p>
+              ) : (
+                <>
+                  <h2 className="user-name">{userData?.vendorName || "N/A"}</h2>
+                  <p className="user-mobile">{userData?.mobile || ""}</p>
+                </>
+              )}
             </div>
           </div>
+
           <button
             className="edit-btn"
             onClick={() => navigate("/vendor/account/edit-profile")}

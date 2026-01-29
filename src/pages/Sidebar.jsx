@@ -11,7 +11,7 @@ import {
   FaBoxOpen,
   FaAccusoft,
 } from "react-icons/fa";
-import axios from "axios";
+import vendorProfileImageService from "../services/vendorProfileImageService";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://accountsoft.onrender.com";
@@ -20,54 +20,27 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(true);
-  const [expandedItems,] = useState({ Income: true });
   const [vendorData, setVendorData] = useState(null);
 
   useEffect(() => {
-    const fetchVendorData = async () => {
-      try {
-        const token = localStorage.getItem("vendorToken");
-        const storedData = localStorage.getItem("vendorData");
-
-        if (storedData) {
-          setVendorData(JSON.parse(storedData));
-        }
-
-        if (token) {
-          const { data } = await axios.get(`${API_URL}/auth/vendor/profile`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (data.success) {
-            setVendorData(data.data);
-            localStorage.setItem("vendorData", JSON.stringify(data.data));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching vendor data:", error);
-        if (error.response?.status === 401) {
-          handleLogout();
-        }
-      }
-    };
-
-    fetchVendorData();
+    const storedData = localStorage.getItem("vendorData");
+    if (storedData) {
+      setVendorData(JSON.parse(storedData));
+    }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("vendorToken");
     localStorage.removeItem("vendorData");
-
     sessionStorage.clear();
     window.location.href = "/login";
   };
+
   const menuItems = [
     { name: "Dashboard", icon: FaHome, path: "/vendor/dashboard" },
     { name: "Customer", icon: FaUsers, path: "/vendor/customer" },
     { name: "Product", icon: FaBoxOpen, path: "/vendor/product" },
-    { name: "Payment", icon: FaPaypal, path: "/vendor/subscriptions" },
+    { name: "Payment", icon: FaPaypal, path: "/vendor/payment" },
     { name: "Account", icon: FaAccusoft, path: "/vendor/account" },
   ];
 
@@ -84,17 +57,37 @@ const Sidebar = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const profileImageUrl = vendorProfileImageService.getImageUrl(
+    vendorData?.profileImage,
+  );
+
   return (
     <>
       <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
-        {/* Header */}
         <div className="sidebar-header">
           <div className="user-profile">
-            <div className="profile-avatar">
-              {vendorData
-                ? getInitials(vendorData.vendorName || vendorData.businessName)
-                : "VN"}
+            <div
+              className={`profile-avatar ${profileImageUrl ? "has-image" : ""}`}
+            >
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  className="avatar-img"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "";
+                  }}
+                />
+              ) : (
+                <span>
+                  {getInitials(
+                    vendorData?.vendorName || vendorData?.businessName,
+                  )}
+                </span>
+              )}
             </div>
+
             {isOpen && (
               <div className="user-info">
                 <span className="user-role">
@@ -110,7 +103,6 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* Main Menu */}
         <div className="sidebar-content">
           {isOpen && <div className="section-label">MAIN</div>}
 
@@ -126,41 +118,9 @@ const Sidebar = () => {
                     onClick={() => handleMenuClick(item.path)}
                   >
                     <Icon className="menu-icon" />
-                    {isOpen && (
-                      <>
-                        <span className="menu-text">{item.name}</span>
-                        {item.hasDropdown && (
-                          <FaChevronRight
-                            className={`dropdown-arrow ${expandedItems[item.name] ? "expanded" : ""}`}
-                          />
-                        )}
-                      </>
-                    )}
+                    {isOpen && <span className="menu-text">{item.name}</span>}
                     {!isOpen && <div className="tooltip">{item.name}</div>}
                   </div>
-
-                  {/* Submenu - Expanded */}
-                  {isOpen && item.subItems && expandedItems[item.name] && (
-                    <div className="submenu">
-                      {item.subItems.map((subItem, subIdx) => (
-                        <div key={subIdx} className="submenu-item">
-                          {subItem}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Submenu - Collapsed (Hover Tooltip) */}
-                  {!isOpen && item.subItems && (
-                    <div className="hover-submenu">
-                      <div className="hover-submenu-title">{item.name}</div>
-                      {item.subItems.map((subItem, subIdx) => (
-                        <div key={subIdx} className="hover-submenu-item">
-                          {subItem}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}

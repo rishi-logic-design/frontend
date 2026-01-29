@@ -1,58 +1,86 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import gstSlabService from "../../services/gstSlabService";
 import "./gstSlabs.scss";
 
-const GSTSlabs = () => {
+const GstSlabs = () => {
   const navigate = useNavigate();
-  const [slabs, setSlabs] = useState([
-    { id: 1, name: "5%", percentage: 5 },
-    { id: 2, name: "12%", percentage: 12 },
-    { id: 3, name: "18%", percentage: 18 },
-    { id: 4, name: "28%", percentage: 28 },
-  ]);
+
+  const [slabs, setSlabs] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingSlab, setEditingSlab] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
-    percentage: "",
+    slabName: "",
+    rate: "",
   });
+
+  useEffect(() => {
+    loadSlabs();
+  }, []);
+
+  const loadSlabs = async () => {
+    try {
+      const data = await gstSlabService.getSlabs();
+      setSlabs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch GST slabs", err);
+    }
+  };
 
   const handleAdd = () => {
     setEditingSlab(null);
-    setFormData({ name: "", percentage: "" });
+    setFormData({ slabName: "", rate: "" });
     setShowModal(true);
   };
 
   const handleEdit = (slab) => {
     setEditingSlab(slab);
-    setFormData({ name: slab.name, percentage: slab.percentage });
+    setFormData({
+      slabName: slab.slabName,
+      rate: slab.rate,
+    });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    setSlabs(slabs.filter((slab) => slab.id !== id));
+  const handleSave = async () => {
+    if (!formData.slabName || formData.rate === "") {
+      alert("Please fill all fields");
+      return;
+    }
+    try {
+      if (editingSlab) {
+        await gstSlabService.updateSlab(editingSlab.id, {
+          slabName: formData.slabName,
+          rate: Number(formData.rate),
+        });
+      } else {
+        await gstSlabService.createSlab({
+          slabName: formData.slabName,
+          rate: Number(formData.rate),
+        });
+      }
+
+      setShowModal(false);
+      loadSlabs();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Something went wrong");
+    }
   };
 
-  const handleSave = () => {
-    if (editingSlab) {
-      setSlabs(
-        slabs.map((slab) =>
-          slab.id === editingSlab.id
-            ? { ...slab, name: formData.name, percentage: formData.percentage }
-            : slab,
-        ),
-      );
-    } else {
-      setSlabs([
-        ...slabs,
-        {
-          id: Date.now(),
-          name: formData.name,
-          percentage: formData.percentage,
-        },
-      ]);
+  // 🔹 DELETE
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this GST slab?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await gstSlabService.deleteSlab(id);
+      loadSlabs();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to delete GST slab");
     }
-    setShowModal(false);
   };
 
   return (
@@ -65,80 +93,74 @@ const GSTSlabs = () => {
           >
             ←
           </button>
-          <h1>GST SLABS</h1>
+          <h1>GST Slabs</h1>
         </div>
+
         <button className="add-btn" onClick={handleAdd}>
           +
         </button>
       </div>
 
       <div className="slabs-container">
-        {slabs.map((slab) => (
-          <div key={slab.id} className="slab-item">
-            <span className="slab-name">{slab.name}</span>
-            <div className="slab-actions">
-              <button onClick={() => handleEdit(slab)}>✎</button>
-              <button
-                className="delete-btn"
-                onClick={() => handleDelete(slab.id)}
-              >
-                🗑
-              </button>
+        {slabs.length === 0 ? (
+          <p className="empty-text">No GST slabs found</p>
+        ) : (
+          slabs.map((slab) => (
+            <div key={slab.id} className="slab-item">
+              <span className="slab-name">
+                {slab.slabName} ({slab.rate}%)
+              </span>
+
+              <div className="slab-actions">
+                <button onClick={() => handleEdit(slab)}>✎</button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(slab.id)}
+                >
+                  🗑
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Add/Edit SLABS</h2>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ×
-              </button>
-            </div>
+            <h2>{editingSlab ? "Edit GST Slab" : "Add GST Slab"}</h2>
 
             <div className="form-group">
-              <label>SLABS Name</label>
+              <label>Slab Name</label>
               <input
-                type="text"
-                value={formData.name}
+                value={formData.slabName}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, slabName: e.target.value })
                 }
-                placeholder="Enter your Amount"
               />
             </div>
 
             <div className="form-group">
-              <label>Percentage</label>
+              <label>Percentage (%)</label>
               <input
                 type="number"
-                value={formData.percentage}
+                value={formData.rate}
                 onChange={(e) =>
-                  setFormData({ ...formData, percentage: e.target.value })
+                  setFormData({ ...formData, rate: e.target.value })
                 }
-                placeholder="Enter Percentage"
               />
             </div>
 
             <div className="modal-actions">
-              <button
-                className="cancel-btn"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="save-btn" onClick={handleSave}>
-                Save
-              </button>
+              <button onClick={() => setShowModal(false)}>Cancel</button>
+              <button onClick={handleSave}>Save</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
 
-export default GSTSlabs;
+export default GstSlabs;

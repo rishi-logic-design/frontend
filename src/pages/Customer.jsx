@@ -1,83 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./customer.scss";
+import customerService from "../services/customerService";
 
 const Customer = () => {
   const navigate = useNavigate();
+  const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+  const vendorId = vendorData?.id;
+
+  const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [customers] = useState([
-    {
-      id: 1,
-      name: "Maruti Textile",
-      contactPerson: "Rajesh Sharma",
-      avatar: "👨‍💼",
-      avatarBg: "#3b82f6",
-      balance: 4000,
-    },
-    {
-      id: 2,
-      name: "Kamal Textile",
-      contactPerson: "Virat Shrivas",
-      avatar: "👨‍💼",
-      avatarBg: "#0ea5e9",
-      balance: 4000,
-    },
-    {
-      id: 3,
-      name: "Ram Textile",
-      contactPerson: "Hari Varma",
-      avatar: "👨‍💼",
-      avatarBg: "#10b981",
-      balance: 4000,
-    },
-    {
-      id: 4,
-      name: "Shivshakti Textile",
-      contactPerson: "Om Prakash",
-      avatar: "👨‍💼",
-      avatarBg: "#f59e0b",
-      balance: 4000,
-    },
-    {
-      id: 5,
-      name: "Om Textile",
-      contactPerson: "Darshak Shah",
-      avatar: "👨‍💼",
-      avatarBg: "#ef4444",
-      balance: 4000,
-    },
-    {
-      id: 6,
-      name: "Joan Textile",
-      contactPerson: "Hardik Parmar",
-      avatar: "👨‍💼",
-      avatarBg: "#8b5cf6",
-      balance: 4000,
-    },
-    {
-      id: 7,
-      name: "Hermika Textile",
-      contactPerson: "Harmika Varma",
-      avatar: "👨‍💼",
-      avatarBg: "#ec4899",
-      balance: 4000,
-    },
-    {
-      id: 8,
-      name: "Hariom Textile",
-      contactPerson: "Hari Sharma",
-      avatar: "👨‍💼",
-      avatarBg: "#14b8a6",
-      balance: 4000,
-    },
-  ]);
+  const fetchCustomers = async () => {
+    if (!vendorId) return;
+    try {
+      setLoading(true);
+      const res = await customerService.getCustomers({ vendorId });
+      console.log(res);
+      setCustomers(res?.data?.rows || []);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const handleSearch = async (value) => {
+    setSearchQuery(value);
+
+    if (!vendorId) return;
+    try {
+      if (!value.trim()) {
+        fetchCustomers();
+        return;
+      }
+
+      setLoading(true);
+      const data = await customerService.searchCustomers(value, vendorId);
+      setCustomers(data || []);
+    } catch (error) {
+      console.error("Error searching customers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [vendorId]);
 
   const handleAddCustomer = () => {
     navigate("/vendor/add-customer");
@@ -102,33 +73,55 @@ const Customer = () => {
             type="text"
             placeholder="Search Customer"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="search-input"
           />
         </div>
 
         <div className="customers-list">
-          {filteredCustomers.length > 0 ? (
-            filteredCustomers.map((customer) => (
+          {loading ? (
+            <p className="page-center">Loading...</p>
+          ) : customers.length > 0 ? (
+            customers.map((customers) => (
               <div
-                key={customer.id}
+                key={customers.id || customers._id}
                 className="customer-item"
-                onClick={() => handleCustomerClick(customer.id)}
+                onClick={() =>
+                  handleCustomerClick(customers.id || customers._id)
+                }
               >
                 <div className="customer-info">
-                  <div
-                    className="customer-avatar"
-                    style={{ background: customer.avatarBg }}
-                  >
-                    <span>{customer.avatar}</span>
-                  </div>
+                  <div className="customer-avatar">
+                    {customers.customerImage ? (
+                      <img
+                        src={customers.customerImage}
+                        alt="Customer"
+                        className="customer-img"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "";
+                        }}
+                      />
+                    ) : (
+                      customers.customerName?.charAt(0)?.toUpperCase() || "👤"
+                    )}
+                  </div>{" "}
                   <div className="customer-details">
-                    <h3 className="customer-name">{customer.name}</h3>
-                    <p className="contact-person">{customer.contactPerson}</p>
+                    <h3 className="customer-name">{customers.customerName}</h3>
+                    <p
+                      className="contact-person"
+                      style={{
+                        marginBottom: "4px",
+                        fontWeight: "400",
+                        color: "darkblue",
+                      }}
+                    >
+                      {customers.businessName || "-"}
+                    </p>
+                    <p className="contact-person">
+                      {customers.mobileNumber || "-"}
+                    </p>
                   </div>
-                </div>
-                <div className="customer-balance">
-                  ₹{customer.balance.toLocaleString()}
                 </div>
               </div>
             ))

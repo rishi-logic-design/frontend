@@ -1,67 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import productService from "../services/productService";
 import "./productPage.scss";
 
 const ProductPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [products] = useState([
-    {
-      id: 1,
-      name: "Mona Silk Touch",
-      category: "Mona",
-      size: "1.5 inch",
-    },
-    {
-      id: 2,
-      name: "Premium Banglory Shine",
-      category: "Banglory",
-      size: "2.5 inch",
-    },
-    {
-      id: 3,
-      name: "SoftWeave Mona",
-      category: "Mona",
-      size: "1 inch",
-    },
-    {
-      id: 4,
-      name: "Mona Spark Luxe",
-      category: "Mona",
-      size: "1.5 inch",
-    },
-    {
-      id: 5,
-      name: "Crystal Mona Texture",
-      category: "Mona",
-      size: "0.80 inch",
-    },
-    {
-      id: 6,
-      name: "Gold Banglory Texture",
-      category: "Banglory",
-      size: "1.25 inch",
-    },
-    {
-      id: 7,
-      name: "Luxury Banglory Fabric",
-      category: "Banglory",
-      size: "2 inch",
-    },
-    {
-      id: 8,
-      name: "Premium Banglory Shine",
-      category: "Banglory",
-      size: "8 inch",
-    },
-  ]);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const res = await productService.getProducts();
+      console.log("RAW PRODUCT API RESPONSE 👉", res);
+
+      const productList = Array.isArray(res?.products) ? res.products : [];
+
+      setProducts(productList);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getProductSize = (product) => {
+    if (
+      Array.isArray(product.productSizes) &&
+      product.productSizes.length > 0 &&
+      product.productSizes[0].size
+    ) {
+      return product.productSizes[0].size.inches;
+    }
+    return "-";
+  };
+  const filteredProducts = products.filter((product) => {
+    const name = product.name || "";
+    const category = product.category?.name || "";
+
+    return (
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   const handleAddProduct = () => {
     navigate("/vendor/add-product");
@@ -88,14 +75,19 @@ const ProductPage = () => {
         </div>
 
         <div className="products-list">
-          {filteredProducts.length > 0 ? (
+          {loading ? (
+            <p className="page-center">Loading...</p>
+          ) : filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
               <div key={product.id} className="product-item">
                 <div className="product-info">
                   <h3 className="product-name">{product.name}</h3>
-                  <p className="product-category">{product.category}</p>
+                  <p className="product-category">
+                    {product.category?.name || "-"}
+                  </p>
                 </div>
-                <div className="product-size">{product.size}</div>
+
+                <div className="product-size">" {getProductSize(product)}</div>
               </div>
             ))
           ) : (

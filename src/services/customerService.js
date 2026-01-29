@@ -1,108 +1,227 @@
-import api from "../services/api";
+import { uploadCustomerImage, deleteImage } from "../utils/firebaseStorage";
 
-const customerService = {
-  createCustomer: async (customerData) => {
-    try {
-      const response = await api.post("/api/customers", customerData);
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://accountsoft.onrender.com";
+
+export const createCustomer = async (formData) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+
+    const imageFile = formData.get("customerImage");
+    let imageUrl = null;
+
+    if (imageFile instanceof File) {
+      imageUrl = await uploadCustomerImage(imageFile);
     }
-  },
 
-  // FIXED: Added vendorId parameter
-  getCustomers: async (vendorId) => {
-    try {
-      // If vendorId is provided, send it as query parameter
-      const params = vendorId ? { vendorId } : {};
-      const response = await api.get("/api/customers", { params });
+    const customerData = {};
 
-      // Log to debug what we're getting
-      console.log("API Response for customers:", response.data);
+    for (let [key, value] of formData.entries()) {
+      if (key === "customerImage") continue;
 
-      // Handle different response formats
-      if (response.data.data) {
-        return response.data.data;
-      } else if (Array.isArray(response.data)) {
-        return response.data;
+      if (key === "homeAddress" || key === "officeAddress") {
+        customerData[key] = JSON.parse(value);
+      } else if (key === "priceValue") {
+        customerData.pricePerProduct = Number(value || 0);
       } else {
-        return [];
+        customerData[key] = value;
       }
-    } catch (error) {
-      console.error("Error in getCustomers:", error);
-      throw error.response?.data || error;
     }
-  },
 
-  getCustomerById: async (id) => {
-    try {
-      const response = await api.get(`/api/customers/${id}`);
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    customerData.customerImage = imageUrl;
 
-  updateCustomer: async (id, customerData) => {
-    try {
-      const response = await api.put(`/api/customers/${id}`, customerData);
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    const response = await fetch(`${API_URL}/api/customers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(customerData),
+    });
 
-  deleteCustomer: async (id) => {
-    try {
-      const response = await api.delete(`/api/customers/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
+    if (!response.ok) {
+      if (imageUrl) await deleteImage(imageUrl);
+      throw new Error("Failed to create customer");
     }
-  },
 
-  searchCustomers: async (searchQuery) => {
-    try {
-      const response = await api.get("/api/customers/search", {
-        params: { q: searchQuery },
-      });
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  getCustomerCountByVendor: async () => {
-    try {
-      const response = await api.get("/api/customers/count-by-vendor");
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  addTransaction: async (customerId, transactionData) => {
-    try {
-      const response = await api.post(
-        `/api/customers/${customerId}/transactions`,
-        transactionData,
-      );
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  getTransactionReport: async (params) => {
-    try {
-      const response = await api.get("/api/customers/transactions/report", {
-        params,
-      });
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    return await response.json();
+  } catch (err) {
+    console.error("Create customer error:", err);
+    throw err;
+  }
 };
 
-export default customerService;
+export const updateCustomer = async (customerId, formData) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+
+    const imageFile = formData.get("customerImage");
+    let newImageUrl = null;
+    const oldImageUrl = formData.get("oldCustomerImage");
+
+    if (imageFile && imageFile instanceof File) {
+      newImageUrl = await uploadCustomerImage(imageFile);
+
+      if (oldImageUrl) {
+        await deleteImage(oldImageUrl);
+      }
+
+      formData.delete("customerImage");
+      formData.append("customerImage", newImageUrl);
+    }
+
+    formData.delete("oldCustomerImage");
+
+    const customerData = {};
+    for (let [key, value] of formData.entries()) {
+      if (key === "homeAddress" || key === "officeAddress") {
+        customerData[key] = JSON.parse(value);
+      } else {
+        customerData[key] = value;
+      }
+    }
+
+    const response = await fetch(`${API_URL}/api/customers/${customerId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(customerData),
+    });
+
+    if (!response.ok) {
+      if (newImageUrl) {
+        await deleteImage(newImageUrl);
+      }
+      throw new Error("Failed to update customer");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Update customer error:", error);
+    throw error;
+  }
+};
+
+export const deleteCustomer = async (customerId, imageUrl) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+
+    const response = await fetch(
+      `${API_URL}/api/customers/${customerId}?vendorId=${vendorData?.id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete customer");
+    }
+
+    if (imageUrl) {
+      await deleteImage(imageUrl);
+    }
+  } catch (error) {
+    console.error("Delete customer error:", error);
+    throw error;
+  }
+};
+
+export const getCustomers = async (params = {}) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+
+    const queryParams = new URLSearchParams({
+      vendorId: vendorData?.id,
+      ...params,
+    });
+
+    const response = await fetch(`${API_URL}/api/customers?${queryParams}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch customers");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Get customers error:", error);
+    throw error;
+  }
+};
+
+export const getCustomerById = async (customerId) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+
+    const response = await fetch(`${API_URL}/api/customers/${customerId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch customer");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Get customer error:", error);
+    throw error;
+  }
+};
+
+export const searchCustomers = async (query) => {
+  try {
+    const token = localStorage.getItem("vendorToken");
+    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+
+    const queryParams = new URLSearchParams({
+      vendorId: vendorData?.id,
+      q: query,
+    });
+
+    const response = await fetch(
+      `${API_URL}/api/customers/search?${queryParams}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to search customers");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Search customers error:", error);
+    throw error;
+  }
+};
+
+export default {
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+  getCustomers,
+  getCustomerById,
+  searchCustomers,
+};

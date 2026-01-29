@@ -20,6 +20,7 @@ import Payment from "./components/accountPage/Payment";
 import GSTSlabs from "./components/accountPage/GstSlabs";
 import GSTNumber from "./components/accountPage/GstNumber";
 import FirmAddress from "./components/accountPage/FilmAddress";
+import PaymentPage from "./pages/PaymentPage";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -66,8 +67,6 @@ const App = () => {
           <Route path="dashboard" element={<HomePage />} />
           <Route path="customer" element={<Customer />} />
           <Route path="product" element={<ProductPage />} />
-
-          {/* Account Routes */}
           <Route path="account" element={<AccountPage />} />
           <Route path="account/edit-profile" element={<EditProfile />} />
           <Route path="account/payment" element={<Payment />} />
@@ -126,7 +125,7 @@ const App = () => {
             }
           />
           <Route
-            path="export-ledger"
+            path="export-ledger/:id"
             element={
               <ProtectedRoute>
                 <ExportLedger />
@@ -152,19 +151,15 @@ const App = () => {
           />
 
           <Route
-            path="subscriptions"
+            path="payment"
             element={
-              <div style={{ padding: "32px" }}>
-                <h1>Subscription Page</h1>
-                <p>Coming Soon...</p>
-              </div>
+              <ProtectedRoute>
+                <PaymentPage />
+              </ProtectedRoute>
             }
           />
-
           <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
-
-        {/* Redirects */}
         <Route
           path="/dashboard"
           element={<Navigate to="/vendor/dashboard" replace />}

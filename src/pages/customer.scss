@@ -1,3 +1,11 @@
+.page-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #86868b;
+}
 .customer-page {
   padding: 24px;
   min-height: 100vh;
@@ -148,20 +156,25 @@
           }
 
           .customer-avatar {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
+            background: #eef2ff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
+            font-weight: 600;
+            overflow: hidden;
             @media (max-width: 768px) {
               width: 45px;
               height: 45px;
               font-size: 22px;
             }
+          }
+          .customer-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
 
           .customer-details {

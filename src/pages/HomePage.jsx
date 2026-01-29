@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./homePage.scss";
 import billService from "../services/billService";
 import challanService from "../services/challanService";
 import AnimatedAmount from "../utils/AnimatedAmount";
+import vendorService from "../services/vendorService";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [vendorData] = useState({
-    vendorName: "Shiv Rolla House",
-    avatar: "👨‍🍳",
-  });
+  const location = useLocation();
+  const [vendorData, setVendorData] = useState(null);
+
   const [collectionAmount, setCollectionAmount] = useState(0);
-  const [loadingCollection, setLoadingCollection] = useState(true);
+  const [loadingCollection, setLoadingCollection] = useState(false);
   const [activeTab, setActiveTab] = useState("challan");
   const [searchQuery, setSearchQuery] = useState("");
   const [challans, setChallans] = useState([]);
@@ -20,13 +20,48 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const getVendorId = () => {
+    const vd = JSON.parse(localStorage.getItem("vendorData"));
+    return vd?.id || null;
+  };
+
+  // ✅ Initial load
   useEffect(() => {
     fetchCollectionAmount();
     fetchChallans();
     fetchBills();
   }, []);
 
+  // ✅ Refresh when returning from payment page
+  useEffect(() => {
+    if (location.state?.refresh) {
+      console.log("🔄 Refreshing home page data...");
+      fetchCollectionAmount();
+      fetchBills(); // Refresh bills to show updated status
+      fetchChallans();
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const loadVendor = async () => {
+      try {
+        const vendorId = getVendorId();
+        if (!vendorId) return;
+
+        const res = await vendorService.getVendorById(vendorId);
+        setVendorData(res.data || res);
+      } catch (err) {
+        console.error("Failed to load vendor", err);
+      }
+    };
+
+    loadVendor();
+  }, []);
+
   const fetchCollectionAmount = async () => {
+    setLoadingCollection(true);
     try {
       const data = await billService.getPendingCollectionTotal();
       setCollectionAmount(Math.floor(Number(data.totalPendingAmount) || 0));
@@ -59,13 +94,14 @@ const HomePage = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("📥 Fetching bills...");
       const data = await billService.getBills();
-      console.log("bills", data);
+      console.log("✅ Bills received:", data);
 
       const rows = Array.isArray(data.rows) ? data.rows : [];
       setBills(rows);
     } catch (error) {
-      console.error("Failed to fetch bills", error);
+      console.error("❌ Failed to fetch bills:", error);
       setError("Failed to load bills");
       setBills([]);
     } finally {
@@ -153,30 +189,15 @@ const HomePage = () => {
       return "N/A";
     }
   };
-  const getAmount = (item) => {
-    if (item.grandTotal || item.totalAmount || item.netAmount) {
-      return item.grandTotal || item.totalAmount || item.netAmount;
-    }
 
-    if (Array.isArray(item.items)) {
-      return item.items.reduce((sum, i) => {
-        const qty = Number(i.qty || i.quantity || 1);
-        const rate = Number(i.rate || i.price || 0);
-        const amt = Number(i.amount || qty * rate || 0);
-        return sum + amt;
-      }, 0);
-    }
-
-    return 0;
-  };
   const getBillAmount = (bill) => {
-    // 1️⃣ Highest priority: backend-calculated totals
+    // ✅ Priority order for getting bill amount
     if (bill.totalWithGST != null) return Number(bill.totalWithGST);
     if (bill.totalAmount != null) return Number(bill.totalAmount);
     if (bill.netAmount != null) return Number(bill.netAmount);
     if (bill.finalAmount != null) return Number(bill.finalAmount);
 
-    // 2️⃣ Calculate from items
+    // Calculate from items if available
     if (Array.isArray(bill.items) && bill.items.length > 0) {
       return bill.items.reduce((sum, item) => {
         if (item.totalWithGst != null) {
@@ -189,11 +210,12 @@ const HomePage = () => {
       }, 0);
     }
 
-    // 3️⃣ Paid / adjusted bill
+    // If paid, show 0
     if (bill.status === "paid") return 0;
 
     return 0;
   };
+
   const getStatus = (item) => {
     const status = item.status || item.paymentStatus || "unpaid";
     return status.toLowerCase();
@@ -206,9 +228,12 @@ const HomePage = () => {
       <div className="homepage-header">
         <div className="vendor-info">
           <div className="vendor-avatar">
-            <span>{vendorData.avatar}</span>
+            <span>
+              {vendorData?.vendorName?.charAt(0)?.toUpperCase() || "👤"}
+            </span>
           </div>
-          <h1>{vendorData.vendorName}</h1>
+
+          <h1>{vendorData?.vendorName || "Loading..."}</h1>
         </div>
         <div className="header-actions">
           <button className="icon-btn" title="Menu">

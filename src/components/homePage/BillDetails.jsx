@@ -1,29 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./billDetails.scss";
 import billService from "../../services/billService";
 
 const BillDetails = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [billData, setBillData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
 
+  // ✅ Initial load
   useEffect(() => {
     fetchBillDetails();
   }, [id]);
+
+  // ✅ Refresh when returning from payment page
+  useEffect(() => {
+    if (location.state?.refresh) {
+      console.log("🔄 Refreshing bill data...");
+      fetchBillDetails();
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchBillDetails = async () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("📥 Fetching bill details for ID:", id);
       const data = await billService.getBillById(id);
-      console.log(data);
+      console.log("✅ Bill data received:", data);
       setBillData(data);
     } catch (error) {
-      console.error("Failed to fetch bill details", error);
+      console.error("❌ Failed to fetch bill details:", error);
       setError("Failed to load bill details. Please try again.");
     } finally {
       setLoading(false);
@@ -51,7 +64,7 @@ const BillDetails = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `bill_${billData?.billNumber || id}.pdf`;
+      link.download = `bill_${billData?.bill?.billNumber || billData?.billNumber || id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -63,8 +76,15 @@ const BillDetails = () => {
   };
 
   const handleRecordPayment = () => {
-    navigate(`/vendor/record-payment/${id}?type=bill`);
+    // ✅ Navigate with proper parameters
+    const customerId =
+      billData?.bill?.customer?.id || billData?.bill?.customerId;
+    console.log("🔗 Navigating to payment with:", { billId: id, customerId });
+    navigate(
+      `/vendor/add-payment?billId=${id}&type=bill&customerId=${customerId}`,
+    );
   };
+
   const formatAddress = (address) => {
     if (!address) return "Address not provided";
 
@@ -82,7 +102,6 @@ const BillDetails = () => {
 
       return parts.join(", ");
     } catch (e) {
-      // agar JSON parse fail ho jaye
       return address;
     }
   };
@@ -110,13 +129,39 @@ const BillDetails = () => {
     );
   }
 
-  const customer = billData.bill.customer || {};
-  const items = billData.bill.items || [];
-  console.log(items);
-  const totalAmount = billData.totalAmount || billData.total || 0;
-  const status = billData.bill.status || billData.paymentStatus || "unpaid";
-  const subtotal = billData.bill.subtotal || 0;
-  const gst = billData.gst || billData.tax || 0;
+  const customer = billData.bill?.customer || {};
+  const items = billData.bill?.items || [];
+
+  // ✅ Get proper amount values from bill
+  const totalAmount = parseFloat(
+    billData.bill?.totalWithGST ||
+      billData.bill?.totalAmount ||
+      billData.totalAmount ||
+      0,
+  );
+
+  const paidAmount = parseFloat(
+    billData.bill?.paidAmount || billData.paidAmount || 0,
+  );
+
+  const pendingAmount = parseFloat(
+    billData.bill?.pendingAmount ||
+      billData.pendingAmount ||
+      totalAmount - paidAmount,
+  );
+
+  const status = billData.bill?.status || billData.status || "pending";
+  const subtotal = parseFloat(
+    billData.bill?.subtotal || billData.bill?.totalWithoutGST || 0,
+  );
+  const gst = parseFloat(billData.bill?.gstTotal || billData.gst || 0);
+
+  console.log("💰 Bill Amounts:", {
+    totalAmount,
+    paidAmount,
+    pendingAmount,
+    status,
+  });
 
   return (
     <div className="bill-details-page">
@@ -133,15 +178,33 @@ const BillDetails = () => {
           <div className="header-card">
             <div className="header-info">
               <h2 className="bill-number">
-                #{billData.billNumber || billData.billNo || id}
+                #{billData.bill?.billNumber || billData.billNumber || id}
               </h2>
               <span className={`status-badge ${status.toLowerCase()}`}>
-                {status === "paid" ? "Paid" : "pending"}
+                {status === "paid"
+                  ? "Paid"
+                  : status === "partial"
+                    ? "Partially Paid"
+                    : "Pending"}
               </span>
             </div>
             <div className="amount-section">
-              <p className="amount-label">Total Amount Due</p>
-              <h3 className="amount-value">₹{totalAmount.toLocaleString()}</h3>
+              <p className="amount-label">
+                {status === "paid" ? "Total Amount" : "Pending Amount"}
+              </p>
+              <h3 className="amount-value">
+                ₹
+                {(status === "paid"
+                  ? totalAmount
+                  : pendingAmount
+                ).toLocaleString()}
+              </h3>
+              {status !== "paid" && paidAmount > 0 && (
+                <p className="paid-info">
+                  Paid: ₹{paidAmount.toLocaleString()} of ₹
+                  {totalAmount.toLocaleString()}
+                </p>
+              )}
             </div>
             {status !== "paid" && (
               <button
@@ -197,20 +260,26 @@ const BillDetails = () => {
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
-                      <tr key={item._id || index}>
+                      <tr key={item._id || item.id || index}>
                         <td>
                           <span className="item-number">{index + 1}.</span>{" "}
                           {item.description || item.itemName || "N/A"}
                         </td>
                         <td>
                           {item.quantity || item.qty || 0}
-                          {item.unit || ""}
+                          {item.unit ? ` ${item.unit}` : ""}
                         </td>
                         <td>
-                          ₹{(item.rate || item.price || 0).toLocaleString()}
+                          ₹
+                          {parseFloat(
+                            item.rate || item.price || 0,
+                          ).toLocaleString()}
                         </td>
                         <td>
-                          ₹{(item.amount || item.total || 0).toLocaleString()}
+                          ₹
+                          {parseFloat(
+                            item.amount || item.total || 0,
+                          ).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -222,7 +291,7 @@ const BillDetails = () => {
 
           {/* Payment Summary Card */}
           <div className="payment-card">
-            <h3 className="card-title">Payment</h3>
+            <h3 className="card-title">Payment Summary</h3>
             <div className="payment-details">
               <div className="payment-row">
                 <span className="payment-label">Subtotal (without GST):</span>
@@ -233,7 +302,7 @@ const BillDetails = () => {
               {gst > 0 && (
                 <div className="payment-row">
                   <span className="payment-label">
-                    GST ({billData.gstPercentage || 18}%):
+                    GST ({billData.bill?.gstPercentage || 18}%):
                   </span>
                   <span className="payment-value">₹{gst.toLocaleString()}</span>
                 </div>
@@ -244,6 +313,22 @@ const BillDetails = () => {
                   ₹{totalAmount.toLocaleString()}
                 </span>
               </div>
+              {paidAmount > 0 && (
+                <>
+                  <div className="payment-row paid">
+                    <span className="payment-label">Paid Amount:</span>
+                    <span className="payment-value">
+                      ₹{paidAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="payment-row pending">
+                    <span className="payment-label">Pending Amount:</span>
+                    <span className="payment-value">
+                      ₹{pendingAmount.toLocaleString()}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

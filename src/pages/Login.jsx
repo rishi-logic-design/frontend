@@ -16,7 +16,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [vendorData, setVendorData] = useState(null);
 
-  // Check Vendor
   const checkVendor = async () => {
     setMessage({ text: "", type: "" });
 

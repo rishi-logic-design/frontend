@@ -9,7 +9,7 @@ const Dashboard = () => {
     <div className="dashboard-layout">
       <Sidebar />
       <div className="dashboard-main">
-        <AnimatedOutlet />
+        <Outlet />
       </div>
     </div>
   );

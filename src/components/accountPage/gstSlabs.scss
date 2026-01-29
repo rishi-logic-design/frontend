@@ -1,14 +1,13 @@
-// GST SLABS Page
 .gst-slabs-page {
   min-height: 100vh;
-  background-color: #1e293b;
+  background-color: #f8fafc;
 
   .page-header {
     padding: 16px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: white;
+    color: black;
 
     .header-left {
       display: flex;
@@ -18,7 +17,7 @@
       .back-btn {
         background: none;
         border: none;
-        color: white;
+        color: black;
         font-size: 24px;
         cursor: pointer;
         padding: 0;
@@ -36,7 +35,7 @@
     .add-btn {
       background: none;
       border: none;
-      color: white;
+      color: black;
       font-size: 28px;
       cursor: pointer;
       padding: 0;

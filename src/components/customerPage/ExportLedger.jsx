@@ -1,35 +1,133 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ledgerService from "../../services/ledgerService";
+import customerService from "../../services/customerService";
 import "./exportLedger.scss";
+
 
 const ExportLedger = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [customer, setCustomer] = useState(null);
+  const [ledgerSummary, setLedgerSummary] = useState(null);
+
   const [exportFormat, setExportFormat] = useState("pdf");
   const [emailToMe, setEmailToMe] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedRange, setSelectedRange] = useState("last1month");
   const [customDates, setCustomDates] = useState({
-    fromDate: "01 April 2025",
-    toDate: "07 August 2025",
+    fromDate: "",
+    toDate: "",
   });
 
-  // Sample data
-  const ledgerData = {
-    customerName: "Rajesh Sharma",
-    period: "Last 3 Months",
-    totalInvoices: 35000,
-    outstanding: 8000,
+  useEffect(() => {
+    fetchData();
+  }, [id, selectedRange, customDates]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch customer details
+      const customerData = await customerService.getCustomerById(id);
+      setCustomer(customerData);
+
+      // Calculate date range
+      const dateRange = getDateRange();
+
+      // Fetch ledger summary
+      const summaryData = await ledgerService.getLedgerSummary(id, dateRange);
+      setLedgerSummary(summaryData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      alert("Failed to load ledger data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExport = () => {
-    console.log("Exporting ledger...", {
-      format: exportFormat,
-      emailToMe,
-      range: selectedRange,
-      customDates: selectedRange === "custom" ? customDates : null,
-    });
-    // Add export logic here
+  const getDateRange = () => {
+    const today = new Date();
+    let fromDate, toDate;
+
+    if (selectedRange === "custom") {
+      fromDate = customDates.fromDate;
+      toDate = customDates.toDate;
+    } else {
+      toDate = today.toISOString().split("T")[0];
+
+      switch (selectedRange) {
+        case "last1month":
+          fromDate = new Date(today.setMonth(today.getMonth() - 1))
+            .toISOString()
+            .split("T")[0];
+          break;
+        case "last3months":
+          fromDate = new Date(today.setMonth(today.getMonth() - 3))
+            .toISOString()
+            .split("T")[0];
+          break;
+        case "last1year":
+          fromDate = new Date(today.setFullYear(today.getFullYear() - 1))
+            .toISOString()
+            .split("T")[0];
+          break;
+        default:
+          fromDate = new Date(today.setMonth(today.getMonth() - 1))
+            .toISOString()
+            .split("T")[0];
+      }
+    }
+
+    return { fromDate, toDate };
+  };
+
+  const getRangeLabel = () => {
+    switch (selectedRange) {
+      case "last1month":
+        return "Last 1 Month";
+      case "last3months":
+        return "Last 3 Months";
+      case "last1year":
+        return "Last 1 Year";
+      case "custom":
+        return `${customDates.fromDate} to ${customDates.toDate}`;
+      default:
+        return "Last 1 Month";
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+
+      const dateRange = getDateRange();
+
+      const exportData = {
+        customerId: id,
+        format: exportFormat,
+        emailToMe: emailToMe,
+        fromDate: dateRange.fromDate,
+        toDate: dateRange.toDate,
+      };
+
+      console.log("Exporting ledger with data:", exportData);
+
+      await ledgerService.exportLedger(exportData);
+
+      console.log(
+        `Ledger exported successfully as ${exportFormat.toUpperCase()}!${
+          emailToMe ? " Check your email." : ""
+        }`,
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+      console.log("Failed to export ledger. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleDateRangeClick = () => {
@@ -37,9 +135,32 @@ const ExportLedger = () => {
   };
 
   const handleApplyDateRange = () => {
+    if (selectedRange === "custom") {
+      if (!customDates.fromDate || !customDates.toDate) {
+        alert("Please select both from and to dates");
+        return;
+      }
+    }
     setShowDateModal(false);
-    // Apply the selected date range
   };
+
+  if (loading) {
+    return (
+      <div className="export-ledger-page">
+        <div className="page-header">
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            ← Back
+          </button>
+          <h1 className="page-title">Export Ledger</h1>
+        </div>
+        <div className="page-content">
+          <div style={{ textAlign: "center", padding: "40px" }}>
+            Loading ledger data...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="export-ledger-page">
@@ -48,7 +169,6 @@ const ExportLedger = () => {
           ← Back
         </button>
         <h1 className="page-title">Export Ledger</h1>
-        <button className="menu-btn">☰</button>
       </div>
 
       <div className="page-content">
@@ -57,22 +177,29 @@ const ExportLedger = () => {
           <div className="summary-card">
             <h3 className="summary-title">Ledger Summary</h3>
             <p className="summary-subtitle">
-              Statement for {ledgerData.customerName} for {ledgerData.period}
+              Statement for{" "}
+              {customer?.customerName || customer?.businessName || "Customer"}{" "}
+              for {getRangeLabel()}
             </p>
             <div className="summary-details">
               <div className="summary-row">
                 <span className="summary-label">Total Invoices</span>
                 <span className="summary-value">
-                  ₹{ledgerData.totalInvoices.toLocaleString()}
+                  ₹{(ledgerSummary?.totalInvoices || 0).toLocaleString()}
                 </span>
               </div>
               <div className="summary-row">
                 <span className="summary-label">Outstanding</span>
                 <span className="summary-value outstanding">
-                  ₹{ledgerData.outstanding.toLocaleString()}
+                  ₹{(ledgerSummary?.outstanding || 0).toLocaleString()}
                 </span>
               </div>
-              <button className="view-details-btn">View Details</button>
+              <button
+                className="view-details-btn"
+                onClick={handleDateRangeClick}
+              >
+                Change Date Range
+              </button>
             </div>
           </div>
 
@@ -111,8 +238,12 @@ const ExportLedger = () => {
           </div>
 
           {/* Export Button */}
-          <button className="export-btn" onClick={handleExport}>
-            Export
+          <button
+            className="export-btn"
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? "Exporting..." : "Export"}
           </button>
         </div>
       </div>
@@ -143,7 +274,7 @@ const ExportLedger = () => {
                   className={`range-btn ${selectedRange === "last3months" ? "active" : ""}`}
                   onClick={() => setSelectedRange("last3months")}
                 >
-                  Last 3 month
+                  Last 3 months
                 </button>
                 <button
                   className={`range-btn ${selectedRange === "last1year" ? "active" : ""}`}
@@ -166,7 +297,7 @@ const ExportLedger = () => {
                     <label>From Date</label>
                     <input
                       type="date"
-                      value="2025-04-01"
+                      value={customDates.fromDate}
                       onChange={(e) =>
                         setCustomDates({
                           ...customDates,
@@ -180,7 +311,7 @@ const ExportLedger = () => {
                     <label>To Date</label>
                     <input
                       type="date"
-                      value="2025-08-07"
+                      value={customDates.toDate}
                       onChange={(e) =>
                         setCustomDates({
                           ...customDates,

@@ -1,71 +1,76 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import customerService from "../../services/customerService";
 import "./customerDetails.scss";
 
 const CustomerDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Sample data - replace with API call
-  const customerData = {
-    name: "Maruti Textile",
-    contactPerson: "Rajesh Sharma",
-    address: "201, Market Road, Surat, Gujarat",
-    avatar: "👨‍💼",
-    avatarBg: "#3b82f6",
-    priceOfProduct: 8000,
-    paymentDueAmount: 4000,
-    purchaseHistory: [
-      {
-        id: 1,
-        product: "Cotton Fabric",
-        amount: 3000,
-        date: "09 August 2025",
-        status: "paid",
-      },
-      {
-        id: 2,
-        product: "Denim Fabric",
-        amount: 2000,
-        date: "09 August 2025",
-        status: "pending",
-      },
-      {
-        id: 3,
-        product: "Cotton Fabric",
-        amount: 3000,
-        date: "09 August 2025",
-        status: "paid",
-      },
-      {
-        id: 4,
-        product: "Denim Fabric",
-        amount: 2000,
-        date: "09 August 2025",
-        status: "pending",
-      },
-      {
-        id: 5,
-        product: "Denim Fabric",
-        amount: 2000,
-        date: "09 August 2025",
-        status: "paid",
-      },
-    ],
+  const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+  const vendorId = vendorData?.id;
+
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (!vendorId || !id) {
+      navigate("/vendor/customer");
+      return;
+    }
+    loadCustomer();
+  }, [id, vendorId]);
+
+  const loadCustomer = async () => {
+    try {
+      setLoading(true);
+      const res = await customerService.getCustomerById(id, vendorId);
+      console.log(res);
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+      navigate("/vendor/customer");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCall = () => {
-    console.log("Calling customer...");
-    // Add call functionality
-  };
+  if (loading) return <div className="page-center">Loading...</div>;
+  if (!data || !data.customer)
+    return <div className="page-center">Customer not found</div>;
 
-  const handleAlert = () => {
-    console.log("Sending alert to customer...");
-    // Add alert functionality
-  };
+  const { customer, challans = [], due = 0 } = data;
 
-  const handleExportLedger = () => {
-    navigate("/vendor/export-ledger");
+  const formatAmount = (v) => Number(v || 0).toLocaleString();
+
+  const parseAddress = (addr) => {
+    if (!addr) return "No address";
+
+    let obj = addr;
+
+    try {
+      if (typeof obj === "string") obj = JSON.parse(obj);
+
+      if (typeof obj === "string") obj = JSON.parse(obj);
+    } catch (e) {
+      console.log("Address parse error:", e);
+      return "No address";
+    }
+
+    if (!obj || typeof obj !== "object") return "No address";
+
+    return [
+      obj.streetNo,
+      obj.houseNo,
+      obj.residencyName,
+      obj.officeNo,
+      obj.buildingNo,
+      obj.areaCity,
+      obj.state,
+      obj.pincode,
+    ]
+      .filter(Boolean)
+      .join(", ");
   };
 
   return (
@@ -79,87 +84,108 @@ const CustomerDetails = () => {
 
       <div className="page-content">
         <div className="details-container">
-          {/* Customer Info Card */}
+          {/* Customer Info */}
           <div className="customer-info-card">
             <div className="customer-header">
-              <div
-                className="customer-avatar"
-                style={{ background: customerData.avatarBg }}
-              >
-                <span>{customerData.avatar}</span>
+              <div className="customer-avatar">
+                {customer.customerImage ? (
+                  <img
+                    src={customer.customerImage}
+                    alt="Customer"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "";
+                    }}
+                  />
+                ) : (
+                  customer.customerName?.charAt(0)?.toUpperCase() || "👤"
+                )}
               </div>
+
               <div className="customer-text">
-                <h2 className="customer-name">{customerData.name}</h2>
-                <p className="contact-person">{customerData.contactPerson}</p>
+                <h2 className="customer-name">
+                  {customer.customerName || "N/A"}
+                </h2>
+                <p className="contact-person">{customer.mobileNumber || "-"}</p>
                 <div className="address">
-                  <span className="location-icon">📍</span>
-                  <span>{customerData.address}</span>
+                  📍 {parseAddress(customer.homeAddress)}
                 </div>
               </div>
             </div>
 
             <div className="action-buttons">
-              <button className="action-btn call" onClick={handleCall}>
-                <span className="btn-icon">📞</span>
-                <span className="btn-text">Call</span>
+              <button
+                className="action-btn call"
+                onClick={() =>
+                  customer.mobileNumber &&
+                  (window.location.href = `tel:${customer.mobileNumber}`)
+                }
+              >
+                📞 Call
               </button>
-              <button className="action-btn alert" onClick={handleAlert}>
-                <span className="btn-icon">🔔</span>
-                <span className="btn-text">Alert</span>
-              </button>
+
+              <button className="action-btn alert">🔔 Alert</button>
+
               <button
                 className="action-btn export"
-                onClick={handleExportLedger}
+                onClick={() => navigate(`/vendor/export-ledger/${id}`)}
               >
-                <span className="btn-icon">📊</span>
-                <span className="btn-text">Export Ledger</span>
+                📊 Export Ledger
               </button>
             </div>
           </div>
 
-          {/* Summary Cards */}
+          {/* Summary */}
           <div className="summary-cards">
             <div className="summary-card">
-              <div className="card-icon">💰</div>
-              <div className="card-content">
-                <p className="card-label">Price Of Product</p>
-                <h3 className="card-value">
-                  ₹{customerData.priceOfProduct.toLocaleString()}
-                </h3>
-              </div>
+              <p className="card-label">Price Of Product</p>
+              <h3 className="card-value">
+                ₹{formatAmount(customer.pricePerProduct)}
+              </h3>
             </div>
+
             <div className="summary-card">
-              <div className="card-icon">💳</div>
-              <div className="card-content">
-                <p className="card-label">Payment Due Amount</p>
-                <h3 className="card-value">
-                  ₹{customerData.paymentDueAmount.toLocaleString()}
-                </h3>
-              </div>
+              <p className="card-label">Payment Due Amount</p>
+              <h3 className="card-value">₹{formatAmount(due)}</h3>
             </div>
           </div>
 
           {/* Purchase History */}
           <div className="purchase-history-card">
             <h3 className="section-title">Purchase History</h3>
-            <div className="history-list">
-              {customerData.purchaseHistory.map((item) => (
-                <div key={item.id} className="history-item">
-                  <div className="item-info">
-                    <h4 className="item-name">{item.product}</h4>
-                    <p className="item-amount">
-                      ₹{item.amount.toLocaleString()}
-                    </p>
+
+            {challans.length === 0 ? (
+              <p className="empty-text">No purchase history available</p>
+            ) : (
+              <div className="history-list">
+                {challans.map((c) => (
+                  <div
+                    key={c.id}
+                    className="history-item"
+                    onClick={() => navigate(`/challan/${c.id}`)}
+                  >
+                    <div className="item-info">
+                      <h4 className="item-name">{c.challanNumber}</h4>
+                      <p className="item-amount">
+                        ₹{formatAmount(c.totalAmount)}
+                      </p>
+                    </div>
+
+                    <div className="item-meta">
+                      <span className="item-date">
+                        {new Date(c.challanDate).toLocaleDateString()}
+                      </span>
+                      <span className="item-due">
+                        Due: ₹{formatAmount(c.due)}
+                      </span>
+                      <span className={`item-status ${c.status}`}>
+                        {c.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="item-meta">
-                    <span className="item-date">{item.date}</span>
-                    <span className={`item-status ${item.status}`}>
-                      {item.status === "paid" ? "Paid" : "Pending"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
