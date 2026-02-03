@@ -71,7 +71,10 @@ const NewChallan = () => {
       ]);
 
       let customersList = [];
-      if (customersData?.rows && Array.isArray(customersData.rows)) {
+
+      if (customersData?.data?.rows && Array.isArray(customersData.data.rows)) {
+        customersList = customersData.data.rows;
+      } else if (customersData?.rows && Array.isArray(customersData.rows)) {
         customersList = customersData.rows;
       } else if (Array.isArray(customersData)) {
         customersList = customersData;

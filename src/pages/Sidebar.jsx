@@ -61,6 +61,8 @@ const Sidebar = () => {
     vendorData?.profileImage,
   );
 
+  console.log(profileImageUrl)
+
   return (
     <>
       <div className={`sidebar ${isOpen ? "open" : "closed"}`}>

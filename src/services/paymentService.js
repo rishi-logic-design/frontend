@@ -4,7 +4,7 @@ const paymentService = {
   createPayment: async (paymentData) => {
     try {
       const response = await api.post("/api/payments", paymentData);
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       console.error("Payment creation error:", error);
       throw error.response?.data || error;
@@ -14,7 +14,7 @@ const paymentService = {
   getPayments: async (params = {}) => {
     try {
       const response = await api.get("/api/payments", { params });
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -23,7 +23,7 @@ const paymentService = {
   getPaymentById: async (id) => {
     try {
       const response = await api.get(`/api/payments/${id}`);
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -32,7 +32,7 @@ const paymentService = {
   updatePayment: async (id, paymentData) => {
     try {
       const response = await api.put(`/api/payments/${id}`, paymentData);
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -50,7 +50,7 @@ const paymentService = {
   getPaymentStats: async (params = {}) => {
     try {
       const response = await api.get("/api/payments/stats", { params });
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -61,7 +61,7 @@ const paymentService = {
       const response = await api.get(
         `/api/payments/customer/${customerId}/outstanding`,
       );
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
@@ -75,11 +75,9 @@ const paymentService = {
 
       console.log("Pending invoices response:", response.data);
 
-      // Handle the response structure properly
       if (response.data.success && response.data.data) {
         const data = response.data.data;
 
-        // Combine bills and challans into a single invoices array
         const invoices = [...(data.bills || []), ...(data.challans || [])];
 
         return {

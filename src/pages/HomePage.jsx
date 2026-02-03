@@ -25,21 +25,18 @@ const HomePage = () => {
     return vd?.id || null;
   };
 
-  // ✅ Initial load
   useEffect(() => {
     fetchCollectionAmount();
     fetchChallans();
     fetchBills();
   }, []);
 
-  // ✅ Refresh when returning from payment page
   useEffect(() => {
     if (location.state?.refresh) {
       console.log("🔄 Refreshing home page data...");
       fetchCollectionAmount();
-      fetchBills(); // Refresh bills to show updated status
+      fetchBills();
       fetchChallans();
-      // Clear the state
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -191,13 +188,11 @@ const HomePage = () => {
   };
 
   const getBillAmount = (bill) => {
-    // ✅ Priority order for getting bill amount
     if (bill.totalWithGST != null) return Number(bill.totalWithGST);
     if (bill.totalAmount != null) return Number(bill.totalAmount);
     if (bill.netAmount != null) return Number(bill.netAmount);
     if (bill.finalAmount != null) return Number(bill.finalAmount);
 
-    // Calculate from items if available
     if (Array.isArray(bill.items) && bill.items.length > 0) {
       return bill.items.reduce((sum, item) => {
         if (item.totalWithGst != null) {
@@ -210,7 +205,6 @@ const HomePage = () => {
       }, 0);
     }
 
-    // If paid, show 0
     if (bill.status === "paid") return 0;
 
     return 0;

@@ -76,7 +76,6 @@ const BillDetails = () => {
   };
 
   const handleRecordPayment = () => {
-    // ✅ Navigate with proper parameters
     const customerId =
       billData?.bill?.customer?.id || billData?.bill?.customerId;
     console.log("🔗 Navigating to payment with:", { billId: id, customerId });

@@ -1,0 +1,560 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 2px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 10;
+  border-radius: 16px 16px 0 0;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+.payment-form {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &.error {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:disabled {
+      background: #f9fafb;
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%236b7280' d='M5 7l5 5 5-5H5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+  }
+
+  .error-message {
+    display: block;
+    color: #ef4444;
+    font-size: 13px;
+    margin-top: 6px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &::before {
+      content: "⚠️";
+      font-size: 12px;
+    }
+  }
+}
+
+// Customer Search Styles
+.customer-search-wrapper {
+  position: relative;
+
+  input {
+    padding-right: 40px;
+  }
+
+  .clear-customer-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e5e7eb;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #d1d5db;
+      color: #374151;
+    }
+  }
+}
+
+.customer-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: -2px;
+
+  .customer-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f3f4f6;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: #f9fafb;
+    }
+
+    &.selected {
+      background: #ede9fe;
+      border-left: 3px solid #667eea;
+    }
+
+    .customer-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .customer-phone {
+      font-size: 12px;
+      color: #6b7280;
+    }
+  }
+
+  .no-results {
+    padding: 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+  }
+}
+
+// Amount Input Wrapper
+.amount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .currency-symbol {
+    position: absolute;
+    left: 16px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  .amount-input {
+    padding-left: 40px;
+    font-weight: 600;
+    font-size: 16px;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+}
+
+// Method Fields Section
+.method-fields {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 2px solid #e5e7eb;
+
+  .method-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+
+    .method-icon {
+      font-size: 20px;
+    }
+
+    .method-title {
+      font-weight: 600;
+      color: #374151;
+      font-size: 15px;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 2px solid #f3f4f6;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-radius: 0 0 16px 16px;
+
+  button {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  .btn-cancel {
+    background: #f3f4f6;
+    color: #6b7280;
+
+    &:hover {
+      background: #e5e7eb;
+      color: #1a1a1a;
+    }
+  }
+
+  .btn-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      opacity: 0.6;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Scrollbar for modal content
+.modal-content {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+}
+
+// Scrollbar for customer dropdown
+.customer-dropdown {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+}
+
+// Responsive Styles
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-radius: 12px 12px 0 0;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  .payment-form {
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .method-fields {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 16px 20px;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 14px 16px;
+
+    h2 {
+      font-size: 16px;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 20px;
+    }
+  }
+
+  .payment-form {
+    padding: 16px;
+  }
+
+  .form-group {
+    label {
+      font-size: 13px;
+    }
+
+    input,
+    select,
+    textarea {
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+  }
+
+  .amount-input-wrapper {
+    .currency-symbol {
+      left: 14px;
+      font-size: 14px;
+    }
+
+    .amount-input {
+      padding-left: 36px;
+      font-size: 14px;
+    }
+  }
+}
+
+// Focus visible styles for accessibility
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+// Print styles
+@media print {
+  .modal-overlay {
+    position: static;
+    background: none;
+  }
+
+  .modal-content {
+    box-shadow: none;
+    max-height: none;
+  }
+
+  .modal-footer {
+    display: none;
+  }
+}

@@ -1,39 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./addPayment.scss";
-import paymentService from "../../services/paymentService";
 import customerService from "../../services/customerService";
+import paymentService from "../../services/paymentService";
 import { uploadPaymentAttachment } from "../../utils/firebaseStorage";
 
 const AddPayment = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // URL se parameters
-  const billIdFromUrl = searchParams.get("billId");
-  const typeFromUrl = searchParams.get("type");
-  const customerIdFromUrl = searchParams.get("customerId");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingCustomers, setLoadingCustomers] = useState(true);
-  const [loadingInvoices, setLoadingInvoices] = useState(false);
-  const [customers, setCustomers] = useState([]);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
-
   const [formData, setFormData] = useState({
-    creditDebit: "",
-    customerId: customerIdFromUrl || "",
+    type: "",
+    subType: "",
+    customerId: "",
     homeAddress: "",
     gstNumber: "",
     totalOutstanding: 0,
     paymentDate: new Date().toISOString().split("T")[0],
     amount: "",
-    paymentMethod: "",
-    remark: "",
-    attachment: null,
-    attachmentUrl: null,
+    method: "",
+    reference: "",
+    note: "",
+    attachmentFile: null,
     bankName: "",
     accountNumber: "",
     ifscCode: "",
@@ -41,932 +27,911 @@ const AddPayment = () => {
     chequeNumber: "",
     chequeDate: "",
     chequeBankName: "",
-    reference: "",
+    adjustedInvoices: [],
   });
 
-  const [invoices, setInvoices] = useState([]);
-  const [adjustmentAmount, setAdjustmentAmount] = useState(0);
-  const [outstandingAfterAdjustment, setOutstandingAfterAdjustment] =
-    useState(0);
+  const [customers, setCustomers] = useState([]);
+  const [pendingInvoices, setPendingInvoices] = useState([]);
+  const [selectedCustomerData, setSelectedCustomerData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const getVendorId = () => {
-    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
-    return vendorData?.id || null;
-  };
-
-  // Load customers
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoadingCustomers(true);
-        const vendorId = getVendorId();
-        if (vendorId) {
-          const res = await customerService.getCustomers();
-          setCustomers(res?.data?.rows || []);
-        }
-      } catch (err) {
-        console.error("Error fetching customers:", err);
-        setError("Failed to load customers");
-      } finally {
-        setLoadingCustomers(false);
-      }
-    };
-
     fetchCustomers();
   }, []);
 
-  // Load customer data and invoices
-  useEffect(() => {
-    const loadCustomerData = async () => {
-      if (!formData.customerId) {
-        setInvoices([]);
-        setFormData((prev) => ({
-          ...prev,
-          homeAddress: "",
-          gstNumber: "",
-          totalOutstanding: 0,
-        }));
-        return;
+  const fetchCustomers = async () => {
+    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
+    const vendorId = vendorData?.id;
+    try {
+      const response = await customerService.getCustomers(vendorId);
+      let customerList = [];
+
+      if (response?.data?.rows && Array.isArray(response.data.rows)) {
+        customerList = response.data.rows;
+      } else if (response?.rows && Array.isArray(response.rows)) {
+        customerList = response.rows;
+      } else if (Array.isArray(response)) {
+        customerList = response;
       }
-
-      try {
-        setLoadingInvoices(true);
-        const vendorId = getVendorId();
-
-        const customer = customers.find(
-          (c) => c.id === parseInt(formData.customerId),
-        );
-        if (customer) {
-          setFormData((prev) => ({
-            ...prev,
-            homeAddress: customer.officeAddress || customer.address || "",
-            gstNumber:
-              customer.gstNumber || customer.gstin || customer.pan || "",
-          }));
-        }
-
-        // Load customer outstanding
-        const outstandingData = await paymentService.getCustomerOutstanding(
-          formData.customerId,
-        );
-
-        setFormData((prev) => ({
-          ...prev,
-          totalOutstanding: parseFloat(outstandingData.outstanding || 0),
-        }));
-
-        // Load customer's pending invoices
-        const pendingInvoicesData =
-          await paymentService.getCustomerPendingInvoices(formData.customerId);
-
-        console.log("Pending invoices data:", pendingInvoicesData);
-
-        // Map the invoices with EXPLICIT billId
-        const mappedInvoices = (pendingInvoicesData.invoices || []).map(
-          (invoice) => {
-            const totalAmount = parseFloat(invoice.totalAmount || 0);
-            const paidAmount = parseFloat(invoice.paidAmount || 0);
-            const pendingAmount = parseFloat(
-              invoice.pendingAmount || totalAmount - paidAmount,
-            );
-
-            return {
-              id: invoice.id,
-              billId: invoice.id, // ✅ EXPLICIT billId for backend
-              billNo: invoice.billNumber || invoice.billNo,
-              invoiceDate: invoice.billDate
-                ? new Date(invoice.billDate).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "",
-              totalAmount: totalAmount,
-              paidAmount: paidAmount,
-              payAmount: "",
-              pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
-              status:
-                pendingAmount <= 0
-                  ? "paid"
-                  : paidAmount > 0
-                    ? "partial"
-                    : "pending",
-              selected: false,
-            };
-          },
-        );
-
-        // Sort by date (newest first)
-        mappedInvoices.sort((a, b) => {
-          const dateA = new Date(a.invoiceDate);
-          const dateB = new Date(b.invoiceDate);
-          return dateB - dateA;
-        });
-
-        setInvoices(mappedInvoices);
-        setOutstandingAfterAdjustment(
-          parseFloat(outstandingData.outstanding || 0),
-        );
-
-        // ✅ Auto-select invoice if coming from bill details
-        if (billIdFromUrl && typeFromUrl === "bill") {
-          const billId = parseInt(billIdFromUrl);
-          const targetInvoice = mappedInvoices.find(
-            (inv) => inv.billId === billId,
-          );
-
-          if (targetInvoice) {
-            console.log("Auto-selecting invoice:", targetInvoice);
-
-            // Auto-select and pre-fill amount
-            setInvoices((prevInvoices) =>
-              prevInvoices.map((inv) =>
-                inv.billId === billId
-                  ? {
-                      ...inv,
-                      selected: true,
-                      payAmount: inv.pendingAmount.toString(),
-                    }
-                  : inv,
-              ),
-            );
-
-            // Set form data
-            setFormData((prev) => ({
-              ...prev,
-              amount: targetInvoice.pendingAmount.toString(),
-              creditDebit: "credit", // Auto-select credit for bill payment
-            }));
-          }
-        }
-      } catch (err) {
-        console.error("Error loading customer data:", err);
-        setError("Failed to load customer data");
-      } finally {
-        setLoadingInvoices(false);
-      }
-    };
-
-    if (formData.customerId && customers.length > 0) {
-      loadCustomerData();
+      console.log(response);
+      setCustomers(customerList);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      setCustomers([]);
     }
-  }, [formData.customerId, customers, billIdFromUrl, typeFromUrl]);
-
-  // Calculate adjustments
-  useEffect(() => {
-    const selectedInvoices = invoices.filter((inv) => inv.selected);
-    const totalAdjusted = selectedInvoices.reduce(
-      (sum, inv) => sum + (parseFloat(inv.payAmount) || 0),
-      0,
-    );
-    setAdjustmentAmount(totalAdjusted);
-
-    const outstanding = formData.totalOutstanding;
-    const paymentAmt = parseFloat(formData.amount) || 0;
-
-    if (formData.creditDebit === "credit") {
-      setOutstandingAfterAdjustment(outstanding - paymentAmt);
-    } else if (formData.creditDebit === "debit") {
-      setOutstandingAfterAdjustment(outstanding + paymentAmt);
-    } else {
-      setOutstandingAfterAdjustment(outstanding);
-    }
-  }, [
-    invoices,
-    formData.amount,
-    formData.creditDebit,
-    formData.totalOutstanding,
-  ]);
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
-    setError(null);
-  };
 
-  const handleInvoiceToggle = (id) => {
-    setInvoices(
-      invoices.map((invoice) =>
-        invoice.id === id
-          ? { ...invoice, selected: !invoice.selected }
-          : invoice,
-      ),
-    );
-  };
-
-  const handlePayAmountChange = (id, value) => {
-    const numValue = parseFloat(value) || 0;
-    setInvoices(
-      invoices.map((invoice) => {
-        if (invoice.id === id) {
-          const newPendingAmount =
-            invoice.totalAmount - invoice.paidAmount - numValue;
-          return {
-            ...invoice,
-            payAmount: value,
-            pendingAmount: newPendingAmount > 0 ? newPendingAmount : 0,
-          };
-        }
-        return invoice;
-      }),
-    );
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "application/pdf",
-    ];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (!allowedTypes.includes(file.type)) {
-      setError("Only JPEG, PNG, and PDF files are allowed");
-      return;
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
 
-    if (file.size > maxSize) {
-      setError("File size should not exceed 5MB");
-      return;
-    }
+  const handleCustomerChange = async (e) => {
+    const customerId = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      customerId,
+      adjustedInvoices: [], // Reset adjusted invoices
+    }));
 
-    setUploadingFile(true);
-    setError(null);
-
-    try {
-      const url = await uploadPaymentAttachment(file);
+    if (!customerId) {
+      setSelectedCustomerData(null);
+      setPendingInvoices([]);
       setFormData((prev) => ({
         ...prev,
-        attachment: file,
-        attachmentUrl: url,
+        address: "",
+        gstNumber: "",
+        totalOutstanding: 0,
       }));
-    } catch (err) {
-      console.error("File upload error:", err);
-      setError("Failed to upload file. Please try again.");
-    } finally {
-      setUploadingFile(false);
+      return;
     }
+
+    try {
+      setLoadingInvoices(true);
+
+      // Fetch customer details
+      const customerResponse =
+        await customerService.getCustomerById(customerId);
+      const customerData = customerResponse.data || customerResponse;
+
+      setSelectedCustomerData(customerData);
+
+      // Auto-fill address and GST
+      const address =
+        customerData.officeAddress?.address ||
+        customerData.homeAddress?.address ||
+        customerData.address ||
+        "";
+      const gstNumber = customerData.gstNumber || "";
+
+      // Fetch outstanding and pending invoices in parallel
+      const [outstandingResponse, invoicesResponse] = await Promise.all([
+        paymentService.getCustomerOutstanding(customerId),
+        paymentService.getCustomerPendingInvoices(customerId),
+      ]);
+
+      console.log("Outstanding response:", outstandingResponse);
+      console.log("Invoices response:", invoicesResponse);
+
+      const outstanding = parseFloat(
+        outstandingResponse.outstanding ||
+          outstandingResponse.totalOutstanding ||
+          0,
+      );
+      const invoices = invoicesResponse.invoices || [];
+
+      setFormData((prev) => ({
+        ...prev,
+        address,
+        gstNumber,
+        totalOutstanding: outstanding,
+      }));
+
+      setPendingInvoices(invoices);
+    } catch (error) {
+      console.error("Error fetching customer data:", error);
+      alert("Failed to fetch customer details. Please try again.");
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  const handleInvoiceAmountChange = (invoiceId, payAmount) => {
+    const amount = parseFloat(payAmount) || 0;
+
+    setFormData((prev) => {
+      const existingIndex = prev.adjustedInvoices.findIndex(
+        (inv) => inv.billId === invoiceId,
+      );
+
+      let newAdjustedInvoices;
+      if (amount === 0) {
+        // Remove if amount is 0
+        newAdjustedInvoices = prev.adjustedInvoices.filter(
+          (inv) => inv.billId !== invoiceId,
+        );
+      } else if (existingIndex !== -1) {
+        // Update existing
+        newAdjustedInvoices = [...prev.adjustedInvoices];
+        newAdjustedInvoices[existingIndex] = {
+          billId: invoiceId,
+          payAmount: amount,
+        };
+      } else {
+        // Add new
+        newAdjustedInvoices = [
+          ...prev.adjustedInvoices,
+          { billId: invoiceId, payAmount: amount },
+        ];
+      }
+
+      return {
+        ...prev,
+        adjustedInvoices: newAdjustedInvoices,
+      };
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size should not exceed 5MB");
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        attachmentFile: file,
+      }));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      attachmentFile: null,
+    }));
+    const fileInput = document.getElementById("attachment");
+    if (fileInput) fileInput.value = "";
   };
 
   const validateForm = () => {
-    if (!formData.customerId) {
-      setError("Please select a customer");
-      return false;
+    const newErrors = {};
+
+    // Validate type
+    if (!formData.type) {
+      newErrors.type = "Payment type (Credit/Debit) is required";
     }
 
-    if (!formData.creditDebit) {
-      setError("Please select credit or debit");
-      return false;
+    // Validate subType
+    if (!formData.subType) {
+      newErrors.subType = "Sub-type is required";
     }
 
+    // Validate customer for customer payments
+    if (formData.subType === "customer" && !formData.customerId) {
+      newErrors.customerId = "Customer is required";
+    }
+
+    // Validate amount
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      setError("Please enter a valid amount");
-      return false;
+      newErrors.amount = "Valid amount is required";
     }
 
+    // Validate payment date
     if (!formData.paymentDate) {
-      setError("Please select a payment date");
-      return false;
+      newErrors.paymentDate = "Payment date is required";
     }
 
-    if (!formData.paymentMethod) {
-      setError("Please select a payment method");
-      return false;
+    // Validate payment method
+    if (!formData.method) {
+      newErrors.method = "Payment method is required";
     }
 
-    // Method-specific validations
-    if (formData.paymentMethod === "bank") {
-      if (!formData.bankName || !formData.accountNumber || !formData.ifscCode) {
-        setError("Please fill all bank transfer details");
-        return false;
-      }
+    // Method-specific validation
+    if (formData.method === "bank") {
+      if (!formData.bankName) newErrors.bankName = "Bank name is required";
+      if (!formData.accountNumber)
+        newErrors.accountNumber = "Account number is required";
+      if (!formData.ifscCode) newErrors.ifscCode = "IFSC code is required";
     }
 
-    if (
-      formData.paymentMethod === "upi" ||
-      formData.paymentMethod === "online"
-    ) {
-      if (!formData.upiId) {
-        setError("Please enter UPI ID");
-        return false;
-      }
+    if (formData.method === "upi" || formData.method === "online") {
+      if (!formData.upiId) newErrors.upiId = "UPI ID is required";
     }
 
-    if (formData.paymentMethod === "cheque") {
-      if (
-        !formData.chequeNumber ||
-        !formData.chequeDate ||
-        !formData.chequeBankName
-      ) {
-        setError("Please fill all cheque details");
-        return false;
-      }
+    if (formData.method === "cheque") {
+      if (!formData.chequeNumber)
+        newErrors.chequeNumber = "Cheque number is required";
+      if (!formData.chequeDate)
+        newErrors.chequeDate = "Cheque date is required";
+      if (!formData.chequeBankName)
+        newErrors.chequeBankName = "Bank name is required";
     }
 
-    // Validate adjustment amounts match payment amount
-    const selectedInvoices = invoices.filter((inv) => inv.selected);
-    if (selectedInvoices.length > 0) {
-      const totalAdjusted = selectedInvoices.reduce(
-        (sum, inv) => sum + (parseFloat(inv.payAmount) || 0),
+    // Validate adjusted invoices total matches payment amount
+    if (formData.adjustedInvoices.length > 0) {
+      const totalAdjusted = formData.adjustedInvoices.reduce(
+        (sum, inv) => sum + parseFloat(inv.payAmount || 0),
         0,
       );
       const paymentAmount = parseFloat(formData.amount);
 
       if (Math.abs(totalAdjusted - paymentAmount) > 0.01) {
-        setError(
-          "Sum of adjusted invoice amounts must equal the payment amount",
-        );
-        return false;
+        newErrors.adjustedInvoices =
+          "Total adjusted amount must equal payment amount";
       }
     }
 
-    return true;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
-    if (!validateForm()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    setLoading(true);
-    setError(null);
+    if (!validateForm()) {
+      alert("Please fix the errors before submitting");
+      return;
+    }
 
     try {
-      // ✅ Prepare adjusted invoices with EXPLICIT billId
-      const selectedInvoices = invoices.filter(
-        (inv) => inv.selected && parseFloat(inv.payAmount) > 0,
-      );
+      setLoading(true);
 
-      const adjustedInvoices = selectedInvoices.map((inv) => ({
-        billId: inv.billId, // ✅ Use explicit billId
-        payAmount: parseFloat(inv.payAmount),
-      }));
-
-      console.log("=== PAYMENT DATA ===");
-      console.log("Selected Invoices:", selectedInvoices);
-      console.log("Adjusted Invoices for Backend:", adjustedInvoices);
+      let attachmentUrl = null;
+      if (formData.attachmentFile) {
+        try {
+          attachmentUrl = await uploadPaymentAttachment(
+            formData.attachmentFile,
+          );
+        } catch (uploadError) {
+          console.error("Error uploading attachment:", uploadError);
+          if (
+            !window.confirm("Failed to upload attachment. Continue without it?")
+          ) {
+            setLoading(false);
+            return;
+          }
+        }
+      }
 
       const paymentData = {
-        customerId: parseInt(formData.customerId),
-        type: formData.creditDebit,
-        subType: "customer",
+        customerId: formData.customerId || null,
+        type: formData.type,
+        subType: formData.subType,
         amount: parseFloat(formData.amount),
         paymentDate: formData.paymentDate,
-        method: formData.paymentMethod,
+        method: formData.method,
         reference: formData.reference || null,
-        note: formData.remark || null,
-        attachments: formData.attachmentUrl ? [formData.attachmentUrl] : [],
-        adjustedInvoices: adjustedInvoices.length > 0 ? adjustedInvoices : null,
+        note: formData.note || null,
+        attachments: attachmentUrl ? [attachmentUrl] : [],
+        status: "completed",
       };
 
-      // Add method-specific fields
-      if (formData.paymentMethod === "bank") {
+      if (formData.method === "bank") {
         paymentData.bankName = formData.bankName;
         paymentData.accountNumber = formData.accountNumber;
         paymentData.ifscCode = formData.ifscCode;
-      } else if (
-        formData.paymentMethod === "upi" ||
-        formData.paymentMethod === "online"
-      ) {
+      }
+
+      if (formData.method === "upi" || formData.method === "online") {
         paymentData.upiId = formData.upiId;
-      } else if (formData.paymentMethod === "cheque") {
+      }
+
+      if (formData.method === "cheque") {
         paymentData.chequeNumber = formData.chequeNumber;
         paymentData.chequeDate = formData.chequeDate;
         paymentData.chequeBankName = formData.chequeBankName;
       }
 
-      console.log("Final Payment Data:", paymentData);
+      if (formData.adjustedInvoices.length > 0) {
+        paymentData.adjustedInvoices = formData.adjustedInvoices;
+      }
+
+      console.log("Submitting payment data:", paymentData);
 
       const response = await paymentService.createPayment(paymentData);
 
-      console.log("✅ Payment created successfully:", response);
-      setSuccess(true);
+      console.log("Payment created successfully:", response);
 
-      // Show success message
-      alert("Payment recorded successfully!");
+      setShowSuccessModal(true);
 
-      // ✅ Navigate based on source
-      if (billIdFromUrl && typeFromUrl === "bill") {
-        // If came from bill details, go back to bill details with refresh
-        navigate(`/vendor/bill-details/${billIdFromUrl}`, {
-          replace: true,
-          state: { refresh: true },
-        });
-      } else {
-        // Otherwise go to home page for fresh data
-        navigate("/vendor/home", { replace: true, state: { refresh: true } });
-      }
-    } catch (err) {
-      console.error("❌ Payment creation error:", err);
-      setError(err.message || "Failed to create payment. Please try again.");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/vendor/home", { state: { refresh: true } });
+      }, 2000);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      const errorMessage =
+        error.message ||
+        error.response?.data?.message ||
+        "Failed to create payment";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loadingCustomers) {
-    return (
-      <div className="add-payment-page">
-        <div className="loading-state">
-          <p>Loading...</p>
-        </div>
-      </div>
+  const handleCancel = () => {
+    navigate(-1);
+  };
+
+  const getTotalAdjustedAmount = () => {
+    return formData.adjustedInvoices.reduce(
+      (sum, inv) => sum + parseFloat(inv.payAmount || 0),
+      0,
     );
-  }
+  };
 
   return (
     <div className="add-payment-page">
-      <div className="page-header">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="success-modal-overlay">
+          <div className="success-modal">
+            <div className="success-icon">
+              <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#10B981" />
+                <path
+                  d="M8 12l3 3 5-6"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p>Your payment has been recorded successfully</p>
+          </div>
+        </div>
+      )}
+
+      <div className="payment-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ←
         </button>
-        <h1 className="page-title">Add Payment</h1>
+        <h1>Add Payment</h1>
       </div>
 
-      <div className="page-content">
-        <div className="form-container">
-          {error && (
-            <div className="error-message">
-              <span className="error-icon">⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="success-message">
-              <span className="success-icon">✓</span>
-              <span>Payment recorded successfully!</span>
-            </div>
-          )}
-
-          {/* Credit/Debit Selection */}
-          <div className="form-section">
-            <div className="form-group">
-              <label>
-                Transaction Type <span className="required">*</span>
-              </label>
-              <div className="radio-group">
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="creditDebit"
-                    value="credit"
-                    checked={formData.creditDebit === "credit"}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                  />
-                  <span className="radio-text">Credit (Money In)</span>
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="creditDebit"
-                    value="debit"
-                    checked={formData.creditDebit === "debit"}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                  />
-                  <span className="radio-text">Debit (Money Out)</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Selection */}
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="customerId">
-                Customer <span className="required">*</span>
-              </label>
-              <select
-                id="customerId"
-                name="customerId"
-                value={formData.customerId}
-                onChange={handleInputChange}
-                className="form-input"
-                disabled={loading}
-              >
-                <option value="">Select Customer</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.customerName} - {customer.businessName || "N/A"}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {formData.customerId && (
-              <>
-                <div className="form-group">
-                  <label>Address</label>
-                  <input
-                    type="text"
-                    value={formData.homeAddress}
-                    className="form-input"
-                    disabled
-                    readOnly
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>GST Number</label>
-                  <input
-                    type="text"
-                    value={formData.gstNumber}
-                    className="form-input"
-                    disabled
-                    readOnly
-                  />
-                </div>
-
-                <div className="form-group outstanding-display">
-                  <label>Total Outstanding</label>
-                  <div className="outstanding-amount">
-                    ₹{formData.totalOutstanding.toLocaleString()}
-                  </div>
-                </div>
-              </>
+      <div className="payment-form-container">
+        <form onSubmit={handleSubmit} className="payment-form">
+          {/* Credit/Debit Type */}
+          <div className="form-group">
+            <label htmlFor="type">Payment Type *</label>
+            <select
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleInputChange}
+              className={errors.type ? "error" : ""}
+              required
+            >
+              <option value="">Select Payment Type</option>
+              <option value="credit">Credit (Money Received)</option>
+              <option value="debit">Debit (Money Paid)</option>
+            </select>
+            {errors.type && (
+              <span className="error-message">{errors.type}</span>
             )}
           </div>
 
-          {/* Payment Details */}
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="paymentDate">
-                Payment Date <span className="required">*</span>
-              </label>
-              <input
-                type="date"
-                id="paymentDate"
-                name="paymentDate"
-                value={formData.paymentDate}
-                onChange={handleInputChange}
-                className="form-input"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="amount">
-                Amount <span className="required">*</span>
-              </label>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                placeholder="Enter amount"
-                className="form-input"
-                step="0.01"
-                min="0"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reference">Reference/Transaction ID</label>
-              <input
-                type="text"
-                id="reference"
-                name="reference"
-                value={formData.reference}
-                onChange={handleInputChange}
-                placeholder="Enter reference number"
-                className="form-input"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="remark">Remark</label>
-              <textarea
-                id="remark"
-                name="remark"
-                value={formData.remark}
-                onChange={handleInputChange}
-                placeholder="Enter any remarks"
-                className="form-input"
-                rows="3"
-                disabled={loading}
-              />
-            </div>
+          {/* Sub Type */}
+          <div className="form-group">
+            <label htmlFor="subType">Sub Type *</label>
+            <select
+              id="subType"
+              name="subType"
+              value={formData.subType}
+              onChange={handleInputChange}
+              className={errors.subType ? "error" : ""}
+              required
+            >
+              <option value="">Select Sub Type</option>
+              <option value="customer">Customer</option>
+              <option value="vendor">Vendor</option>
+              <option value="cash-deposit">Cash Deposit</option>
+              <option value="cash-withdrawal">Cash Withdrawal</option>
+              <option value="bank-charges">Bank Charges</option>
+              <option value="electricity-bill">Electricity Bill</option>
+              <option value="miscellaneous">Miscellaneous</option>
+            </select>
+            {errors.subType && (
+              <span className="error-message">{errors.subType}</span>
+            )}
           </div>
 
-          {/* Invoice Adjustment Section */}
-          {formData.customerId && formData.creditDebit === "credit" && (
-            <div className="invoice-section">
-              <h3 className="section-title">Adjust with Invoices</h3>
-              {loadingInvoices ? (
-                <div className="loading-invoices">
-                  <p>Loading invoices...</p>
-                </div>
-              ) : invoices.length > 0 ? (
-                <div className="invoice-list">
-                  {invoices.map((invoice) => (
-                    <label
-                      key={invoice.id}
-                      className={`invoice-item ${invoice.selected ? "selected" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={invoice.selected}
-                        onChange={() => handleInvoiceToggle(invoice.id)}
-                        disabled={loading}
-                      />
-                      <div className="invoice-details">
-                        <div className="invoice-header">
-                          <span className="invoice-number">
-                            #{invoice.billNo}
-                          </span>
-                          <span className="invoice-date">
-                            {invoice.invoiceDate}
-                          </span>
-                          <span
-                            className={`invoice-status ${invoice.status.toLowerCase()}`}
-                          >
-                            {invoice.status}
-                          </span>
-                        </div>
-                        <div className="invoice-amounts">
-                          <div className="amount-row">
-                            <span className="amount-label">Total:</span>
-                            <span className="amount-value">
-                              ₹{invoice.totalAmount.toLocaleString()}
-                            </span>
+          {formData.subType === "customer" && (
+            <>
+              <div className="form-group">
+                <label htmlFor="customerId">Customer *</label>
+                <select
+                  id="customerId"
+                  name="customerId"
+                  value={formData.customerId}
+                  onChange={handleCustomerChange}
+                  className={errors.customerId ? "error" : ""}
+                  required
+                >
+                  <option value="">Select Customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.customerName ||
+                        customer.businessName ||
+                        `Customer ${customer.id}`}
+                    </option>
+                  ))}
+                </select>
+                {errors.customerId && (
+                  <span className="error-message">{errors.customerId}</span>
+                )}
+              </div>
+
+              {/* Auto-filled fields */}
+              {formData.customerId && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="address">Address</label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.homeAddress}
+                      readOnly
+                      placeholder="Auto-filled"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="gstNumber">GST Number</label>
+                    <input
+                      type="text"
+                      id="gstNumber"
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      readOnly
+                      placeholder="Auto-filled"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="totalOutstanding">Total Outstanding</label>
+                    <input
+                      type="text"
+                      id="totalOutstanding"
+                      name="totalOutstanding"
+                      value={`₹${formData.totalOutstanding.toLocaleString()}`}
+                      readOnly
+                      className="outstanding-field"
+                    />
+                  </div>
+
+                  {/* Pending Invoices */}
+                  {loadingInvoices ? (
+                    <div className="loading-invoices">
+                      <div className="spinner"></div>
+                      <p>Loading pending invoices...</p>
+                    </div>
+                  ) : (
+                    pendingInvoices.length > 0 && (
+                      <div className="invoices-section">
+                        <h3>Adjust Against Invoices (Optional)</h3>
+                        <p className="invoices-hint">
+                          Allocate payment amount to specific invoices
+                        </p>
+
+                        {pendingInvoices.map((invoice) => (
+                          <div key={invoice.id} className="invoice-item">
+                            <div className="invoice-header">
+                              <span className="invoice-number">
+                                {invoice.billNumber ||
+                                  invoice.challanNumber ||
+                                  `Invoice #${invoice.id}`}
+                              </span>
+                              <span className="invoice-date">
+                                {new Date(
+                                  invoice.billDate || invoice.invoiceDate,
+                                ).toLocaleDateString("en-IN")}
+                              </span>
+                            </div>
+                            <div className="invoice-details">
+                              <div className="detail-row">
+                                <span>
+                                  Total: ₹
+                                  {parseFloat(
+                                    invoice.totalAmount,
+                                  ).toLocaleString()}
+                                </span>
+                                <span>
+                                  Paid: ₹
+                                  {parseFloat(
+                                    invoice.paidAmount || 0,
+                                  ).toLocaleString()}
+                                </span>
+                                <span className="pending">
+                                  Pending: ₹
+                                  {parseFloat(
+                                    invoice.pendingAmount,
+                                  ).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="pay-amount-input">
+                                <label>Pay Amount:</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={invoice.pendingAmount}
+                                  step="0.01"
+                                  placeholder="₹0"
+                                  onChange={(e) =>
+                                    handleInvoiceAmountChange(
+                                      invoice.id,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="amount-row">
-                            <span className="amount-label">Paid:</span>
-                            <span className="amount-value">
-                              ₹{invoice.paidAmount.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="amount-row pending">
-                            <span className="amount-label">Pending:</span>
-                            <span className="amount-value">
-                              ₹{invoice.pendingAmount.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                        {invoice.selected && (
-                          <div className="pay-amount-input">
-                            <label>Pay Amount:</label>
-                            <input
-                              type="number"
-                              value={invoice.payAmount}
-                              onChange={(e) =>
-                                handlePayAmountChange(
-                                  invoice.id,
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Enter amount to pay"
-                              min="0"
-                              max={invoice.pendingAmount}
-                              step="0.01"
-                              disabled={loading}
-                            />
+                        ))}
+
+                        {formData.adjustedInvoices.length > 0 && (
+                          <div className="adjusted-summary">
+                            <strong>
+                              Total Adjusted: ₹
+                              {getTotalAdjustedAmount().toLocaleString()}
+                            </strong>
                           </div>
                         )}
                       </div>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <div className="no-invoices">
-                  <p>No pending invoices found for this customer</p>
-                </div>
+                    )
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {/* Payment Date */}
+          <div className="form-group">
+            <label htmlFor="paymentDate">Payment Date *</label>
+            <input
+              type="date"
+              id="paymentDate"
+              name="paymentDate"
+              value={formData.paymentDate}
+              onChange={handleInputChange}
+              className={errors.paymentDate ? "error" : ""}
+              required
+            />
+            {errors.paymentDate && (
+              <span className="error-message">{errors.paymentDate}</span>
+            )}
+          </div>
+
+          {/* Amount */}
+          <div className="form-group">
+            <label htmlFor="amount">Amount *</label>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleInputChange}
+              placeholder="Enter Amount"
+              className={errors.amount ? "error" : ""}
+              required
+              min="0"
+              step="0.01"
+            />
+            {errors.amount && (
+              <span className="error-message">{errors.amount}</span>
+            )}
+          </div>
+
+          {/* Payment Method */}
+          <div className="form-group">
+            <label htmlFor="method">Payment Method *</label>
+            <select
+              id="method"
+              name="method"
+              value={formData.method}
+              onChange={handleInputChange}
+              className={errors.method ? "error" : ""}
+              required
+            >
+              <option value="">Select Payment Method</option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="online">Online</option>
+              <option value="upi">UPI</option>
+              <option value="cheque">Cheque</option>
+              <option value="card">Card</option>
+              <option value="other">Other</option>
+            </select>
+            {errors.method && (
+              <span className="error-message">{errors.method}</span>
+            )}
+          </div>
+
+          {/* Bank Transfer Fields */}
+          {formData.method === "bank" && (
+            <>
+              <div className="form-group">
+                <label htmlFor="bankName">Bank Name *</label>
+                <input
+                  type="text"
+                  id="bankName"
+                  name="bankName"
+                  value={formData.bankName}
+                  onChange={handleInputChange}
+                  placeholder="Enter Bank Name"
+                  className={errors.bankName ? "error" : ""}
+                  required
+                />
+                {errors.bankName && (
+                  <span className="error-message">{errors.bankName}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="accountNumber">Account Number *</label>
+                <input
+                  type="text"
+                  id="accountNumber"
+                  name="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={handleInputChange}
+                  placeholder="Enter Account Number"
+                  className={errors.accountNumber ? "error" : ""}
+                  required
+                />
+                {errors.accountNumber && (
+                  <span className="error-message">{errors.accountNumber}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="ifscCode">IFSC Code *</label>
+                <input
+                  type="text"
+                  id="ifscCode"
+                  name="ifscCode"
+                  value={formData.ifscCode}
+                  onChange={handleInputChange}
+                  placeholder="Enter IFSC Code"
+                  className={errors.ifscCode ? "error" : ""}
+                  required
+                />
+                {errors.ifscCode && (
+                  <span className="error-message">{errors.ifscCode}</span>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* UPI/Online Fields */}
+          {(formData.method === "upi" || formData.method === "online") && (
+            <div className="form-group">
+              <label htmlFor="upiId">UPI ID *</label>
+              <input
+                type="text"
+                id="upiId"
+                name="upiId"
+                value={formData.upiId}
+                onChange={handleInputChange}
+                placeholder="example@upi"
+                className={errors.upiId ? "error" : ""}
+                required
+              />
+              {errors.upiId && (
+                <span className="error-message">{errors.upiId}</span>
               )}
             </div>
           )}
 
-          {/* Adjustment Section */}
-          {formData.customerId && (
-            <div className="adjustment-section">
-              <div className="adjustment-row">
-                <span className="adjustment-label">
-                  Amount Adjustment with Invoice:
-                </span>
-                <span className="adjustment-value">
-                  ₹{adjustmentAmount.toLocaleString()}
-                </span>
-              </div>
-              <div className="adjustment-row">
-                <span className="adjustment-label">
-                  Outstanding after Payment:
-                </span>
-                <span className="adjustment-value">
-                  ₹{outstandingAfterAdjustment.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Method Section */}
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="paymentMethod">
-                Payment Method <span className="required">*</span>
-              </label>
-              <select
-                id="paymentMethod"
-                name="paymentMethod"
-                value={formData.paymentMethod}
-                onChange={handleInputChange}
-                className="form-input"
-                disabled={loading}
-              >
-                <option value="">Select Payment Method</option>
-                <option value="cash">Cash</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="cheque">Cheque</option>
-                <option value="upi">UPI</option>
-                <option value="online">Online</option>
-                <option value="card">Card</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            {/* Bank Transfer Fields */}
-            {formData.paymentMethod === "bank" && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="bankName">
-                    Bank Name <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="bankName"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleInputChange}
-                    placeholder="Enter bank name"
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="accountNumber">
-                    Account Number <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="accountNumber"
-                    name="accountNumber"
-                    value={formData.accountNumber}
-                    onChange={handleInputChange}
-                    placeholder="Enter account number"
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="ifscCode">
-                    IFSC Code <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="ifscCode"
-                    name="ifscCode"
-                    value={formData.ifscCode}
-                    onChange={handleInputChange}
-                    placeholder="Enter IFSC code"
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* UPI/Online Fields */}
-            {(formData.paymentMethod === "upi" ||
-              formData.paymentMethod === "online") && (
+          {/* Cheque Fields */}
+          {formData.method === "cheque" && (
+            <>
               <div className="form-group">
-                <label htmlFor="upiId">
-                  UPI ID <span className="required">*</span>
-                </label>
+                <label htmlFor="chequeNumber">Cheque Number *</label>
                 <input
                   type="text"
-                  id="upiId"
-                  name="upiId"
-                  value={formData.upiId}
+                  id="chequeNumber"
+                  name="chequeNumber"
+                  value={formData.chequeNumber}
                   onChange={handleInputChange}
-                  placeholder="Enter UPI ID"
-                  className="form-input"
-                  disabled={loading}
+                  placeholder="Enter Cheque Number"
+                  className={errors.chequeNumber ? "error" : ""}
+                  required
                 />
+                {errors.chequeNumber && (
+                  <span className="error-message">{errors.chequeNumber}</span>
+                )}
               </div>
-            )}
 
-            {/* Cheque Fields */}
-            {formData.paymentMethod === "cheque" && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="chequeNumber">
-                    Cheque Number <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="chequeNumber"
-                    name="chequeNumber"
-                    value={formData.chequeNumber}
-                    onChange={handleInputChange}
-                    placeholder="Enter cheque number"
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="chequeDate">
-                    Cheque Date <span className="required">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="chequeDate"
-                    name="chequeDate"
-                    value={formData.chequeDate}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="chequeBankName">
-                    Bank Name <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="chequeBankName"
-                    name="chequeBankName"
-                    value={formData.chequeBankName}
-                    onChange={handleInputChange}
-                    placeholder="Enter bank name"
-                    className="form-input"
-                    disabled={loading}
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="form-group">
-              <label htmlFor="attachment">Attachment</label>
-              <div className="file-upload">
+              <div className="form-group">
+                <label htmlFor="chequeDate">Cheque Date *</label>
                 <input
-                  type="file"
-                  id="attachment"
-                  onChange={handleFileUpload}
-                  className="file-input"
-                  accept="image/*,.pdf"
-                  disabled={loading || uploadingFile}
+                  type="date"
+                  id="chequeDate"
+                  name="chequeDate"
+                  value={formData.chequeDate}
+                  onChange={handleInputChange}
+                  className={errors.chequeDate ? "error" : ""}
+                  required
                 />
-                <label htmlFor="attachment" className="file-label">
-                  <span className="upload-icon">📎</span>
-                  <span className="upload-text">
-                    {uploadingFile
-                      ? "Uploading..."
-                      : formData.attachment
-                        ? formData.attachment.name
-                        : "Click to Upload"}
-                  </span>
-                </label>
+                {errors.chequeDate && (
+                  <span className="error-message">{errors.chequeDate}</span>
+                )}
               </div>
-              {formData.attachmentUrl && (
-                <div className="file-preview">
-                  <span className="file-preview-text">
-                    ✓ File uploaded successfully
-                  </span>
+
+              <div className="form-group">
+                <label htmlFor="chequeBankName">Bank Name *</label>
+                <input
+                  type="text"
+                  id="chequeBankName"
+                  name="chequeBankName"
+                  value={formData.chequeBankName}
+                  onChange={handleInputChange}
+                  placeholder="Enter Bank Name"
+                  className={errors.chequeBankName ? "error" : ""}
+                  required
+                />
+                {errors.chequeBankName && (
+                  <span className="error-message">{errors.chequeBankName}</span>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Reference */}
+          <div className="form-group">
+            <label htmlFor="reference">Reference / Transaction ID</label>
+            <input
+              type="text"
+              id="reference"
+              name="reference"
+              value={formData.reference}
+              onChange={handleInputChange}
+              placeholder="Enter Reference (Optional)"
+            />
+          </div>
+
+          {/* Remarks */}
+          <div className="form-group">
+            <label htmlFor="note">Remarks</label>
+            <textarea
+              id="note"
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              placeholder="Enter Remark (Optional)"
+              rows="3"
+            />
+          </div>
+
+          {/* Attachment */}
+          <div className="form-group">
+            <label htmlFor="attachment">Attachment</label>
+            <div className="file-upload">
+              <input
+                type="file"
+                id="attachment"
+                name="attachment"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                accept="image/*,.pdf"
+              />
+
+              {!formData.attachmentFile ? (
+                <label htmlFor="attachment" className="file-upload-label">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <rect
+                      x="3"
+                      y="3"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      stroke="#ccc"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M12 8V16M8 12H16"
+                      stroke="#ccc"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span>Click to Upload</span>
+                </label>
+              ) : (
+                <div className="file-selected">
+                  <div className="file-info">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                        stroke="#10b981"
+                        strokeWidth="2"
+                      />
+                      <polyline
+                        points="13 2 13 9 20 9"
+                        stroke="#10b981"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                    <div className="file-details">
+                      <span className="file-name">
+                        {formData.attachmentFile.name}
+                      </span>
+                      <span className="file-size">
+                        {(formData.attachmentFile.size / 1024).toFixed(2)} KB
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="remove-file-btn"
+                    onClick={handleRemoveFile}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M18 6L6 18M6 6l12 12"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
           </div>
 
+          {/* Error Summary */}
+          {Object.keys(errors).length > 0 && (
+            <div className="error-summary">
+              <p>Please fix the following errors:</p>
+              <ul>
+                {Object.values(errors).map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="action-buttons">
+          <div className="form-actions">
             <button
-              className="cancel-btn"
-              onClick={() => navigate(-1)}
+              type="button"
+              className="btn-cancel"
+              onClick={handleCancel}
               disabled={loading}
             >
               Cancel
             </button>
-            <button
-              className="save-btn"
-              onClick={handleSave}
-              disabled={loading || uploadingFile}
-            >
-              {loading ? "Saving..." : "Save Payment"}
+            <button type="submit" className="btn-save" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner-small"></span>
+                  Saving...
+                </>
+              ) : (
+                "Save Payment"
+              )}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

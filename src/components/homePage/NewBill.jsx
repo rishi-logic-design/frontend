@@ -64,7 +64,9 @@ const NewBill = () => {
       console.log("Customers Data:", customersData);
 
       let customersList = [];
-      if (customersData?.rows && Array.isArray(customersData.rows)) {
+      if (customersData?.data?.rows && Array.isArray(customersData.data.rows)) {
+        customersList = customersData.data.rows;
+      } else if (customersData?.rows && Array.isArray(customersData.rows)) {
         customersList = customersData.rows;
       } else if (Array.isArray(customersData)) {
         customersList = customersData;
@@ -73,7 +75,6 @@ const NewBill = () => {
       setCustomers(customersList);
     } catch (error) {
       console.error("Error fetching customers:", error);
-      alert("Failed to load customers. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -304,13 +305,13 @@ const NewBill = () => {
                     <div className="item-info">
                       <div className="item-header">
                         <h3 className="item-name">
-                          {item.productName || item.name || "Unknown Product"}
+                          {item.productName || "Unknown Product"}
                         </h3>
                         <button className="remove-btn">
                           <MdDelete />
                         </button>
                       </div>
-                      <p className="item-category">{item.size || "N/A"}</p>
+                      <p className="item-category">{item.category.name || "N/A"}</p>
                       <div className="item-details">
                         <div className="detail">
                           <span className="detail-label">Qty</span>
