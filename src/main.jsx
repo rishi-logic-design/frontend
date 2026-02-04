@@ -1,11 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { ToastProvider } from "./context/ToastContext";
-import "./context/toast.scss";
+import { NotificationProvider } from "./context/NotificationContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <ToastProvider>
+  <NotificationProvider>
     <App />
-  </ToastProvider>,
+  </NotificationProvider>,
 );

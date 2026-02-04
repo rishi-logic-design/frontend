@@ -5,8 +5,10 @@ import billService from "../../services/billService";
 import challanService from "../../services/challanService";
 import customerService from "../../services/customerService";
 import "./newBill.scss";
+import { useNotifications } from "../../context/NotificationContext";
 
 const NewBill = () => {
+  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
@@ -217,9 +219,9 @@ const NewBill = () => {
 
       console.log("Creating bill with payload:", payload);
 
+      await fetchNotifications();
       const bill = await billService.createBill(payload);
 
-      alert("Bill created successfully!");
       navigate(`/vendor/bill-details/${bill.id || bill._id}`);
     } catch (error) {
       console.error("Create bill error:", error);
@@ -311,7 +313,9 @@ const NewBill = () => {
                           <MdDelete />
                         </button>
                       </div>
-                      <p className="item-category">{item.category.name || "N/A"}</p>
+                      <p className="item-category">
+                        {item.category.name || "N/A"}
+                      </p>
                       <div className="item-details">
                         <div className="detail">
                           <span className="detail-label">Qty</span>

@@ -4,8 +4,11 @@ import challanService from "../../services/challanService";
 import productService from "../../services/productService";
 import customerService from "../../services/customerService";
 import "./newChallan.scss";
+import { useNotifications } from "../../context/NotificationContext";
 
 const NewChallan = () => {
+  const { fetchNotifications } = useNotifications();
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -185,6 +188,7 @@ const NewChallan = () => {
       };
 
       console.log("Creating challan with payload:", payload);
+      await fetchNotifications();
 
       const challan = await challanService.createChallan(payload);
 

@@ -135,7 +135,7 @@
     &:read-only {
       background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
       color: #718096;
-      cursor: not-allowed;
+      // cursor: not-allowed;
       border-color: #e2e8f0;
     }
 
@@ -149,7 +149,7 @@
     min-height: 100px;
     line-height: 1.6;
   }
-
+  
   select {
     cursor: pointer;
     appearance: none;

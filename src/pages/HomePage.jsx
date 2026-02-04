@@ -5,11 +5,13 @@ import billService from "../services/billService";
 import challanService from "../services/challanService";
 import AnimatedAmount from "../utils/AnimatedAmount";
 import vendorService from "../services/vendorService";
+import { useNotifications } from "../context/NotificationContext";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [vendorData, setVendorData] = useState(null);
+  const { unreadCount, toggleSidebar } = useNotifications();
 
   const [collectionAmount, setCollectionAmount] = useState(0);
   const [loadingCollection, setLoadingCollection] = useState(false);
@@ -91,7 +93,7 @@ const HomePage = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("📥 Fetching bills...");
+      console.log("🔥 Fetching bills...");
       const data = await billService.getBills();
       console.log("✅ Bills received:", data);
 
@@ -233,8 +235,15 @@ const HomePage = () => {
           <button className="icon-btn" title="Menu">
             <span>☰</span>
           </button>
-          <button className="icon-btn" title="Notifications">
+          <button
+            className="icon-btn notification-btn"
+            title="Notifications"
+            onClick={toggleSidebar}
+          >
             <span>🔔</span>
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
           </button>
         </div>
       </div>

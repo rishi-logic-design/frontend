@@ -4,8 +4,10 @@ import "./addPayment.scss";
 import customerService from "../../services/customerService";
 import paymentService from "../../services/paymentService";
 import { uploadPaymentAttachment } from "../../utils/firebaseStorage";
+import { useNotifications } from "../../context/NotificationContext";
 
 const AddPayment = () => {
+  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     type: "",
@@ -344,6 +346,7 @@ const AddPayment = () => {
       const response = await paymentService.createPayment(paymentData);
 
       console.log("Payment created successfully:", response);
+      await fetchNotifications();
 
       setShowSuccessModal(true);
 
