@@ -20,9 +20,10 @@ import Payment from "./components/accountPage/Payment";
 import GSTSlabs from "./components/accountPage/GstSlabs";
 import GSTNumber from "./components/accountPage/GstNumber";
 import FirmAddress from "./components/accountPage/FilmAddress";
+import BillingSettings from "./components/accountPage/BillingSettings";
 import PaymentPage from "./pages/PaymentPage";
 import NotificationToast from "./components/notificationPage/NotificationToast";
-import NotificationSidebar from "./components/notificationPage/NotificationSidebar"
+import NotificationSidebar from "./components/notificationPage/NotificationSidebar";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -47,129 +48,133 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
-        <NotificationToast />
-        <NotificationSidebar />
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+      <NotificationToast />
+      <NotificationSidebar />
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/vendor"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<HomePage />} />
+          <Route path="customer" element={<Customer />} />
+          <Route path="product" element={<ProductPage />} />
+          <Route path="account" element={<AccountPage />} />
+          <Route path="account/edit-profile" element={<EditProfile />} />
+          <Route path="account/payment" element={<Payment />} />
+          <Route path="account/gst-slabs" element={<GSTSlabs />} />
+          <Route path="account/gst-number" element={<GSTNumber />} />
+          <Route path="account/firm-address" element={<FirmAddress />} />
           <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
+            path="account/billing-settings"
+            element={<BillingSettings />}
           />
 
           <Route
-            path="/vendor"
+            path="new-challan"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <NewChallan />
               </ProtectedRoute>
             }
-          >
-            <Route path="dashboard" element={<HomePage />} />
-            <Route path="customer" element={<Customer />} />
-            <Route path="product" element={<ProductPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="account/edit-profile" element={<EditProfile />} />
-            <Route path="account/payment" element={<Payment />} />
-            <Route path="account/gst-slabs" element={<GSTSlabs />} />
-            <Route path="account/gst-number" element={<GSTNumber />} />
-            <Route path="account/firm-address" element={<FirmAddress />} />
-
-            <Route
-              path="new-challan"
-              element={
-                <ProtectedRoute>
-                  <NewChallan />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="new-bill"
-              element={
-                <ProtectedRoute>
-                  <NewBill />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="add-payment"
-              element={
-                <ProtectedRoute>
-                  <AddPayment />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="challan-details/:id"
-              element={
-                <ProtectedRoute>
-                  <ChallanDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="bill-details/:id"
-              element={
-                <ProtectedRoute>
-                  <BillDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="customer-details/:id"
-              element={
-                <ProtectedRoute>
-                  <CustomerDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="export-ledger/:id"
-              element={
-                <ProtectedRoute>
-                  <ExportLedger />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="add-customer"
-              element={
-                <ProtectedRoute>
-                  <AddCustomer />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="add-product"
-              element={
-                <ProtectedRoute>
-                  <AddProduct />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="payment"
-              element={
-                <ProtectedRoute>
-                  <PaymentPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route index element={<Navigate to="dashboard" replace />} />
-          </Route>
-          <Route
-            path="/dashboard"
-            element={<Navigate to="/vendor/dashboard" replace />}
           />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+          <Route
+            path="new-bill"
+            element={
+              <ProtectedRoute>
+                <NewBill />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="add-payment"
+            element={
+              <ProtectedRoute>
+                <AddPayment />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="challan-details/:id"
+            element={
+              <ProtectedRoute>
+                <ChallanDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bill-details/:id"
+            element={
+              <ProtectedRoute>
+                <BillDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="customer-details/:id"
+            element={
+              <ProtectedRoute>
+                <CustomerDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="export-ledger/:id"
+            element={
+              <ProtectedRoute>
+                <ExportLedger />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="add-customer"
+            element={
+              <ProtectedRoute>
+                <AddCustomer />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="add-product"
+            element={
+              <ProtectedRoute>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="payment"
+            element={
+              <ProtectedRoute>
+                <PaymentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route index element={<Navigate to="dashboard" replace />} />
+        </Route>
+        <Route
+          path="/dashboard"
+          element={<Navigate to="/vendor/dashboard" replace />}
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 };

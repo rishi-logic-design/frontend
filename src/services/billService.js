@@ -22,7 +22,7 @@ const billService = {
   getBillById: async (id) => {
     try {
       const response = await api.get(`/api/bills/${id}`);
-      console.log(response)
+      console.log(response);
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error;

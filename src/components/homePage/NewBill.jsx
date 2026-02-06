@@ -6,6 +6,7 @@ import challanService from "../../services/challanService";
 import customerService from "../../services/customerService";
 import "./newBill.scss";
 import { useNotifications } from "../../context/NotificationContext";
+import invoiceSettingsService from "../../services/invoiceServiceSettings";
 
 const NewBill = () => {
   const { fetchNotifications } = useNotifications();
@@ -22,6 +23,11 @@ const NewBill = () => {
   const [selectedChallans, setSelectedChallans] = useState([]);
   const [discount, setDiscount] = useState(0);
   const [gst, setGst] = useState(18);
+
+  // Invoice settings state
+  const [invoiceSettings, setInvoiceSettings] = useState(null);
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState("");
+  const [invoiceNumberError, setInvoiceNumberError] = useState("");
 
   const getVendorId = () => {
     const vendorData = localStorage.getItem("vendorData");
@@ -49,6 +55,7 @@ const NewBill = () => {
 
   useEffect(() => {
     fetchInitialData();
+    fetchInvoiceSettings();
   }, []);
 
   const fetchInitialData = async () => {
@@ -82,6 +89,22 @@ const NewBill = () => {
     }
   };
 
+  const fetchInvoiceSettings = async () => {
+    try {
+      const settings = await invoiceSettingsService.getInvoiceSettings();
+
+      setInvoiceSettings(settings);
+
+      const nextNumber = String(settings.currentCount).padStart(
+        String(settings.startCount).length,
+        "0",
+      );
+      setCustomInvoiceNumber(nextNumber);
+    } catch (error) {
+      console.error("Error fetching invoice settings:", error);
+    }
+  };
+
   const handleCustomerChange = async (customerId) => {
     setFormData((prev) => ({ ...prev, customer: customerId }));
     setSelectedChallans([]);
@@ -92,7 +115,10 @@ const NewBill = () => {
     try {
       setLoading(true);
 
-      const challansData = await challanService.getChallans();
+      const challansData = await challanService.getChallans({
+        customerId,
+        status: "unpaid",
+      });
       console.log("All Challans Data:", challansData);
 
       let allChallans = [];
@@ -194,27 +220,30 @@ const NewBill = () => {
       return;
     }
 
+    if (invoiceNumberError) {
+      alert("Please fix the invoice number error");
+      return;
+    }
+
     try {
       setLoading(true);
 
       // Prepare bill items from selected challans
-      const items = getAllItems();
-
+      let customPrefix = null;
       const payload = {
         customerId: formData.customer,
-        billDate: formData.invoiceDate,
         challanIds: selectedChallans,
-        items: items.map((item) => ({
-          productId: item.productId || item.categoryId,
-          productName: item.productName || item.name || "Unknown Product",
-          categoryId: item.categoryId,
-          size: item.size || "",
-          qty: item.qty || item.quantity || 0,
-          pricePerUnit: item.pricePerUnit || item.price || 0,
-          gstPercent: item.gstPercent || gst,
-        })),
-        discount: discount,
+
+        discountPercent: discount,
         gstPercent: gst,
+
+        customInvoicePrefix: customPrefix || null,
+
+        customInvoiceNumber: customInvoiceNumber
+          ? parseInt(customInvoiceNumber, 10)
+          : null,
+
+        note: formData.note || null,
       };
 
       console.log("Creating bill with payload:", payload);
@@ -226,12 +255,10 @@ const NewBill = () => {
     } catch (error) {
       console.error("Create bill error:", error);
 
-      let errorMessage = "Failed to create bill";
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.data?.message) {
-        errorMessage = error.data.message;
-      }
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create bill";
 
       alert(errorMessage);
     } finally {
@@ -247,12 +274,12 @@ const NewBill = () => {
         <button className="back-btn" onClick={() => navigate(-1)}>
           ← Back
         </button>
-        <h1 className="page-title">Create Bill</h1>
+        <h1 className="page-title">Create New Bill</h1>
       </div>
 
       <div className="page-content">
         <div className="bill-form">
-          {/* Customer & Date Section - ALWAYS VISIBLE */}
+          {/* Customer & Date Section */}
           <div className="form-section">
             <div className="form-group">
               <label htmlFor="customer">Customer</label>
@@ -269,11 +296,8 @@ const NewBill = () => {
                     key={customer._id || customer.id}
                     value={customer._id || customer.id}
                   >
-                    {customer.customerName ||
-                      customer.name ||
-                      customer.businessName ||
-                      `${customer.firstName || ""} ${customer.lastName || ""}`.trim() ||
-                      "Unnamed Customer"}
+                    {customer.customerName || customer.name} -{" "}
+                    {customer.businessName || customer.company || "N/A"}
                   </option>
                 ))}
               </select>
@@ -297,6 +321,38 @@ const NewBill = () => {
             </div>
           </div>
 
+          {/* Invoice Format Section */}
+          {invoiceSettings && (
+            <div className="invoice-format-section">
+              <h2 className="section-title">Invoice Format</h2>
+
+              <div className="form-group">
+                <label htmlFor="invoiceNumber">Invoice Number</label>
+                <div className="invoice-number-input">
+                  <span className="prefix">{invoiceSettings.prefix}</span>
+                  <input
+                    type="number"
+                    id="invoiceNumber"
+                    value={customInvoiceNumber}
+                    className={`form-input ${invoiceNumberError ? "error" : ""}`}
+                    min="1"
+                    disabled={loading}
+                  />
+                </div>
+                {invoiceNumberError && (
+                  <span className="error-text">{invoiceNumberError}</span>
+                )}
+                <p className="input-hint">
+                  Next available: {invoiceSettings.prefix}
+                  {String(invoiceSettings.currentCount).padStart(
+                    String(invoiceSettings.startCount).length,
+                    "0",
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Items Section - ALWAYS VISIBLE */}
           <div className="items-section">
             <h2 className="section-title">Items</h2>
@@ -314,7 +370,7 @@ const NewBill = () => {
                         </button>
                       </div>
                       <p className="item-category">
-                        {item.category.name || "N/A"}
+                        {item.category?.name || "N/A"}
                       </p>
                       <div className="item-details">
                         <div className="detail">
@@ -494,7 +550,10 @@ const NewBill = () => {
               className="generate-btn"
               onClick={handleGenerateBill}
               disabled={
-                loading || !formData.customer || selectedChallans.length === 0
+                loading ||
+                !formData.customer ||
+                selectedChallans.length === 0 ||
+                !!invoiceNumberError
               }
             >
               {loading ? "Generating..." : "Generate Bill"}

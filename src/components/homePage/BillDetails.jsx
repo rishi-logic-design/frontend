@@ -12,17 +12,14 @@ const BillDetails = () => {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
 
-  // ✅ Initial load
   useEffect(() => {
     fetchBillDetails();
   }, [id]);
 
-  // ✅ Refresh when returning from payment page
   useEffect(() => {
     if (location.state?.refresh) {
       console.log("🔄 Refreshing bill data...");
       fetchBillDetails();
-      // Clear the state
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -131,7 +128,6 @@ const BillDetails = () => {
   const customer = billData.bill?.customer || {};
   const items = billData.bill?.items || [];
 
-  // ✅ Get proper amount values from bill
   const totalAmount = parseFloat(
     billData.bill?.totalWithGST ||
       billData.bill?.totalAmount ||
@@ -155,11 +151,19 @@ const BillDetails = () => {
   );
   const gst = parseFloat(billData.bill?.gstTotal || billData.gst || 0);
 
+  // Get invoice number (could be from billNumber or invoiceNumber field)
+  const invoiceNumber =
+    billData.bill?.invoiceNumber ||
+    billData.bill?.billNumber ||
+    billData.billNumber ||
+    id;
+
   console.log("💰 Bill Amounts:", {
     totalAmount,
     paidAmount,
     pendingAmount,
     status,
+    invoiceNumber,
   });
 
   return (
@@ -173,12 +177,13 @@ const BillDetails = () => {
 
       <div className="page-content">
         <div className="details-container">
-          {/* Header Card */}
+          {/* Header Card with Invoice Number */}
           <div className="header-card">
             <div className="header-info">
-              <h2 className="bill-number">
-                #{billData.bill?.billNumber || billData.billNumber || id}
-              </h2>
+              <div className="invoice-number-badge">
+                <span className="invoice-label">Invoice #</span>
+                <h2 className="invoice-number">{invoiceNumber}</h2>
+              </div>
               <span className={`status-badge ${status.toLowerCase()}`}>
                 {status === "paid"
                   ? "Paid"

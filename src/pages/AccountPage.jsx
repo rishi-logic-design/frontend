@@ -65,7 +65,6 @@ const AccountPage = () => {
               )}
             </div>
 
-            {/* 👇 ADD THIS BLOCK */}
             <div className="user-details">
               {loading ? (
                 <p>Loading...</p>
@@ -114,10 +113,20 @@ const AccountPage = () => {
           </div>
         </div>
 
-        {/* Other Information */}
+        {/* Business Settings */}
         <div className="info-section">
-          <h3 className="section-title">Other Information</h3>
+          <h3 className="section-title">Business Settings</h3>
           <div className="menu-list">
+            <button
+              className="menu-item"
+              onClick={() => navigate("/vendor/account/billing-settings")}
+            >
+              <div className="menu-left">
+                <span className="menu-icon">🧾</span>
+                <span className="menu-label">Billing Settings</span>
+              </div>
+              <span className="arrow">›</span>
+            </button>
             <button
               className="menu-item"
               onClick={() => navigate("/vendor/account/gst-slabs")}
@@ -148,6 +157,13 @@ const AccountPage = () => {
               </div>
               <span className="arrow">›</span>
             </button>
+          </div>
+        </div>
+
+        {/* Other Information */}
+        <div className="info-section">
+          <h3 className="section-title">Other Information</h3>
+          <div className="menu-list">
             <button
               className="menu-item"
               onClick={() => navigate("/vendor/product")}
