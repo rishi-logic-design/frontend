@@ -1,0 +1,181 @@
+@use "./bill-vars.scss" as *;
+
+.terms-section {
+  .terms-header {
+    @include flex(row, center, space-between, 12px);
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid $border;
+    .card-title {
+      margin: 0;
+      padding: 0;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      color: $text;
+    }
+    .terms-actions {
+      @include flex(row, center, flex-end, 8px);
+      flex-wrap: wrap;
+    }
+  }
+
+  .template-sel {
+    @include input-base;
+    width: auto;
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+  .btn-add-terms {
+    @include btn($primary);
+    font-size: 12px;
+    padding: 7px 13px;
+  }
+  .btn-clear-terms {
+    @include btn(transparent, $danger);
+    font-size: 12px;
+    padding: 7px 13px;
+    border: 1.5px solid rgba($danger, 0.3);
+  }
+
+  .terms-list {
+    @include flex(column, stretch, flex-start, 8px);
+    margin-bottom: 12px;
+  }
+
+  .term-item {
+    @include flex(row, flex-start, flex-start, 8px);
+    background: $bg;
+    border: 1px solid $border;
+    border-radius: $radius-sm;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: $text;
+    .term-idx {
+      color: $primary;
+      font-weight: 700;
+      min-width: 20px;
+    }
+    .term-text {
+      flex: 1;
+      line-height: 1.5;
+    }
+    .btn-remove-term {
+      background: none;
+      border: none;
+      color: $text-muted;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 2px;
+      flex-shrink: 0;
+      opacity: 0.6;
+      transition:
+        opacity 0.2s,
+        color 0.2s;
+      &:hover {
+        opacity: 1;
+        color: $danger;
+      }
+    }
+  }
+  .no-terms {
+    color: $text-muted;
+    font-size: 13px;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  // Quick suggestions
+  .suggestions {
+    @include flex(row, center, flex-start, 6px);
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed $border;
+    .sug-label {
+      font-size: 11px;
+      color: $text-muted;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .sug-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: $primary-light;
+      color: $primary;
+      font-weight: 600;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 240px;
+      &:hover {
+        background: rgba($primary, 0.2);
+      }
+    }
+  }
+
+  // Modal
+  .terms-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 200;
+    @include flex(row, center, center);
+  }
+  .terms-modal {
+    background: #fff;
+    border-radius: $radius;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: slide-up 0.2s ease;
+    .modal-head {
+      @include flex(row, center, space-between);
+      font-size: 16px;
+      font-weight: 700;
+      color: $text;
+      margin-bottom: 16px;
+      button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: $text-muted;
+        cursor: pointer;
+      }
+    }
+    textarea {
+      @include input-base;
+      height: 120px;
+      resize: vertical;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .modal-foot {
+      @include flex(row, center, flex-end, 10px);
+      .btn-cancel-modal {
+        @include btn($bg, $text-muted);
+        border: 1.5px solid $border;
+      }
+      .btn-save-modal {
+        @include btn($primary);
+      }
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

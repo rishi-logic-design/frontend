@@ -1,0 +1,180 @@
+@use "./bill-vars.scss" as *;
+
+.signature-section {
+  .sig-header {
+    @include flex(row, center, space-between);
+    margin-bottom: 0;
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: $text;
+    }
+  }
+
+  // Toggle switch
+  .toggle {
+    @include flex(row, center, flex-start, 10px);
+    cursor: pointer;
+    input {
+      display: none;
+    }
+    .slider {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: $border;
+      border-radius: 12px;
+      transition: background 0.25s;
+      &::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.25s;
+      }
+    }
+    input:checked ~ .slider {
+      background: $primary;
+    }
+    input:checked ~ .slider::after {
+      transform: translateX(20px);
+    }
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-muted;
+    }
+    input:checked ~ .toggle-label {
+      color: $primary;
+    }
+  }
+
+  .sig-body {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1.5px solid $border;
+    animation: fade-in 0.25s ease;
+  }
+
+  .sig-text {
+    margin-bottom: 20px;
+    p {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: $text;
+    }
+    .company-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: $text;
+    }
+  }
+
+  .stamp-area {
+    margin-bottom: 16px;
+  }
+
+  .stamp-preview {
+    position: relative;
+    display: inline-block;
+    border: 2px solid $border;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    max-width: 220px;
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 160px;
+      object-fit: contain;
+    }
+    .stamp-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      @include flex(row, center, center);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    &:hover .stamp-overlay {
+      opacity: 1;
+    }
+    .btn-remove-stamp {
+      @include btn($danger);
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+  }
+
+  .stamp-drop-zone {
+    @include flex(column, center, center, 8px);
+    border: 2px dashed $border;
+    border-radius: $radius;
+    padding: 32px 24px;
+    cursor: pointer;
+    max-width: 300px;
+    text-align: center;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+    &:hover {
+      border-color: $primary;
+      background: $primary-light;
+    }
+    .drop-icon {
+      font-size: 36px;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: $text;
+    }
+    span {
+      font-size: 11px;
+      color: $text-muted;
+    }
+  }
+
+  .stamp-actions {
+    @include flex(row, center, flex-start, 8px);
+    margin-bottom: 16px;
+    .btn-clear-stamp {
+      @include btn(transparent, $danger);
+      border: 1.5px solid rgba($danger, 0.3);
+      font-size: 13px;
+      padding: 7px 14px;
+    }
+    .btn-replace-stamp {
+      @include btn($primary-light, $primary);
+      font-size: 13px;
+      padding: 7px 14px;
+      cursor: pointer;
+    }
+  }
+
+  .auth-sig {
+    font-size: 12px;
+    color: $text-muted;
+    font-style: italic;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px dashed $border;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

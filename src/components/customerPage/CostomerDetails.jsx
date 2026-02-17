@@ -77,7 +77,7 @@ const CustomerDetails = () => {
     <div className="customer-details-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ←
         </button>
         <h1 className="page-title">Customer Details</h1>
       </div>

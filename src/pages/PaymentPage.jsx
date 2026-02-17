@@ -17,6 +17,8 @@ const PaymentPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showOpeningBalanceModal, setShowOpeningBalanceModal] = useState(false);
+  const [openingBalanceAmount, setOpeningBalanceAmount] = useState("");
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -29,10 +31,15 @@ const PaymentPage = () => {
   const [stats, setStats] = useState({
     totalTransactions: 0,
     totalAmount: 0,
+    cashOpening: "0.00",
+    bankOpening: "0.00",
+    cashBalance: "0.00",
+    bankBalance: "0.00",
   });
 
   useEffect(() => {
     fetchPayments();
+    fetchStats();
   }, [activeTab, activeBook, filters]);
 
   const fetchPayments = async () => {
@@ -56,19 +63,55 @@ const PaymentPage = () => {
         (sum, payment) => sum + parseFloat(payment.amount || 0),
         0,
       );
-      setStats({
+      setStats((prev) => ({
+        ...prev,
         totalTransactions: paymentData.length,
         totalAmount: totalAmount,
-      });
+      }));
     } catch (error) {
       console.error("Error fetching payments:", error);
       setPayments([]);
-      setStats({
+      setStats((prev) => ({
+        ...prev,
         totalTransactions: 0,
         totalAmount: 0,
-      });
+      }));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const statsData = await paymentService.getPaymentStats();
+      setStats((prev) => ({
+        ...prev,
+        cashOpening: statsData.cashOpening || "0.00",
+        bankOpening: statsData.bankOpening || "0.00",
+        cashBalance: statsData.cashBalance || "0.00",
+        bankBalance: statsData.bankBalance || "0.00",
+      }));
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
+  const handleSetOpeningBalance = async () => {
+    if (!openingBalanceAmount || parseFloat(openingBalanceAmount) <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+
+    try {
+      await paymentService.setOpeningBalance(activeBook, openingBalanceAmount);
+      setShowOpeningBalanceModal(false);
+      setOpeningBalanceAmount("");
+      fetchStats();
+      fetchPayments();
+      alert("Opening balance set successfully!");
+    } catch (error) {
+      console.error("Error setting opening balance:", error);
+      alert(error.message || "Failed to set opening balance");
     }
   };
 
@@ -242,19 +285,32 @@ const PaymentPage = () => {
     return statusColors[status] || "badge-secondary";
   };
 
-  return (
+  return (  
     <div className="payment-page">
       <div className="payment-header">
         <h1 className="page-title">
           {activeBook === "cash" ? "Cash Book" : "Bank Book"}
         </h1>
-        <button
-          className="add-btn"
-          title="Add New Entry"
-          onClick={handleAddPayment}
-        >
-          +
-        </button>
+        <div className="header-actions">
+          {parseFloat(
+            activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
+          ) === 0 && (
+            <button
+              className="opening-balance-btn"
+              onClick={() => setShowOpeningBalanceModal(true)}
+              title="Set Opening Balance"
+            >
+              Set Opening Balance
+            </button>
+          )}
+          <button
+            className="add-btn"
+            title="Add New Entry"
+            onClick={handleAddPayment}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <div className="tabs-container">
@@ -280,6 +336,30 @@ const PaymentPage = () => {
 
       {/* Summary Section - Always Visible */}
       <div className="summary-section">
+        {parseFloat(
+          activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
+        ) > 0 && (
+          <div className="summary-row">
+            <span className="summary-label">Opening Balance</span>
+            <span className="summary-value">
+              {formatAmount(
+                activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
+              )}
+            </span>
+          </div>
+        )}
+        {parseFloat(
+          activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
+        ) > 0 && (
+          <div className="summary-row">
+            {/* <span className="summary-label">Current Balance</span>
+            <span className="summary-value amount-highlight">
+              {formatAmount(
+                activeBook === "cash" ? stats.cashBalance : stats.bankBalance,
+              )}
+            </span> */}
+          </div>
+        )}
         <div className="summary-row">
           <span className="summary-label">Total Transactions</span>
           <span className="summary-value">{stats.totalTransactions}</span>
@@ -777,7 +857,7 @@ const PaymentPage = () => {
       {showModal && (
         <PaymentModal
           payment={editingPayment}
-          loading={!editingPayment} 
+          loading={!editingPayment}
           type={activeTab}
           method={activeBook === "cash" ? "cash" : "bank"}
           onClose={() => {
@@ -786,6 +866,60 @@ const PaymentPage = () => {
           }}
           onSave={handleSavePayment}
         />
+      )}
+
+      {showOpeningBalanceModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowOpeningBalanceModal(false)}
+        >
+          <div
+            className="opening-balance-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Set Opening Balance</h2>
+              <button
+                className="close-modal"
+                onClick={() => setShowOpeningBalanceModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-info">
+                Set the opening balance for{" "}
+                {activeBook === "cash" ? "Cash" : "Bank"} Book. This can only be
+                set once and cannot be edited later.
+              </p>
+              <div className="form-group">
+                <label>Amount (₹)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="Enter opening balance"
+                  value={openingBalanceAmount}
+                  onChange={(e) => setOpeningBalanceAmount(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={() => {
+                  setShowOpeningBalanceModal(false);
+                  setOpeningBalanceAmount("");
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn-save" onClick={handleSetOpeningBalance}>
+                Set Opening Balance
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

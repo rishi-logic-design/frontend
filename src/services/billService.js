@@ -46,13 +46,48 @@ const billService = {
       throw error.response?.data || error;
     }
   },
-
+  getBillHtml: async (id) => {
+    try {
+      const response = await api.get(`/api/bills/${id}/html`);
+      return response.data.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+  
   downloadPDF: async (id) => {
     try {
-      const response = await api.get(`/api/bills/${id}/download`, {
-        responseType: "blob",
+      const htmlData = await billService.getBillHtml(id);
+      const { html, billNumber } = htmlData;
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "absolute";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(html);
+      iframeDoc.close();
+
+      await new Promise((resolve) => {
+        if (iframe.contentWindow.document.readyState === "complete") {
+          resolve();
+        } else {
+          iframe.onload = resolve;
+        }
       });
-      return response.data;
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+
+      return { success: true, billNumber };
     } catch (error) {
       throw error.response?.data || error;
     }

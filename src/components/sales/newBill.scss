@@ -1,0 +1,1266 @@
+$primary: #f59e0b;
+$primary-solid: #f59e0b;
+$primary-dark: #d97706;
+$primary-light: #fef3c7;
+$primary-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+
+$accent: #fb923c;
+$accent-solid: #fb923c;
+$accent-gradient: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
+
+$success: #10b981;
+$success-light: #d1fae5;
+$danger: #ef4444;
+$warning: #f59e0b;
+$warning-light: #fef3c7;
+
+$text: #1e293b;
+$text-light: #475569;
+$text-muted: #94a3b8;
+$border: #e2e8f0;
+$border-light: #f1f5f9;
+$bg: #fffbeb;
+$bg-gradient: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+$card: #ffffff;
+$card-hover: #fefefe;
+
+$radius: 16px;
+$radius-lg: 20px;
+$radius-sm: 10px;
+$aside-w: 340px;
+$shadow: 0 4px 20px rgba(245, 158, 11, 0.08);
+$shadow-lg: 0 10px 40px rgba(245, 158, 11, 0.12);
+$shadow-hover: 0 8px 30px rgba(245, 158, 11, 0.2);
+$font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+
+@mixin flex($a: center, $j: flex-start, $gap: 0) {
+  display: flex;
+  align-items: $a;
+  justify-content: $j;
+  @if $gap != 0 {
+    gap: $gap;
+  }
+}
+
+@mixin inp {
+  padding: 12px 16px;
+  border: 2px solid $border;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  color: $text;
+  background: #fff;
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  font-family: $font;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+
+  &:focus {
+    border-color: $primary-solid;
+    box-shadow: 0 0 0 4px rgba($primary-solid, 0.1);
+    transform: translateY(-1px);
+  }
+
+  &::placeholder {
+    color: #cbd5e1;
+  }
+}
+
+@mixin btn($bg, $c: #fff) {
+  @include flex(center, center);
+  gap: 8px;
+  padding: 12px 24px;
+  background: $bg;
+  color: $c;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: $font;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-hover;
+
+    &::before {
+      width: 300px;
+      height: 300px;
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.new-bill-page {
+  min-height: 100vh;
+  background: $bg;
+  font-family: $font;
+  color: $text;
+  animation: fadeIn 0.4s ease;
+
+  .nb-header {
+    @include flex(center, space-between, 16px);
+    padding: 20px 40px;
+    background: $card;
+    border-bottom: 2px solid $border-light;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    animation: slideDown 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .back-btn {
+      @include flex(center, center, 8px);
+      padding: 10px 18px;
+      background: $bg;
+      border: 2px solid $border;
+      border-radius: $radius-sm;
+      font-size: 14px;
+      font-weight: 600;
+      color: $text;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        border-color: $primary-solid;
+        background: rgba($primary-solid, 0.05);
+        transform: translateX(-3px);
+      }
+    }
+
+    &__text {
+      flex: 1;
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        background: $primary-gradient;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+      }
+      p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: $text-muted;
+      }
+    }
+    &__mode {
+      @include flex(center, flex-end, 10px);
+      .mode-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-muted;
+        transition: color 0.2s;
+        &.active {
+          color: $primary;
+        }
+      }
+    }
+  }
+
+  .nb-body {
+    @include flex(flex-start, center, 24px);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    align-items: flex-start;
+  }
+
+  .nb-main {
+    flex: 1;
+    min-width: 0;
+    animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nb-card {
+    background: $card;
+    border-radius: $radius;
+    border: 2px solid $border-light;
+    box-shadow: $shadow;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeIn 0.5s ease;
+
+    &:hover {
+      box-shadow: $shadow-lg;
+    }
+
+    &__title {
+      font-size: 16px;
+      font-weight: 800;
+      color: $text;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid $border-light;
+      letter-spacing: -0.3px;
+    }
+
+    &__sub {
+      font-size: 12px;
+      font-weight: 700;
+      color: $text-muted;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    &__title-row {
+      @include flex(center, space-between);
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid $border-light;
+
+      .nb-card__title {
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+    }
+  }
+
+  .nb-invoice-mode-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid $border-light;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(
+        circle,
+        rgba($primary-solid, 0.03) 0%,
+        transparent 70%
+      );
+      animation: pulse 4s ease-in-out infinite;
+    }
+  }
+
+  .mode-toggle-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mode-option {
+    cursor: pointer;
+    position: relative;
+
+    input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &__content {
+      @include flex(center, flex-start, 14px);
+      padding: 18px 20px;
+      background: $bg;
+      border: 2px solid $border;
+      border-radius: $radius-sm;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: $primary-gradient;
+        transform: scaleY(0);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+
+    .mode-icon {
+      font-size: 28px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-text {
+      @include flex(flex-start, flex-start);
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mode-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: $text;
+      transition: color 0.3s;
+    }
+
+    .mode-desc {
+      font-size: 12px;
+      color: $text-muted;
+      transition: color 0.3s;
+    }
+
+    &:hover &__content {
+      border-color: $primary-solid;
+      background: rgba($primary-solid, 0.03);
+      transform: translateY(-2px);
+      box-shadow: $shadow-hover;
+    }
+
+    &:hover .mode-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    &[data-active="true"] &__content {
+      background: rgba($primary-solid, 0.1);
+      border-color: $primary-solid;
+      box-shadow: $shadow-hover;
+
+      &::before {
+        transform: scaleY(1);
+      }
+    }
+
+    &[data-active="true"] .mode-title {
+      color: $primary-solid;
+      font-weight: 800;
+    }
+
+    &[data-active="true"] .mode-desc {
+      color: $primary-dark;
+    }
+
+    &[data-active="true"] .mode-icon {
+      transform: scale(1.15);
+      filter: drop-shadow(0 2px 8px rgba($primary-solid, 0.3));
+    }
+  }
+
+  .nb-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .nb-group {
+    @include flex(flex-start, flex-start);
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    z-index: 2;
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text;
+    }
+    input,
+    select,
+    textarea {
+      @include inp;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 56px;
+    }
+    &.full {
+      grid-column: 1 / -1;
+    }
+    &.mt8 {
+      margin-top: 8px;
+    }
+  }
+  .req {
+    color: $danger;
+  }
+  .nb-hint {
+    font-size: 11px;
+    color: $text-muted;
+    margin-top: 2px;
+  }
+  .nb-check-row {
+    @include flex(center, flex-start, 8px);
+    cursor: pointer;
+    font-size: 13px;
+    color: $text;
+    margin-top: 8px;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: $primary-solid;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    span {
+      cursor: pointer;
+    }
+  }
+
+  .nb-inv-preview {
+    @include flex(center, space-between);
+    background: $primary-gradient;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: $shadow-hover;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 100%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+      );
+      animation: shimmer 3s infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    &__label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+
+    &__num {
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffffff;
+      font-family: "Courier New", monospace;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    input {
+      display: none;
+    }
+    .toggle-slider {
+      display: block;
+      width: 46px;
+      height: 26px;
+      background: $border;
+      border-radius: 13px;
+      transition: background 0.25s;
+      &::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.25s;
+      }
+    }
+    input:checked + .toggle-slider {
+      background: $primary;
+    }
+    input:checked + .toggle-slider::after {
+      transform: translateX(20px);
+    }
+  }
+
+  .nb-challans {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .nb-challan-card {
+    border: 2px solid $border-light;
+    border-radius: $radius-sm;
+    padding: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: $primary;
+      transform: scaleY(0);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:hover {
+      border-color: $primary-solid;
+      box-shadow: $shadow-hover;
+      transform: translateY(-3px);
+
+      &::before {
+        transform: scaleY(1);
+      }
+    }
+
+    &.sel {
+      border-color: $primary-solid;
+      background: $primary-gradient;
+      box-shadow: $shadow-hover;
+
+      &::before {
+        transform: scaleY(1);
+      }
+
+      .ch-num,
+      .ch-row span {
+        color: #ffffff;
+      }
+
+      .ch-row {
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+    &__head {
+      @include flex(center, space-between);
+      margin-bottom: 10px;
+      .ch-num {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      input[type="checkbox"] {
+        accent-color: $primary;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    .ch-row {
+      @include flex(center, space-between);
+      font-size: 12px;
+      color: $text-muted;
+      margin-bottom: 4px;
+      span:last-child {
+        font-weight: 600;
+        color: $text;
+      }
+    }
+    .ch-badge {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: $primary;
+      background: rgba($primary, 0.1);
+      border-radius: 20px;
+      padding: 2px 8px;
+      display: inline-block;
+    }
+  }
+  .nb-empty {
+    @include flex(center, center);
+    padding: 28px;
+    color: $text-muted;
+    font-size: 13px;
+    background: $bg;
+    border-radius: $radius-sm;
+    border: 1.5px dashed $border;
+  }
+
+  .nb-items-preview {
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px dashed $border;
+  }
+  .tbl-wrap,
+  .nb-items-scroll {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    th {
+      background: $bg;
+      padding: 9px 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: $text-muted;
+      font-weight: 700;
+      border-bottom: 2px solid $border;
+      text-align: left;
+    }
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid $border;
+      vertical-align: middle;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .badge {
+      background: $primary-light;
+      color: $primary;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .amt {
+      font-weight: 700;
+      color: $success;
+    }
+  }
+
+  .nb-items-table {
+    min-width: 860px;
+    tr.filled td {
+      background: rgba($primary, 0.015);
+    }
+    .idx {
+      color: $text-muted;
+      font-size: 12px;
+      text-align: center;
+      width: 30px;
+    }
+    .total-cell {
+      font-weight: 700;
+      color: $success;
+      white-space: nowrap;
+    }
+    .inp {
+      @include inp;
+    }
+    .inp-name {
+      min-width: 130px;
+    }
+    .inp-sm {
+      width: 72px;
+      text-align: right;
+    }
+    .sel-gst {
+      @include inp;
+      width: 82px;
+      padding: 8px 4px;
+      font-size: 12px;
+    }
+    .btn-del {
+      background: none;
+      border: none;
+      color: $danger;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 3px;
+      opacity: 0.65;
+      transition: opacity 0.2s;
+      &:hover:not(:disabled) {
+        opacity: 1;
+      }
+      &:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+      }
+    }
+  }
+  .btn-add-item {
+    @include btn($primary-solid);
+    font-size: 14px;
+    padding: 10px 20px;
+    font-weight: 700;
+    box-shadow: $shadow-hover;
+
+    svg {
+      font-size: 18px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:hover:not(:disabled) svg {
+      transform: rotate(90deg) scale(1.2);
+    }
+  }
+
+  .nb-terms-list {
+    @include flex(flex-start, flex-start);
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .nb-term-item {
+    @include flex(flex-start, flex-start, 12px);
+    width: 100%;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid $border-light;
+    border-radius: $radius-sm;
+    padding: 14px 16px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: $primary-solid;
+      background: rgba($primary-solid, 0.02);
+      box-shadow: $shadow;
+    }
+
+    .ti-num {
+      background: $primary-gradient;
+      color: #ffffff;
+      font-weight: 800;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      @include flex(center, center);
+      font-size: 12px;
+      box-shadow: 0 2px 8px rgba($primary-solid, 0.3);
+    }
+
+    .ti-txt {
+      flex: 1;
+      line-height: 1.6;
+      color: $text;
+    }
+
+    .ti-del {
+      background: none;
+      border: none;
+      color: $text-muted;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0;
+      transition: all 0.3s;
+      padding: 4px;
+      border-radius: 50%;
+
+      &:hover {
+        opacity: 1;
+        color: $danger;
+        background: rgba($danger, 0.1);
+      }
+    }
+
+    &:hover .ti-del {
+      opacity: 0.6;
+    }
+  }
+  .nb-empty-txt {
+    color: $text-muted;
+    font-size: 13px;
+    padding: 12px 0;
+  }
+  .nb-term-suggestions {
+    @include flex(center, flex-start, 8px);
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 2px dashed $border-light;
+
+    .sug-chip {
+      font-size: 12px;
+      padding: 6px 14px;
+      background: linear-gradient(
+        135deg,
+        rgba($accent-solid, 0.1) 0%,
+        rgba($primary-solid, 0.1) 100%
+      );
+      color: $primary-solid;
+      font-weight: 700;
+      border: 2px solid transparent;
+      border-radius: 20px;
+      cursor: pointer;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        background: $primary-gradient;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: $shadow-hover;
+      }
+    }
+  }
+  .terms-actions {
+    @include flex(center, flex-end, 8px);
+    flex-wrap: wrap;
+  }
+
+  .btn-sm {
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: $radius-sm;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow;
+    }
+
+    &.btn-primary {
+      background: $primary-gradient;
+      color: #fff;
+      box-shadow: $shadow-hover;
+
+      &:hover {
+        box-shadow: 0 8px 25px rgba($primary-solid, 0.3);
+      }
+    }
+
+    &.btn-outline {
+      background: transparent;
+      color: $primary-solid;
+      border: 2px solid $primary-solid;
+
+      &:hover {
+        background: rgba($primary-solid, 0.05);
+      }
+    }
+
+    &.btn-ghost {
+      background: transparent;
+      color: $text-muted;
+      border: 2px solid $border;
+
+      &:hover {
+        background: $bg;
+        border-color: $text-muted;
+      }
+    }
+  }
+
+  .nb-stamp-body {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1.5px solid $border;
+    animation: fadeUp 0.2s ease;
+  }
+  .stamp-cert {
+    font-size: 13px;
+    color: $text;
+    margin-bottom: 16px;
+    strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+  }
+
+  .stamp-dropzone {
+    @include flex(center, center);
+    flex-direction: column;
+    gap: 8px;
+    border: 2px dashed $border;
+    border-radius: $radius;
+    padding: 32px 20px;
+    cursor: pointer;
+    max-width: 300px;
+    text-align: center;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+    &:hover {
+      border-color: $primary;
+      background: $primary-light;
+    }
+    .dropzone-icon {
+      font-size: 40px;
+      color: $primary;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: $text;
+    }
+    span {
+      font-size: 11px;
+      color: $text-muted;
+    }
+  }
+
+  .stamp-preview-wrap {
+    @include flex(flex-start, flex-start, 12px);
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    .stamp-img {
+      max-width: 160px;
+      max-height: 120px;
+      object-fit: contain;
+      border: 1.5px solid $border;
+      border-radius: $radius-sm;
+      display: block;
+    }
+  }
+  .stamp-progress {
+    @include flex(center, flex-start, 10px);
+    .stamp-progress__bar {
+      height: 6px;
+      background: $primary;
+      border-radius: 3px;
+      transition: width 0.2s;
+    }
+    span {
+      font-size: 12px;
+      font-weight: 700;
+      color: $primary;
+    }
+  }
+  .stamp-uploaded {
+    font-size: 13px;
+    font-weight: 700;
+    color: $success;
+    background: rgba($success, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .auth-sig {
+    font-size: 12px;
+    color: $text-muted;
+    font-style: italic;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed $border;
+  }
+
+  .nb-aside {
+    width: $aside-w;
+    flex-shrink: 0;
+    animation: slideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nb-summary {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: $radius-lg;
+    border: 2px solid $border-light;
+    box-shadow: $shadow-lg;
+    padding: 28px;
+    position: sticky;
+    top: 90px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+    }
+
+    &__title {
+      font-size: 18px;
+      font-weight: 900;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid $border-light;
+      letter-spacing: -0.5px;
+    }
+    &__row {
+      @include flex(center, space-between, 8px);
+      font-size: 13px;
+      color: $text;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      &.sub {
+        color: $text-muted;
+        font-size: 12px;
+      }
+      &.total {
+        font-size: 16px;
+        font-weight: 800;
+        color: $primary;
+        span:last-child {
+          font-size: 20px;
+        }
+      }
+      select {
+        @include inp;
+        width: auto;
+        font-size: 13px;
+      }
+    }
+    &__divider {
+      height: 1px;
+      background: $border;
+      margin: 12px 0;
+    }
+  }
+  .nb-inline-inp {
+    @include flex(center, flex-end, 4px);
+    input {
+      @include inp;
+      width: 70px;
+      text-align: right;
+      padding: 6px 8px;
+    }
+    span {
+      font-size: 13px;
+      color: $text-muted;
+      font-weight: 600;
+    }
+  }
+
+  .nb-actions {
+    @include flex(center, stretch, 12px);
+    margin-top: 24px;
+  }
+
+  .nb-btn {
+    @include btn($primary-solid);
+    flex: 1;
+    justify-content: center;
+    font-size: 15px;
+    padding: 14px 24px;
+    border-radius: $radius-sm;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+
+    &--cancel {
+      background: $bg;
+      color: $text;
+      border: 2px solid $border;
+
+      &:hover:not(:disabled) {
+        background: $border-light;
+        border-color: $text-muted;
+        box-shadow: none;
+      }
+    }
+
+    &--generate {
+      background: $primary-gradient;
+      flex: 2;
+      font-size: 16px;
+      padding: 16px;
+      box-shadow: $shadow-hover;
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 10px 40px rgba($primary-solid, 0.3);
+      }
+    }
+  }
+
+  .nb-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    @include flex(center, center);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .nb-modal {
+    background: $card;
+    border-radius: $radius-lg;
+    padding: 32px;
+    width: 540px;
+    max-width: 95vw;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.3s ease;
+    border: 2px solid $border-light;
+
+    textarea {
+      @include inp;
+      height: 130px;
+      resize: vertical;
+      font-size: 15px;
+      margin: 20px 0;
+      display: block;
+      line-height: 1.6;
+      font-family: $font;
+    }
+
+    &__head {
+      @include flex(center, space-between);
+      font-size: 18px;
+      font-weight: 800;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.3px;
+
+      button {
+        background: $bg;
+        border: none;
+        font-size: 24px;
+        color: $text-muted;
+        cursor: pointer;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        @include flex(center, center);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          background: rgba($danger, 0.1);
+          color: $danger;
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    &__foot {
+      @include flex(center, flex-end, 12px);
+    }
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 960px) {
+    .nb-body {
+      flex-direction: column;
+      padding: 16px;
+    }
+    .nb-aside {
+      width: 100%;
+    }
+    .nb-summary {
+      position: static;
+    }
+    .nb-header {
+      padding: 14px 16px;
+    }
+    .nb-row {
+      grid-template-columns: 1fr;
+    }
+  }
+}

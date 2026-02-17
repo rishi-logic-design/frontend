@@ -101,7 +101,7 @@ const AddCustomer = () => {
     <div className="add-customer-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ←
         </button>
         <h1 className="page-title">Add Customer</h1>
       </div>
@@ -116,9 +116,7 @@ const AddCustomer = () => {
               ) : (
                 <span className="avatar-icon">{avatar}</span>
               )}
-              <label htmlFor="avatar-upload" className="avatar-edit">
-                📷
-              </label>
+              
               <input
                 type="file"
                 id="avatar-upload"

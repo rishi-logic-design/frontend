@@ -1,0 +1,770 @@
+$primary: #f59e0b;
+$primary-dark: #d97706;
+$primary-light: #fef3c7;
+$success: #10b981;
+$success-light: #d1fae5;
+$danger: #ef4444;
+$warning: #f59e0b;
+$text: #1e293b;
+$text-light: #64748b;
+$text-muted: #94a3b8;
+$border: #e2e8f0;
+$border-light: #f1f5f9;
+$bg: #fffbeb;
+$card: #ffffff;
+
+.bill-details-page {
+  min-height: 100vh;
+  background: $bg;
+  animation: fadeIn 0.4s ease;
+
+  .modern-loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 1000;
+
+    .loader-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid $primary-light;
+      border-top-color: $primary;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loader-text {
+      font-size: 16px;
+      color: $primary-dark;
+      font-weight: 600;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+
+  .error-state {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+    background: $card;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    .error-icon {
+      font-size: 48px;
+    }
+
+    .error-message {
+      font-size: 16px;
+      color: $danger;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .back-btn-error {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba($primary, 0.3);
+      }
+    }
+  }
+
+  .bd-header {
+    background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 20px rgba($primary, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    animation: slideDown 0.4s ease;
+
+    .bd-back-btn {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      color: white;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-4px);
+      }
+    }
+
+    .bd-header-content {
+      flex: 1;
+
+      .bd-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        color: white;
+        letter-spacing: -0.5px;
+      }
+
+      .bd-subtitle {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+  }
+
+  .bd-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .bd-card {
+    background: $card;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba($primary, 0.08);
+    border: 2px solid $border-light;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba($primary, 0.12);
+    }
+
+    .bd-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      color: $text;
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid $border-light;
+
+      .title-icon {
+        color: $primary;
+        font-size: 20px;
+      }
+    }
+  }
+
+  .bd-invoice-header {
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+
+    .bd-invoice-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+
+      .invoice-badge {
+        .invoice-label {
+          display: block;
+          font-size: 12px;
+          color: $text-muted;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+        }
+
+        .invoice-number {
+          margin: 0;
+          font-size: 32px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-family: "Courier New", monospace;
+          letter-spacing: 1px;
+        }
+      }
+
+      .status-pill {
+        padding: 10px 20px;
+        border-radius: 24px;
+        font-size: 14px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &.status-paid {
+          background: $success-light;
+          color: $success;
+        }
+
+        &.status-partial {
+          background: $primary-light;
+          color: $primary-dark;
+        }
+
+        &.status-pending {
+          background: #fee2e2;
+          color: $danger;
+        }
+      }
+    }
+
+    .bd-invoice-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border-radius: 10px;
+        border: 1px solid $border-light;
+
+        .meta-icon {
+          color: $primary;
+          font-size: 20px;
+        }
+
+        .meta-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .meta-label {
+            font-size: 11px;
+            color: $text-muted;
+            font-weight: 600;
+            text-transform: uppercase;
+          }
+
+          .meta-value {
+            font-size: 14px;
+            color: $text;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+
+  .bd-customer-card {
+    .customer-details {
+      .customer-header {
+        margin-bottom: 20px;
+
+        .customer-name {
+          margin: 0 0 4px;
+          font-size: 22px;
+          font-weight: 700;
+          color: $text;
+        }
+
+        .customer-business {
+          margin: 0;
+          font-size: 14px;
+          color: $text-light;
+        }
+      }
+
+      .customer-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+
+        .info-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 14px;
+          background: $bg;
+          border-radius: 10px;
+          border-left: 3px solid $primary;
+
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+
+          .info-icon {
+            color: $primary;
+            font-size: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+          }
+
+          .info-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            .info-label {
+              font-size: 11px;
+              color: $text-muted;
+              font-weight: 600;
+              text-transform: uppercase;
+            }
+
+            .info-value {
+              font-size: 14px;
+              color: $text;
+              font-weight: 600;
+              word-break: break-word;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .bd-items-card {
+    .items-table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 2px solid $border-light;
+      background: white;
+
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 100%;
+
+        thead {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+
+          tr {
+            th {
+              padding: 16px 20px;
+              text-align: left;
+              font-size: 13px;
+              font-weight: 800;
+              color: $primary-dark;
+              text-transform: uppercase;
+              letter-spacing: 0.8px;
+              border-bottom: 3px solid $primary;
+              white-space: nowrap;
+
+              &:first-child {
+                border-top-left-radius: 10px;
+                width: 60px;
+                text-align: center;
+              }
+
+              &:nth-child(2) {
+                min-width: 200px;
+              }
+
+              &:nth-child(3),
+              &:nth-child(4) {
+                width: 100px;
+                text-align: center;
+              }
+
+              &:nth-child(5),
+              &:nth-child(6) {
+                width: 140px;
+                text-align: right;
+              }
+
+              &:last-child {
+                border-top-right-radius: 10px;
+              }
+            }
+          }
+        }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid $border-light;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            }
+
+            &:last-child {
+              border-bottom: none;
+
+              td:first-child {
+                border-bottom-left-radius: 10px;
+              }
+
+              td:last-child {
+                border-bottom-right-radius: 10px;
+              }
+            }
+
+            td {
+              padding: 18px 20px;
+              font-size: 14px;
+              color: $text;
+              vertical-align: middle;
+
+              &.item-number {
+                color: $text-muted;
+                font-weight: 800;
+                font-size: 15px;
+                text-align: center;
+                background: $bg;
+                border-right: 2px solid $border-light;
+              }
+
+              &.item-desc {
+                font-weight: 600;
+                color: $text;
+                line-height: 1.5;
+              }
+
+              &:nth-child(3),
+              &:nth-child(4) {
+                text-align: center;
+                font-weight: 600;
+                color: $text-light;
+              }
+
+              &.item-rate {
+                font-weight: 700;
+                text-align: right;
+                color: $text;
+                font-family: "Courier New", monospace;
+                background: linear-gradient(
+                  135deg,
+                  transparent 0%,
+                  #fffbeb 100%
+                );
+              }
+
+              &.item-amount {
+                font-weight: 800;
+                text-align: right;
+                color: $primary-dark;
+                font-size: 16px;
+                font-family: "Courier New", monospace;
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border-left: 3px solid $primary;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .bd-payment-card {
+    .payment-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px;
+        background: $bg;
+        border-radius: 8px;
+
+        .summary-label {
+          font-size: 14px;
+          color: $text-light;
+          font-weight: 600;
+        }
+
+        .summary-value {
+          font-size: 16px;
+          color: $text;
+          font-weight: 700;
+        }
+
+        &.summary-total {
+          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+          padding: 18px;
+          margin-top: 8px;
+
+          .summary-label,
+          .summary-value {
+            color: white;
+            font-size: 18px;
+          }
+        }
+
+        &.summary-paid {
+          background: $success-light;
+
+          .summary-value {
+            color: $success;
+          }
+        }
+
+        &.summary-pending {
+          background: #fee2e2;
+
+          .summary-value {
+            color: $danger;
+          }
+        }
+      }
+    }
+  }
+
+  .bd-terms-card {
+    .terms-text {
+      padding: 16px;
+      background: $bg;
+      border-radius: 10px;
+      border-left: 4px solid $primary;
+
+      p {
+        margin: 0;
+        color: $text;
+        line-height: 1.7;
+        font-size: 14px;
+        white-space: pre-wrap;
+      }
+    }
+
+    .terms-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .term-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px;
+        background: $bg;
+        border-radius: 10px;
+        border-left: 4px solid $primary;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: $primary-light;
+          transform: translateX(4px);
+        }
+
+        .term-bullet {
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 13px;
+          font-weight: 800;
+          flex-shrink: 0;
+        }
+
+        .term-text {
+          flex: 1;
+          color: $text;
+          line-height: 1.6;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .bd-signature-card {
+    .signature-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      padding: 20px;
+      background: $bg;
+      border-radius: 10px;
+
+      .signature-img {
+        max-width: 220px;
+        max-height: 120px;
+        object-fit: contain;
+        border: 2px dashed $primary;
+        padding: 12px;
+        border-radius: 8px;
+        background: white;
+      }
+    }
+  }
+
+  .bd-note-card {
+    .note-text {
+      margin: 0;
+      padding: 16px;
+      background: $bg;
+      border-radius: 10px;
+      border-left: 4px solid $primary;
+      color: $text;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+  }
+
+  .bd-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+
+    .bd-btn {
+      padding: 16px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &.bd-btn-download {
+        background: white;
+        color: $primary;
+        border: 2px solid $primary;
+
+        &:hover:not(:disabled) {
+          background: $primary-light;
+        }
+      }
+
+      &.bd-btn-reminder {
+        background: white;
+        color: $text;
+        border: 2px solid $border;
+
+        &:hover:not(:disabled) {
+          background: $bg;
+          border-color: $text-light;
+        }
+      }
+
+      &.bd-btn-payment {
+        background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba($primary, 0.3);
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba($primary, 0.4);
+        }
+      }
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .bd-container {
+      padding: 20px 16px;
+    }
+
+    .bd-card {
+      padding: 20px;
+    }
+
+    .bd-invoice-header {
+      .bd-invoice-info {
+        .invoice-badge {
+          .invoice-number {
+            font-size: 24px;
+          }
+        }
+      }
+    }
+
+    .items-table-wrapper {
+      .items-table {
+        font-size: 13px;
+
+        thead th,
+        tbody td {
+          padding: 12px 8px;
+        }
+      }
+    }
+
+    .bd-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+}

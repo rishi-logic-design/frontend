@@ -226,7 +226,6 @@ const EditProfile = () => {
                     : "👤"}
                 </span>
               )}
-              <div className="camera-icon">{imageLoading ? "⏳" : "📷"}</div>
 
               <input
                 type="file"

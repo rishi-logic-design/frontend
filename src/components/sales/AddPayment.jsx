@@ -108,7 +108,6 @@ const AddPayment = () => {
 
       setSelectedCustomerData(customerData);
 
-      // Auto-fill address and GST
       const address =
         customerData.officeAddress?.address ||
         customerData.homeAddress?.address ||
@@ -116,7 +115,6 @@ const AddPayment = () => {
         "";
       const gstNumber = customerData.gstNumber || "";
 
-      // Fetch outstanding and pending invoices in parallel
       const [outstandingResponse, invoicesResponse] = await Promise.all([
         paymentService.getCustomerOutstanding(customerId),
         paymentService.getCustomerPendingInvoices(customerId),
@@ -241,27 +239,6 @@ const AddPayment = () => {
       newErrors.method = "Payment method is required";
     }
 
-    // Method-specific validation
-    if (formData.method === "bank") {
-      if (!formData.bankName) newErrors.bankName = "Bank name is required";
-      if (!formData.accountNumber)
-        newErrors.accountNumber = "Account number is required";
-      if (!formData.ifscCode) newErrors.ifscCode = "IFSC code is required";
-    }
-
-    if (formData.method === "upi" || formData.method === "online") {
-      if (!formData.upiId) newErrors.upiId = "UPI ID is required";
-    }
-
-    if (formData.method === "cheque") {
-      if (!formData.chequeNumber)
-        newErrors.chequeNumber = "Cheque number is required";
-      if (!formData.chequeDate)
-        newErrors.chequeDate = "Cheque date is required";
-      if (!formData.chequeBankName)
-        newErrors.chequeBankName = "Bank name is required";
-    }
-
     // Validate adjusted invoices total matches payment amount
     if (formData.adjustedInvoices.length > 0) {
       const totalAdjusted = formData.adjustedInvoices.reduce(
@@ -321,22 +298,7 @@ const AddPayment = () => {
         status: "completed",
       };
 
-      if (formData.method === "bank") {
-        paymentData.bankName = formData.bankName;
-        paymentData.accountNumber = formData.accountNumber;
-        paymentData.ifscCode = formData.ifscCode;
-      }
-
-      if (formData.method === "upi" || formData.method === "online") {
-        paymentData.upiId = formData.upiId;
-      }
-
-      if (formData.method === "cheque") {
-        paymentData.chequeNumber = formData.chequeNumber;
-        paymentData.chequeDate = formData.chequeDate;
-        paymentData.chequeBankName = formData.chequeBankName;
-      }
-
+      // Add adjusted invoices if any bills were selected for payment
       if (formData.adjustedInvoices.length > 0) {
         paymentData.adjustedInvoices = formData.adjustedInvoices;
       }
@@ -665,150 +627,6 @@ const AddPayment = () => {
             {errors.method && (
               <span className="error-message">{errors.method}</span>
             )}
-          </div>
-
-          {/* Bank Transfer Fields */}
-          {formData.method === "bank" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="bankName">Bank Name *</label>
-                <input
-                  type="text"
-                  id="bankName"
-                  name="bankName"
-                  value={formData.bankName}
-                  onChange={handleInputChange}
-                  placeholder="Enter Bank Name"
-                  className={errors.bankName ? "error" : ""}
-                  required
-                />
-                {errors.bankName && (
-                  <span className="error-message">{errors.bankName}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="accountNumber">Account Number *</label>
-                <input
-                  type="text"
-                  id="accountNumber"
-                  name="accountNumber"
-                  value={formData.accountNumber}
-                  onChange={handleInputChange}
-                  placeholder="Enter Account Number"
-                  className={errors.accountNumber ? "error" : ""}
-                  required
-                />
-                {errors.accountNumber && (
-                  <span className="error-message">{errors.accountNumber}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="ifscCode">IFSC Code *</label>
-                <input
-                  type="text"
-                  id="ifscCode"
-                  name="ifscCode"
-                  value={formData.ifscCode}
-                  onChange={handleInputChange}
-                  placeholder="Enter IFSC Code"
-                  className={errors.ifscCode ? "error" : ""}
-                  required
-                />
-                {errors.ifscCode && (
-                  <span className="error-message">{errors.ifscCode}</span>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* UPI/Online Fields */}
-          {(formData.method === "upi" || formData.method === "online") && (
-            <div className="form-group">
-              <label htmlFor="upiId">UPI ID *</label>
-              <input
-                type="text"
-                id="upiId"
-                name="upiId"
-                value={formData.upiId}
-                onChange={handleInputChange}
-                placeholder="example@upi"
-                className={errors.upiId ? "error" : ""}
-                required
-              />
-              {errors.upiId && (
-                <span className="error-message">{errors.upiId}</span>
-              )}
-            </div>
-          )}
-
-          {/* Cheque Fields */}
-          {formData.method === "cheque" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="chequeNumber">Cheque Number *</label>
-                <input
-                  type="text"
-                  id="chequeNumber"
-                  name="chequeNumber"
-                  value={formData.chequeNumber}
-                  onChange={handleInputChange}
-                  placeholder="Enter Cheque Number"
-                  className={errors.chequeNumber ? "error" : ""}
-                  required
-                />
-                {errors.chequeNumber && (
-                  <span className="error-message">{errors.chequeNumber}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="chequeDate">Cheque Date *</label>
-                <input
-                  type="date"
-                  id="chequeDate"
-                  name="chequeDate"
-                  value={formData.chequeDate}
-                  onChange={handleInputChange}
-                  className={errors.chequeDate ? "error" : ""}
-                  required
-                />
-                {errors.chequeDate && (
-                  <span className="error-message">{errors.chequeDate}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="chequeBankName">Bank Name *</label>
-                <input
-                  type="text"
-                  id="chequeBankName"
-                  name="chequeBankName"
-                  value={formData.chequeBankName}
-                  onChange={handleInputChange}
-                  placeholder="Enter Bank Name"
-                  className={errors.chequeBankName ? "error" : ""}
-                  required
-                />
-                {errors.chequeBankName && (
-                  <span className="error-message">{errors.chequeBankName}</span>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Reference */}
-          <div className="form-group">
-            <label htmlFor="reference">Reference / Transaction ID</label>
-            <input
-              type="text"
-              id="reference"
-              name="reference"
-              value={formData.reference}
-              onChange={handleInputChange}
-              placeholder="Enter Reference (Optional)"
-            />
           </div>
 
           {/* Remarks */}

@@ -26,13 +26,13 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 28px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        color: black;
+        color: white;
 
         @media (max-width: 768px) {
           width: 45px;
@@ -96,6 +96,9 @@
     border-radius: 0 0 24px 24px;
     margin-bottom: 24px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     @media (max-width: 768px) {
       padding: 24px 20px 28px;
@@ -154,44 +157,45 @@
         margin: 0 0 24px 0;
       }
     }
+  }
 
-    .action-buttons-top {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
+  .action-buttons-top {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    height: 50px;
+
+    @media (max-width: 768px) {
+      gap: 10px;
+    }
+
+    .action-btn-small {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.18);
+      border: none;
+      border-radius: 24px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
 
       @media (max-width: 768px) {
-        gap: 10px;
+        font-size: 13px;
+        padding: 10px 18px;
+        border-radius: 20px;
       }
 
-      .action-btn-small {
-        padding: 12px 24px;
-        background: rgba(255, 255, 255, 0.18);
-        border: none;
-        border-radius: 24px;
-        color: white;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        backdrop-filter: blur(10px);
+      &:hover {
+        background: rgba(255, 255, 255, 0.28);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
 
-        @media (max-width: 768px) {
-          font-size: 13px;
-          padding: 10px 18px;
-          border-radius: 20px;
-        }
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.28);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        &:active {
-          transform: translateY(0);
-        }
+      &:active {
+        transform: translateY(0);
       }
     }
   }
@@ -260,14 +264,12 @@
 
       .search-input {
         width: 100%;
-        max-width: 600px;
+        max-width: 1350px;
         padding: 14px 16px 14px 48px;
         border: 1px solid #e5e5e7;
         border-radius: 12px;
         font-size: 15px;
-        background: white
-          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%2386868b" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>')
-          no-repeat 16px center;
+        background: white url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%2386868b" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 16px center;
         transition: all 0.2s ease;
         box-sizing: border-box;
 
@@ -447,6 +449,7 @@
     }
   }
 }
+
 // Add this to your existing homePage.scss
 
 .notification-btn {
@@ -473,11 +476,13 @@
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
   }
+
   50% {
     transform: scale(1.1);
     box-shadow: 0 3px 12px rgba(239, 68, 68, 0.6);
@@ -502,5 +507,281 @@
 
   &:active {
     transform: scale(0.95);
+  }
+}
+
+.filter-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.filter-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+
+  @media (max-width: 768px) {
+    max-width: 90%;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.filter-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #86868b;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f0f0f2;
+      color: #2c3e50;
+    }
+  }
+}
+
+.filter-body {
+  padding: 24px;
+
+  .date-range-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .date-range-btn {
+    padding: 12px 16px;
+    border: 1px solid #e5e5e7;
+    background: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f9f9f9;
+      border-color: #2c3e50;
+    }
+
+    &.active {
+      background: #2c3e50;
+      color: white;
+      border-color: #2c3e50;
+    }
+  }
+
+  .custom-range-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e5e7;
+    background: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 16px;
+
+    &:hover {
+      background: #f9f9f9;
+      border-color: #2c3e50;
+    }
+
+    &.active {
+      background: #2c3e50;
+      color: white;
+      border-color: #2c3e50;
+    }
+  }
+
+  .custom-date-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .date-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #2c3e50;
+      }
+
+      .date-input {
+        padding: 10px 12px;
+        border: 1px solid #e5e5e7;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #2c3e50;
+        background: white;
+        transition: all 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #2c3e50;
+          box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+      }
+    }
+  }
+
+  .status-filter-section {
+    border-top: 1px solid #e5e5e7;
+    padding-top: 20px;
+
+    h4 {
+      margin: 0 0 16px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+  }
+
+  .filter-option {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f9f9f9;
+      }
+
+      input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        cursor: pointer;
+        accent-color: #2c3e50;
+      }
+
+      span {
+        font-size: 15px;
+        color: #1d1d1f;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.filter-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e7;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+
+  button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.clear-btn {
+      background: #f0f0f2;
+      color: #2c3e50;
+
+      &:hover {
+        background: #e5e5e7;
+      }
+    }
+
+    &.apply-btn {
+      background: #2c3e50;
+      color: white;
+
+      &:hover {
+        background: #1a252f;
+      }
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
   }
 }

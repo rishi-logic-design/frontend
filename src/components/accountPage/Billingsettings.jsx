@@ -22,23 +22,23 @@ const BillingSettings = () => {
     loadTemplatePreview();
   }, []);
 
-  const loadSettings = async () => {
-    try {
-      setLoading(true);
-      const data = await invoiceSettingsService.getInvoiceSettings();
-      setSettings(data);
-      setFormData({
-        prefix: data.prefix || "INV",
-        startCount: data.startCount || 1001,
-        invoiceTemplate: data.invoiceTemplate || "template1",
-      });
-    } catch (error) {
-      console.error("Failed to load settings:", error);
-      alert("Failed to load billing settings");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadSettings = async () => {
+      try {
+        setLoading(true);
+        const data = await invoiceSettingsService.getInvoiceSettings();
+        setSettings(data);
+        setFormData({
+          prefix: data.prefix || "INV",
+          startCount: data.startCount || 1001,
+          invoiceTemplate: data.invoiceTemplate || "template1",
+        });
+      } catch (error) {
+        console.error("Failed to load settings:", error);
+        alert("Failed to load billing settings");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const loadTemplatePreview = async () => {
     try {
@@ -72,7 +72,6 @@ const BillingSettings = () => {
 
     if (!validateForm()) return;
 
-    // Show confirmation for resetting count
     if (parseInt(formData.startCount) !== settings.startCount) {
       const confirm = window.confirm(
         "Changing the start count will reset all invoice numbers. Are you sure?",
@@ -89,7 +88,6 @@ const BillingSettings = () => {
       };
 
       await invoiceSettingsService.updateInvoiceSettings(payload);
-      alert("Billing settings updated successfully!");
       await loadSettings();
     } catch (error) {
       console.error("Failed to update settings:", error);
@@ -125,7 +123,7 @@ const BillingSettings = () => {
     <div className="billing-settings-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ← 
         </button>
         <h1 className="page-title">Billing Settings</h1>
       </div>
@@ -281,14 +279,25 @@ const BillingSettings = () => {
                         alt={template.name}
                         onError={(e) => {
                           e.target.src =
-                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E${template.name}%3C/text%3E%3C/svg%3E";
+                            "data:image/svg+xml;utf8," +
+                            encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" width="200" height="280">
+                <rect width="200" height="280" fill="#f0f0f0"/>
+                <text x="50%" y="50%" font-size="14" fill="#999"
+                  text-anchor="middle" dominant-baseline="middle">
+                  ${template.name}
+                </text>
+              </svg>
+            `);
                         }}
                       />
                     </div>
+
                     <div className="template-details">
                       <h3>{template.name}</h3>
                       <p>{template.description}</p>
                     </div>
+
                     {formData.invoiceTemplate === template.id && (
                       <div className="selected-badge">✓ Selected</div>
                     )}

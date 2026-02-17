@@ -4,44 +4,48 @@
   background: #fafbfc;
 
   .page-header {
-    background: white;
-    padding: 20px 24px;
+    background: linear-gradient(180deg, #34495e 0%, #3d566e 100%);
+    color: white;
+    padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
-    border-bottom: 1px solid #e8e9eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     position: sticky;
     top: 0;
     z-index: 100;
 
     .back-btn {
-      background: #f3f4f6;
-      border: none;
-      color: #1f2937;
-      font-size: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      font-size: 24px;
       cursor: pointer;
-      padding: 10px 14px;
       display: flex;
       align-items: center;
-      border-radius: 10px;
-      transition: all 0.2s ease;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
 
       &:hover {
-        background: #e5e7eb;
-        transform: translateX(-2px);
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateX(-4px) scale(1.05);
       }
 
       &:active {
-        transform: scale(0.95);
+        transform: translateX(-4px) scale(0.95);
       }
     }
 
-    h1 {
-      font-size: 20px;
-      font-weight: 600;
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
       margin: 0;
-      color: #1f2937;
+      letter-spacing: 0.5px;
     }
   }
 

@@ -1,40 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import "./billDetails.scss";
-import billService from "../../services/billService";
+import { useNavigate, useParams } from "react-router-dom";
+import "./challanDetails.scss";
+import challanService from "../../services/challanService";
 
-const BillDetails = () => {
+const ChallanDetails = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
-  const [billData, setBillData] = useState(null);
+  const [challanData, setChallanData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    fetchBillDetails();
+    fetchChallanDetails();
   }, [id]);
 
-  useEffect(() => {
-    if (location.state?.refresh) {
-      console.log("🔄 Refreshing bill data...");
-      fetchBillDetails();
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  const fetchBillDetails = async () => {
+  const fetchChallanDetails = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("📥 Fetching bill details for ID:", id);
-      const data = await billService.getBillById(id);
-      console.log("✅ Bill data received:", data);
-      setBillData(data);
+      const data = await challanService.getChallanById(id);
+      console.log(data);
+      setChallanData(data);
     } catch (error) {
-      console.error("❌ Failed to fetch bill details:", error);
-      setError("Failed to load bill details. Please try again.");
+      console.error("Failed to fetch challan details", error);
+      setError("Failed to load challan details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,7 +35,7 @@ const BillDetails = () => {
 
     setSending(true);
     try {
-      await billService.sendWhatsAppReminder(id);
+      await challanService.sendWhatsAppReminder(id);
       alert("Payment reminder sent successfully!");
     } catch (error) {
       console.error("Failed to send reminder", error);
@@ -57,11 +47,11 @@ const BillDetails = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      const blob = await billService.downloadPDF(id);
+      const blob = await challanService.downloadPDF(id);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `bill_${billData?.bill?.billNumber || billData?.billNumber || id}.pdf`;
+      link.download = `challan_${challanData?.challanNumber || id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -73,14 +63,31 @@ const BillDetails = () => {
   };
 
   const handleRecordPayment = () => {
-    const customerId =
-      billData?.bill?.customer?.id || billData?.bill?.customerId;
-    console.log("🔗 Navigating to payment with:", { billId: id, customerId });
-    navigate(
-      `/vendor/add-payment?billId=${id}&type=bill&customerId=${customerId}`,
-    );
+    navigate(`/vendor/record-payment/${id}?type=challan`);
   };
 
+  if (loading) {
+    return (
+      <div className="challan-details-page">
+        <div className="loading-state">
+          <p>Loading challan details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !challanData) {
+    return (
+      <div className="challan-details-page">
+        <div className="error-state">
+          <p>{error || "Challan not found"}</p>
+          <button onClick={() => navigate(-1)} className="back-btn">
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
   const formatAddress = (address) => {
     if (!address) return "Address not provided";
 
@@ -97,118 +104,52 @@ const BillDetails = () => {
       ].filter(Boolean);
 
       return parts.join(", ");
-    } catch (e) {
+    } catch {
       return address;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="bill-details-page">
-        <div className="loading-state">
-          <p>Loading bill details...</p>
-        </div>
-      </div>
-    );
-  }
+  const customer = challanData.challan.customer || {};
+  console.log(customer);
+  const items = challanData.challan.items || [];
+  const subtotal = Number(
+    challanData.challan.subtotal ?? challanData.challan.totalWithoutGST ?? 0,
+  );
 
-  if (error || !billData) {
-    return (
-      <div className="bill-details-page">
-        <div className="error-state">
-          <p>{error || "Bill not found"}</p>
-          <button onClick={() => navigate(-1)} className="back-btn">
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const customer = billData.bill?.customer || {};
-  const items = billData.bill?.items || [];
-
-  const totalAmount = parseFloat(
-    billData.bill?.totalWithGST ||
-      billData.bill?.totalAmount ||
-      billData.totalAmount ||
+  const totalAmount = Number(
+    challanData.challan.totalWithGST ??
+      challanData.challan.totalWithoutGST ??
+      challanData.due ??
       0,
   );
-
-  const paidAmount = parseFloat(
-    billData.bill?.paidAmount || billData.paidAmount || 0,
-  );
-
-  const pendingAmount = parseFloat(
-    billData.bill?.pendingAmount ||
-      billData.pendingAmount ||
-      totalAmount - paidAmount,
-  );
-
-  const status = billData.bill?.status || billData.status || "pending";
-  const subtotal = parseFloat(
-    billData.bill?.subtotal || billData.bill?.totalWithoutGST || 0,
-  );
-  const gst = parseFloat(billData.bill?.gstTotal || billData.gst || 0);
-
-  // Get invoice number (could be from billNumber or invoiceNumber field)
-  const invoiceNumber =
-    billData.bill?.invoiceNumber ||
-    billData.bill?.billNumber ||
-    billData.billNumber ||
-    id;
-
-  console.log("💰 Bill Amounts:", {
-    totalAmount,
-    paidAmount,
-    pendingAmount,
-    status,
-    invoiceNumber,
-  });
+  const status =
+    challanData.challan.status || challanData.paymentStatus ;
+  const gst = challanData.challan.gst || 0;
 
   return (
-    <div className="bill-details-page">
+    <div className="challan-details-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ← 
         </button>
-        <h1 className="page-title">Bill Details</h1>
+        <h1 className="page-title">Challan Details</h1>
       </div>
 
       <div className="page-content">
         <div className="details-container">
-          {/* Header Card with Invoice Number */}
+          {/* Header Card */}
           <div className="header-card">
             <div className="header-info">
-              <div className="invoice-number-badge">
-                <span className="invoice-label">Invoice #</span>
-                <h2 className="invoice-number">{invoiceNumber}</h2>
-              </div>
+              <h2 className="challan-number">
+                #{challanData.challanNumber || challanData.challanNo || id}
+              </h2>
               <span className={`status-badge ${status.toLowerCase()}`}>
-                {status === "paid"
-                  ? "Paid"
-                  : status === "partial"
-                    ? "Partially Paid"
-                    : "Pending"}
+                {status === "paid" ? "Paid" : "Unpaid"}
               </span>
             </div>
             <div className="amount-section">
-              <p className="amount-label">
-                {status === "paid" ? "Total Amount" : "Pending Amount"}
-              </p>
-              <h3 className="amount-value">
-                ₹
-                {(status === "paid"
-                  ? totalAmount
-                  : pendingAmount
-                ).toLocaleString()}
-              </h3>
-              {status !== "paid" && paidAmount > 0 && (
-                <p className="paid-info">
-                  Paid: ₹{paidAmount.toLocaleString()} of ₹
-                  {totalAmount.toLocaleString()}
-                </p>
-              )}
+              <p className="amount-label">Total Amount Due</p>
+              <h3 className="amount-value">₹{subtotal.toLocaleString()}</h3>
             </div>
             {status !== "paid" && (
               <button
@@ -264,26 +205,25 @@ const BillDetails = () => {
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
-                      <tr key={item._id || item.id || index}>
+                      <tr key={item._id || index}>
                         <td>
                           <span className="item-number">{index + 1}.</span>{" "}
-                          {item.description || item.itemName || "N/A"}
+                          {item.name || item.productName || "N/A"}
                         </td>
                         <td>
                           {item.quantity || item.qty || 0}
-                          {item.unit ? ` ${item.unit}` : ""}
+                          {item.unit || ""}
                         </td>
                         <td>
                           ₹
-                          {parseFloat(
-                            item.rate || item.price || 0,
+                          {(
+                            item.rate ||
+                            item.pricePerUnit ||
+                            0
                           ).toLocaleString()}
                         </td>
                         <td>
-                          ₹
-                          {parseFloat(
-                            item.amount || item.total || 0,
-                          ).toLocaleString()}
+                          ₹{(item.amount || item.total || 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -295,19 +235,17 @@ const BillDetails = () => {
 
           {/* Payment Summary Card */}
           <div className="payment-card">
-            <h3 className="card-title">Payment Summary</h3>
+            <h3 className="card-title">Payment</h3>
             <div className="payment-details">
               <div className="payment-row">
-                <span className="payment-label">Subtotal (without GST):</span>
+                <span className="payment-label">Subtotal:</span>
                 <span className="payment-value">
                   ₹{subtotal.toLocaleString()}
                 </span>
               </div>
               {gst > 0 && (
                 <div className="payment-row">
-                  <span className="payment-label">
-                    GST ({billData.bill?.gstPercentage || 18}%):
-                  </span>
+                  <span className="payment-label">GST:</span>
                   <span className="payment-value">₹{gst.toLocaleString()}</span>
                 </div>
               )}
@@ -317,22 +255,6 @@ const BillDetails = () => {
                   ₹{totalAmount.toLocaleString()}
                 </span>
               </div>
-              {paidAmount > 0 && (
-                <>
-                  <div className="payment-row paid">
-                    <span className="payment-label">Paid Amount:</span>
-                    <span className="payment-value">
-                      ₹{paidAmount.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="payment-row pending">
-                    <span className="payment-label">Pending Amount:</span>
-                    <span className="payment-value">
-                      ₹{pendingAmount.toLocaleString()}
-                    </span>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
@@ -353,4 +275,4 @@ const BillDetails = () => {
   );
 };
 
-export default BillDetails;
+export default ChallanDetails;

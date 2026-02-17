@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./customer.scss";
 import customerService from "../services/customerService";
+import { CiEdit, CiTrash } from "react-icons/ci";
+import { IoClose } from "react-icons/io5";
 
 const Customer = () => {
   const navigate = useNavigate();
@@ -11,6 +13,16 @@ const Customer = () => {
   const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [formData, setFormData] = useState({
+    customerName: "",
+    businessName: "",
+    mobileNumber: "",
+    email: "",
+    gstNumber: "",
+    customerImage: null,
+  });
 
   const fetchCustomers = async () => {
     if (!vendorId) return;
@@ -45,7 +57,109 @@ const Customer = () => {
       setLoading(false);
     }
   };
+  const handleDeleteCustomer = async (customerId, imageUrl) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this customer?",
+    );
 
+    if (!confirmDelete) return;
+
+    try {
+      setLoading(true);
+      await customerService.deleteCustomer(customerId, imageUrl);
+      fetchCustomers(); // refresh list
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete customer");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditClick = (customer, e) => {
+    e.stopPropagation();
+    setEditingCustomer(customer);
+    setFormData({
+      customerName: customer.customerName || "",
+      businessName: customer.businessName || "",
+      mobileNumber: customer.mobileNumber || "",
+      email: customer.email || "",
+      gstNumber: customer.gstNumber || "",
+      customerImage: null,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowEditModal(false);
+    setEditingCustomer(null);
+    setFormData({
+      customerName: "",
+      businessName: "",
+      mobileNumber: "",
+      email: "",
+      gstNumber: "",
+      customerImage: null,
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        customerImage: file,
+      }));
+    }
+  };
+
+  const handleUpdateCustomer = async (e) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+      const updateFormData = new FormData();
+
+      updateFormData.append("customerName", formData.customerName);
+      updateFormData.append("businessName", formData.businessName);
+      updateFormData.append("mobileNumber", formData.mobileNumber);
+      updateFormData.append("email", formData.email);
+      updateFormData.append("gstNumber", formData.gstNumber);
+      updateFormData.append("vendorId", vendorId);
+
+      if (formData.customerImage) {
+        updateFormData.append("customerImage", formData.customerImage);
+      }
+
+      if (editingCustomer.customerImage) {
+        updateFormData.append(
+          "oldCustomerImage",
+          editingCustomer.customerImage,
+        );
+      }
+
+      await customerService.updateCustomer(
+        editingCustomer.id || editingCustomer._id,
+        updateFormData,
+      );
+
+      fetchCustomers();
+      handleModalClose();
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to update customer");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     fetchCustomers();
   }, [vendorId]);
@@ -123,6 +237,29 @@ const Customer = () => {
                     </p>
                   </div>
                 </div>
+                <div
+                  className="customer-actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className="edit-btn"
+                    onClick={(e) => handleEditClick(customers, e)}
+                  >
+                    <CiEdit />
+                  </button>
+
+                  <button
+                    className="delete-btn"
+                    onClick={() =>
+                      handleDeleteCustomer(
+                        customers.id || customers._id,
+                        customers.customerImage,
+                      )
+                    }
+                  >
+                    <CiTrash />
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -132,6 +269,103 @@ const Customer = () => {
           )}
         </div>
       </div>
+
+      {showEditModal && (
+        <div className="modal-overlay" onClick={handleModalClose}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Customer</h2>
+              <button className="modal-close-btn" onClick={handleModalClose}>
+                <IoClose />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCustomer} className="modal-form">
+              <div className="form-group">
+                <label>Customer Name *</label>
+                <input
+                  type="text"
+                  name="customerName"
+                  value={formData.customerName}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Business Name</label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Mobile Number *</label>
+                <input
+                  type="tel"
+                  name="mobileNumber"
+                  value={formData.mobileNumber}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>GST Number</label>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={formData.gstNumber}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Customer Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {editingCustomer?.customerImage && !formData.customerImage && (
+                  <img
+                    src={editingCustomer.customerImage}
+                    alt="Current"
+                    className="current-image-preview"
+                  />
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleModalClose}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn" disabled={loading}>
+                  {loading ? "Updating..." : "Update Customer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

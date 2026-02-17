@@ -99,6 +99,19 @@ const paymentService = {
       throw error.response?.data || error;
     }
   },
+
+  setOpeningBalance: async (method, amount) => {
+    try {
+      const response = await api.post("/api/payments/opening-balance", {
+        method,
+        amount,
+      });
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error("Set opening balance error:", error);
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default paymentService;

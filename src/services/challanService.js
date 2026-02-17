@@ -10,9 +10,20 @@ const challanService = {
       throw error.response?.data || error;
     }
   },
-  getChallans: async () => {
+  getChallans: async (filters = {}) => {
     try {
-      const response = await api.get("/api/challans");
+      const params = new URLSearchParams();
+      if (filters.customerId) {
+        params.append('customerId', filters.customerId);
+      }
+      if (filters.status) {
+        params.append('status', filters.status);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/api/challans?${queryString}` : '/api/challans';
+      
+      const response = await api.get(url);
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error;

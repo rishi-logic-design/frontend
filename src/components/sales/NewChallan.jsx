@@ -217,7 +217,7 @@ const NewChallan = () => {
     <div className="new-challan-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ← 
         </button>
         <h1 className="page-title">Add Challan</h1>
       </div>

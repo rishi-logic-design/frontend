@@ -61,7 +61,7 @@ const AddProduct = () => {
     <div className="add-product-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          ←
         </button>
         <h1 className="page-title">Add Product</h1>
       </div>

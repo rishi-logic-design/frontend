@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://accountsoft.onrender.com";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("vendorToken");
@@ -16,7 +16,7 @@ const invoiceSettingsService = {
   getInvoiceSettings: async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/vendor/invoice-settings`,
+        `${API_BASE_URL}/api/vendor/invoice-settings`,
         getAuthHeaders(),
       );
       return response.data.data;
@@ -29,7 +29,7 @@ const invoiceSettingsService = {
   updateInvoiceSettings: async (payload) => {
     try {
       const response = await axios.put(
-        `${API_BASE_URL}/vendor/invoice-settings`,
+        `${API_BASE_URL}/api/vendor/invoice-settings`,
         payload,
         getAuthHeaders(),
       );
@@ -43,8 +43,8 @@ const invoiceSettingsService = {
   getNextInvoiceNumber: async (requestedNumber = null) => {
     try {
       const url = requestedNumber
-        ? `${API_BASE_URL}/vendor/invoice-settings/next-number?requestedNumber=${requestedNumber}`
-        : `${API_BASE_URL}/vendor/invoice-settings/next-number`;
+        ? `${API_BASE_URL}/api/vendor/invoice-settings/next-number?requestedNumber=${requestedNumber}`
+        : `${API_BASE_URL}/api/vendor/invoice-settings/next-number`;
 
       const response = await axios.get(url, getAuthHeaders());
       return response.data.data;
@@ -57,7 +57,7 @@ const invoiceSettingsService = {
   checkInvoiceNumber: async (number) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/vendor/invoice-settings/check-number?number=${number}`,
+        `${API_BASE_URL}/api/vendor/invoice-settings/check-number?number=${number}`,
         getAuthHeaders(),
       );
       return response.data.data;
@@ -70,7 +70,7 @@ const invoiceSettingsService = {
   getTemplatePreview: async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/vendor/invoice-settings/template-preview`,
+        `${API_BASE_URL}/api/vendor/invoice-settings/template-preview`,
         getAuthHeaders(),
       );
       console.log(response.data);

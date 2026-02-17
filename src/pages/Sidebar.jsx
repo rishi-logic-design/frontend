@@ -2,25 +2,29 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./sidebar.scss";
 import {
-  FaHome,
-  FaUsers,
   FaSignOutAlt,
   FaChevronRight,
   FaChevronLeft,
+  FaChevronDown,
+  FaFileInvoice,
+  FaCalculator,
+  FaCog,
   FaPaypal,
   FaBoxOpen,
-  FaAccusoft,
+  FaHome,
+  FaUsers,
+  FaBolt,
 } from "react-icons/fa";
 import vendorProfileImageService from "../services/vendorProfileImageService";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://accountsoft.onrender.com";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(true);
   const [vendorData, setVendorData] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({
+    sales: false,
+  });
 
   useEffect(() => {
     const storedData = localStorage.getItem("vendorData");
@@ -36,93 +40,195 @@ const Sidebar = () => {
     window.location.href = "/login";
   };
 
-  const menuItems = [
-    { name: "Dashboard", icon: FaHome, path: "/vendor/dashboard" },
-    { name: "Customer", icon: FaUsers, path: "/vendor/customer" },
-    { name: "Product", icon: FaBoxOpen, path: "/vendor/product" },
-    { name: "Payment", icon: FaPaypal, path: "/vendor/payment" },
-    { name: "Account", icon: FaAccusoft, path: "/vendor/account" },
-  ];
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   const handleMenuClick = (path) => {
     navigate(path);
-  };
-
-  const getInitials = (name) => {
-    if (!name) return "VN";
-    const words = name.trim().split(" ");
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
   };
 
   const profileImageUrl = vendorProfileImageService.getImageUrl(
     vendorData?.profileImage,
   );
 
-  console.log(profileImageUrl)
+  const menuSections = [
+    {
+      type: "single",
+      name: "Dashboard",
+      icon: FaHome,
+      path: "/vendor/dashboard",
+    },
+    {
+      type: "dropdown",
+      name: "Sales",
+      icon: FaFileInvoice,
+      section: "sales",
+      items: [
+        { name: "New Challan", path: "/vendor/new-challan" },
+        { name: "Invoices", path: "/vendor/bills" },
+        { name: "Payment Receipts", path: "/vendor/payment-receipts" },
+      ],
+    },
+    {
+      type: "dropdown",
+      name: "master",
+      icon: FaFileInvoice,
+      section: "master",
+      items: [
+        { name: "New Challan", path: "/vendor/new-challan" },
+        { name: "Invoices", path: "/vendor/bills" },
+        { name: "Payment Receipts", path: "/vendor/payment-receipts" },
+      ],
+    },
+    {
+      type: "single",
+      name: "Customer",
+      icon: FaUsers,
+      path: "/vendor/customer",
+    },
+    {
+      type: "single",
+      name: "Product",
+      icon: FaBoxOpen,
+      path: "/vendor/product",
+    },
+    {
+      type: "single",
+      name: "Payment",
+      icon: FaPaypal,
+      path: "/vendor/payment",
+    },
+    {
+      type: "single",
+      name: "Account",
+      icon: FaCog,
+      path: "/vendor/account",
+    },
+
+    {
+      type: "dropdown",
+      name: "Settings",
+      icon: FaCog,
+      section: "settings",
+      items: [
+        { name: "Account Settings", path: "/vendor/account" },
+        { name: "Billing Settings", path: "/vendor/account/billing-settings" },
+        { name: "GST Settings", path: "/vendor/account/gst-slabs" },
+      ],
+    },
+  ];
 
   return (
     <>
       <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
+        {/* Brand Section */}
         <div className="sidebar-header">
-          <div className="user-profile">
-            <div
-              className={`profile-avatar ${profileImageUrl ? "has-image" : ""}`}
-            >
-              {profileImageUrl ? (
-                <img
-                  src={profileImageUrl}
-                  alt="Profile"
-                  className="avatar-img"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "";
-                  }}
-                />
-              ) : (
-                <span>
-                  {getInitials(
-                    vendorData?.vendorName || vendorData?.businessName,
-                  )}
-                </span>
-              )}
+          <div className="brand-section">
+            <div className="brand-logo">
+              <div className="logo-icon">
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt="Logo"
+                    className="logo-img"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <FaCalculator />
+                )}
+              </div>
             </div>
-
             {isOpen && (
-              <div className="user-info">
-                <span className="user-role">
-                  {vendorData?.businessName
-                    ? vendorData.businessName.toUpperCase().substring(0, 20)
-                    : "VENDOR"}
-                </span>
-                <span className="user-name">
-                  {vendorData?.vendorName || "Loading..."}
-                </span>
+              <div className="brand-info">
+                <h1 className="brand-name">
+                  {vendorData?.businessName || "GimBooks"}
+                </h1>
+                <p className="brand-subtitle">GST Invoice Manager</p>
               </div>
             )}
           </div>
+
+          {isOpen && (
+            <button className="create-button">
+              <FaBolt className="create-icon" />
+              <span>Create</span>
+            </button>
+          )}
         </div>
 
+        {/* Menu Content */}
         <div className="sidebar-content">
-          {isOpen && <div className="section-label">MAIN</div>}
-
           <div className="menu-items">
-            {menuItems.map((item, idx) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+            {menuSections.map((section, idx) => {
+              const Icon = section.icon;
+              const isActive =
+                section.path && location.pathname === section.path;
+              const isExpanded =
+                section.type === "dropdown" &&
+                expandedSections[section.section];
 
+              if (section.type === "single") {
+                return (
+                  <div key={idx} className="menu-item-wrapper">
+                    <div
+                      className={`menu-item ${isActive ? "active" : ""}`}
+                      onClick={() => handleMenuClick(section.path)}
+                    >
+                      <Icon className="menu-icon" />
+                      {isOpen && (
+                        <span className="menu-text">{section.name}</span>
+                      )}
+                      {!isOpen && <div className="tooltip">{section.name}</div>}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Dropdown type
               return (
                 <div key={idx} className="menu-item-wrapper">
                   <div
-                    className={`menu-item ${isActive ? "active" : ""}`}
-                    onClick={() => handleMenuClick(item.path)}
+                    className={`menu-item has-dropdown ${isExpanded ? "expanded" : ""}`}
+                    onClick={() => toggleSection(section.section)}
                   >
                     <Icon className="menu-icon" />
-                    {isOpen && <span className="menu-text">{item.name}</span>}
-                    {!isOpen && <div className="tooltip">{item.name}</div>}
+                    {isOpen && (
+                      <span className="menu-text">{section.name}</span>
+                    )}
+                    {isOpen && (
+                      <FaChevronDown
+                        className={`dropdown-arrow ${isExpanded ? "expanded" : ""}`}
+                      />
+                    )}
+                    {!isOpen && <div className="tooltip">{section.name}</div>}
                   </div>
+
+                  {isOpen && isExpanded && (
+                    <div className="submenu">
+                      {section.items.map((subItem, subIdx) => {
+                        const isSubActive = location.pathname === subItem.path;
+                        return (
+                          <div
+                            key={subIdx}
+                            className={`submenu-item ${isSubActive ? "active" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMenuClick(subItem.path);
+                            }}
+                          >
+                            {subItem.name}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -133,7 +239,7 @@ const Sidebar = () => {
         <div className="sidebar-footer">
           <div className="footer-item logout" onClick={handleLogout}>
             <FaSignOutAlt className="menu-icon" />
-            {isOpen && <span className="menu-text">Logout Account</span>}
+            {isOpen && <span className="menu-text">Logout</span>}
             {!isOpen && <div className="tooltip">Logout</div>}
           </div>
         </div>

@@ -4,27 +4,48 @@
   background-color: #f8fafc;
 
   .page-header {
-    padding: 16px 24px;
+    background: linear-gradient(180deg, #34495e 0%, #3d566e 100%);
+    color: white;
+    padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
-    color: black;
-
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-bottom: 40px;
     .back-btn {
-      background: none;
-      border: none;
-      color: black;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       font-size: 24px;
       cursor: pointer;
-      padding: 0;
       display: flex;
       align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateX(-4px) scale(1.05);
+      }
+
+      &:active {
+        transform: translateX(-4px) scale(0.95);
+      }
     }
 
-    h1 {
-      font-size: 18px;
-      font-weight: 600;
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
       margin: 0;
+      letter-spacing: 0.5px;
     }
   }
 

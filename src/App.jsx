@@ -4,11 +4,11 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import HomePage from "./pages/HomePage";
 import Customer from "./pages/Customer";
-import NewBill from "./components/homepage/NewBill";
-import NewChallan from "./components/homepage/NewChallan";
-import AddPayment from "./components/homepage/AddPayment";
-import ChallanDetails from "./components/homepage/ChallanDetails";
-import BillDetails from "./components/homepage/BillDetails";
+import NewBill from "./components/sales/NewBill";
+import NewChallan from "./components/sales/NewChallan";
+import AddPayment from "./components/sales/AddPayment";
+import ChallanDetails from "./components/sales/ChallanDetails";
+import BillDetails from "./components/sales/BillDetails";
 import AddProduct from "./components/productPage/AddProduct";
 import AddCustomer from "./components/customerPage/AddCustomer";
 import CustomerDetails from "./components/customerPage/CostomerDetails";
@@ -24,6 +24,8 @@ import BillingSettings from "./components/accountPage/BillingSettings";
 import PaymentPage from "./pages/PaymentPage";
 import NotificationToast from "./components/notificationPage/NotificationToast";
 import NotificationSidebar from "./components/notificationPage/NotificationSidebar";
+import PaymentReceipts from "./components/sales/PaymentReceipts";
+import BillsList from "./components/sales/BillsList";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -96,6 +98,22 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <NewBill />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="payment-receipts"
+            element={
+              <ProtectedRoute>
+                <PaymentReceipts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bills"
+            element={
+              <ProtectedRoute>
+                <BillsList />
               </ProtectedRoute>
             }
           />
