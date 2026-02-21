@@ -1,3 +1,4 @@
+@use "../homePage/bill/bill-vars" as *;
 // Keyframe Animations
 @keyframes fadeInSlideDown {
   from {
@@ -40,16 +41,6 @@
     transform: scale(1);
   }
 }
-
-// Modern Theme Colors
-$bg-light: #ffffff;
-$bg-gray: #f5f5f7;
-$text-dark: #1d1d1f;
-$text-gray: #6e6e73;
-$accent-yellow: #ffd93d;
-$hover-bg: #f9f9f9;
-$border-color: #e5e5e7;
-$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
 .payment-receipts-page {
   min-height: 100vh;
@@ -500,48 +491,61 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 12px;
               font-weight: 600;
               display: inline-block;
+              text-transform: capitalize;
 
+              &.completed,
               &.settled {
-                background: rgba(52, 211, 153, 0.15);
+                background: rgba(16, 185, 129, 0.1);
                 color: #059669;
+                border: 1px solid rgba(16, 185, 129, 0.2);
               }
 
-              &.unsettled {
-                background: rgba(248, 113, 113, 0.15);
-                color: #dc2626;
-              }
-
+              &.pending,
               &.partial {
-                background: rgba(251, 191, 36, 0.15);
+                background: rgba(245, 158, 11, 0.1);
                 color: #d97706;
+                border: 1px solid rgba(245, 158, 11, 0.2);
+              }
+
+              &.failed,
+              &.unsettled,
+              &.cancelled {
+                background: rgba(239, 68, 68, 0.1);
+                color: #dc2626;
+                border: 1px solid rgba(239, 68, 68, 0.2);
               }
             }
 
             .payment-mode-badge {
               padding: 4px 12px;
-              border-radius: 12px;
-              font-size: 12px;
-              font-weight: 600;
+              border-radius: 20px;
+              font-size: 11px;
+              font-weight: 700;
               display: inline-block;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
 
               &.cash {
-                background: rgba(16, 185, 129, 0.15);
+                background: #ecfdf5;
                 color: #059669;
               }
 
               &.cheque {
-                background: rgba(59, 130, 246, 0.15);
+                background: #eff6ff;
                 color: #2563eb;
               }
 
-              &.upi {
-                background: rgba(139, 92, 246, 0.15);
+              &.upi,
+              &.online {
+                background: #f5f3ff;
                 color: #7c3aed;
               }
 
+              &.bank,
               &.net-banking {
-                background: rgba(245, 158, 11, 0.15);
-                color: #d97706;
+                background: #f8fafc;
+                color: #475569;
+                border: 1px solid #e2e8f0;
               }
             }
 
@@ -576,19 +580,22 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
               .menu-container {
                 position: relative;
+                display: flex;
+                align-items: center;
 
                 .action-menu {
                   position: absolute;
-                  top: calc(100% + 8px);
+                  top: 100%;
                   right: 0;
-                  background: $bg-light;
+                  background: #ffffff;
                   border: 1px solid $border-color;
                   border-radius: 8px;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                  z-index: 100;
+                  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                  z-index: 1000;
                   min-width: 180px;
                   overflow: hidden;
                   animation: fadeInSlideDown 0.3s ease;
+                  margin-top: 8px;
 
                   button {
                     width: 100%;

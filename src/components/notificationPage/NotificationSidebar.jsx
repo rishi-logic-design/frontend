@@ -13,7 +13,6 @@ const NotificationSidebar = () => {
     setShowSidebar,
   } = useNotifications();
 
-  // Close sidebar on escape key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape" && showSidebar) {
@@ -57,7 +56,6 @@ const NotificationSidebar = () => {
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
-    // You can add navigation logic here based on entityType
   };
 
   const handleOverlayClick = () => {
@@ -66,13 +64,11 @@ const NotificationSidebar = () => {
 
   return (
     <>
-      {/* Overlay */}
       <div
         className={`notification-overlay ${showSidebar ? "active" : ""}`}
         onClick={handleOverlayClick}
       />
 
-      {/* Sidebar */}
       <div className={`notification-sidebar ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
           <div className="header-title">

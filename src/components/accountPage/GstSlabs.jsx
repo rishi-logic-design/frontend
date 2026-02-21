@@ -67,7 +67,6 @@ const GstSlabs = () => {
     }
   };
 
-  // 🔹 DELETE
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this GST slab?",
@@ -158,7 +157,6 @@ const GstSlabs = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

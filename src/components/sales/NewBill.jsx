@@ -38,7 +38,6 @@ const NewBill = () => {
   const [availableChallans, setAvailableChallans] = useState([]);
   const [selectedChallans, setSelectedChallans] = useState([]);
 
-  // mode
   const [useManualMode, setUseManualMode] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -47,25 +46,20 @@ const NewBill = () => {
     note: "",
   });
 
-  // invoice number
   const [invoiceSettings, setInvoiceSettings] = useState(null);
   const [customPrefix, setCustomPrefix] = useState("");
   const [useCustomPrefix, setUseCustomPrefix] = useState(false);
 
-  // manual items
   const [manualItems, setManualItems] = useState([{ ...EMPTY_ITEM }]);
 
-  // bill-level discount + GST
   const [discount, setDiscount] = useState(0);
   const [gstType, setGstType] = useState("not_applicable");
   const [gst, setGst] = useState(0);
 
-  // terms
   const [terms, setTerms] = useState([...DEFAULT_TERMS]);
   const [newTerm, setNewTerm] = useState("");
   const [showTermModal, setShowTermModal] = useState(false);
 
-  // stamp
   const [enableStamp, setEnableStamp] = useState(false);
   const [stampFile, setStampFile] = useState(null);
   const [stampPreview, setStampPreview] = useState(null);
@@ -73,7 +67,6 @@ const NewBill = () => {
   const [stampUploading, setStampUploading] = useState(false);
   const [stampProgress, setStampProgress] = useState(0);
 
-  // ── vendor id ──────────────────────────────────────────────────────────────
   const getVendorId = () => {
     for (const key of ["vendorData", "userData"]) {
       try {
@@ -85,7 +78,6 @@ const NewBill = () => {
     return null;
   };
 
-  // ── init ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -109,7 +101,6 @@ const NewBill = () => {
     })();
   }, []);
 
-  // ── customer change ────────────────────────────────────────────────────────
   const handleCustomerChange = async (customerId) => {
     setFormData((p) => ({ ...p, customer: customerId }));
     setSelectedChallans([]);
@@ -130,15 +121,17 @@ const NewBill = () => {
     }
   };
 
-  // ── mode toggle ────────────────────────────────────────────────────────────
   const handleModeToggle = (checked) => {
     setUseManualMode(checked);
     setSelectedChallans([]);
-    if (checked && manualItems.length === 0)
-      setManualItems([{ ...EMPTY_ITEM }]);
+    if (checked) {
+      if (manualItems.length === 0) setManualItems([{ ...EMPTY_ITEM }]);
+      setDiscount(0);
+      setGstType("not_applicable");
+      setGst(0);
+    }
   };
 
-  // ── challan helpers ────────────────────────────────────────────────────────
   const toggleChallan = (id) =>
     setSelectedChallans((p) =>
       p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
@@ -154,7 +147,6 @@ const NewBill = () => {
         })),
       );
 
-  // ── manual item helpers ────────────────────────────────────────────────────
   const addItem = () => setManualItems((p) => [...p, { ...EMPTY_ITEM }]);
   const removeItem = (i) =>
     manualItems.length > 1 &&
@@ -173,7 +165,6 @@ const NewBill = () => {
     return +(afterDisc + gstAmt).toFixed(2);
   };
 
-  // ── summary maths ──────────────────────────────────────────────────────────
   const challanItems = getChallanItems();
 
   const subtotal = useManualMode
@@ -210,7 +201,6 @@ const NewBill = () => {
       year: "numeric",
     });
 
-  // ── stamp upload → firebase ────────────────────────────────────────────────
   const handleStampSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -249,7 +239,6 @@ const NewBill = () => {
     });
   };
 
-  // ── terms helpers ──────────────────────────────────────────────────────────
   const addTerm = () => {
     if (newTerm.trim()) {
       setTerms((p) => [...p, newTerm.trim()]);
@@ -259,7 +248,6 @@ const NewBill = () => {
   };
   const removeTerm = (i) => setTerms((p) => p.filter((_, idx) => idx !== i));
 
-  // ── submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!formData.customer) return alert("Please select a customer");
 
@@ -826,9 +814,7 @@ const NewBill = () => {
             )}
           </div>
         </div>
-        {/* /nb-main */}
 
-        {/* ── Summary Sidebar ── */}
         <div className="nb-aside">
           <div className="nb-summary">
             <div className="nb-summary__title">Summary</div>
@@ -838,56 +824,62 @@ const NewBill = () => {
               <span>₹{subtotal.toLocaleString()}</span>
             </div>
 
-            <div className="nb-summary__row">
-              <span>Discount</span>
-              <div className="nb-inline-inp">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={discount}
-                  onChange={(e) => setDiscount(toNum(e.target.value))}
-                />
-                <span>%</span>
-              </div>
-            </div>
-            {discount > 0 && (
-              <div className="nb-summary__row sub">
-                <span>Discount amt</span>
-                <span>−₹{discountAmt.toLocaleString()}</span>
-              </div>
-            )}
+            {!useManualMode && (
+              <>
+                <div className="nb-summary__row">
+                  <span>Discount</span>
+                  <div className="nb-inline-inp">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={discount}
+                      onChange={(e) => setDiscount(toNum(e.target.value))}
+                    />
+                    <span>%</span>
+                  </div>
+                </div>
+                {discount > 0 && (
+                  <div className="nb-summary__row sub">
+                    <span>Discount amt</span>
+                    <span>−₹{discountAmt.toLocaleString()}</span>
+                  </div>
+                )}
 
-            <div className="nb-summary__row">
-              <span>GST</span>
-              <select
-                value={gstType === "percentage" ? `gst_${gst}` : gstType}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (["not_applicable", "exempted", "non_gst"].includes(v)) {
-                    setGstType(v);
-                    setGst(0);
-                  } else {
-                    setGstType("percentage");
-                    setGst(parseFloat(v.replace("gst_", "")));
-                  }
-                }}
-              >
-                <option value="not_applicable">Not Applicable</option>
-                <option value="gst_0">GST @ 0%</option>
-                <option value="exempted">Exempted</option>
-                <option value="non_gst">Non-GST</option>
-                <option value="gst_5">GST @ 5%</option>
-                <option value="gst_12">GST @ 12%</option>
-                <option value="gst_18">GST @ 18%</option>
-                <option value="gst_28">GST @ 28%</option>
-              </select>
-            </div>
-            {gstType === "percentage" && gst > 0 && (
-              <div className="nb-summary__row sub">
-                <span>GST ({gst}%)</span>
-                <span>₹{gstAmt.toLocaleString()}</span>
-              </div>
+                <div className="nb-summary__row">
+                  <span>GST</span>
+                  <select
+                    value={gstType === "percentage" ? `gst_${gst}` : gstType}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (
+                        ["not_applicable", "exempted", "non_gst"].includes(v)
+                      ) {
+                        setGstType(v);
+                        setGst(0);
+                      } else {
+                        setGstType("percentage");
+                        setGst(parseFloat(v.replace("gst_", "")));
+                      }
+                    }}
+                  >
+                    <option value="not_applicable">Not Applicable</option>
+                    <option value="gst_0">GST @ 0%</option>
+                    <option value="exempted">Exempted</option>
+                    <option value="non_gst">Non-GST</option>
+                    <option value="gst_5">GST @ 5%</option>
+                    <option value="gst_12">GST @ 12%</option>
+                    <option value="gst_18">GST @ 18%</option>
+                    <option value="gst_28">GST @ 28%</option>
+                  </select>
+                </div>
+                {gstType === "percentage" && gst > 0 && (
+                  <div className="nb-summary__row sub">
+                    <span>GST ({gst}%)</span>
+                    <span>₹{gstAmt.toLocaleString()}</span>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="nb-summary__divider" />
@@ -919,9 +911,7 @@ const NewBill = () => {
           </div>
         </div>
       </div>
-      {/* /nb-body */}
 
-      {/* ── Terms Modal ── */}
       {showTermModal && (
         <div
           className="nb-modal-overlay"

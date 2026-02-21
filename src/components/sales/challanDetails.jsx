@@ -36,10 +36,8 @@ const ChallanDetails = () => {
     setSending(true);
     try {
       await challanService.sendWhatsAppReminder(id);
-      alert("Payment reminder sent successfully!");
     } catch (error) {
       console.error("Failed to send reminder", error);
-      alert("Failed to send reminder. Please try again.");
     } finally {
       setSending(false);
     }
@@ -58,7 +56,6 @@ const ChallanDetails = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download PDF", error);
-      alert("Failed to download PDF. Please try again.");
     }
   };
 
@@ -122,15 +119,14 @@ const ChallanDetails = () => {
       challanData.due ??
       0,
   );
-  const status =
-    challanData.challan.status || challanData.paymentStatus ;
+  const status = challanData.challan.status || challanData.paymentStatus;
   const gst = challanData.challan.gst || 0;
 
   return (
     <div className="challan-details-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← 
+          ←
         </button>
         <h1 className="page-title">Challan Details</h1>
       </div>

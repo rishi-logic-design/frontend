@@ -116,7 +116,7 @@ const AddCustomer = () => {
               ) : (
                 <span className="avatar-icon">{avatar}</span>
               )}
-              
+
               <input
                 type="file"
                 id="avatar-upload"

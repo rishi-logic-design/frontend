@@ -22,23 +22,23 @@ const BillingSettings = () => {
     loadTemplatePreview();
   }, []);
 
-    const loadSettings = async () => {
-      try {
-        setLoading(true);
-        const data = await invoiceSettingsService.getInvoiceSettings();
-        setSettings(data);
-        setFormData({
-          prefix: data.prefix || "INV",
-          startCount: data.startCount || 1001,
-          invoiceTemplate: data.invoiceTemplate || "template1",
-        });
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-        alert("Failed to load billing settings");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const data = await invoiceSettingsService.getInvoiceSettings();
+      setSettings(data);
+      setFormData({
+        prefix: data.prefix || "INV",
+        startCount: data.startCount || 1001,
+        invoiceTemplate: data.invoiceTemplate || "template1",
+      });
+    } catch (error) {
+      console.error("Failed to load settings:", error);
+      alert("Failed to load billing settings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadTemplatePreview = async () => {
     try {
@@ -123,7 +123,7 @@ const BillingSettings = () => {
     <div className="billing-settings-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← 
+          ←
         </button>
         <h1 className="page-title">Billing Settings</h1>
       </div>

@@ -16,6 +16,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
+import { useRef } from "react";
 import paymentService from "../../services/paymentService";
 
 const PaymentReceipts = () => {
@@ -50,6 +51,19 @@ const PaymentReceipts = () => {
   const [dateRange, setDateRange] = useState({ start: null, end: null });
 
   const [activeMenu, setActiveMenu] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     fetchPayments();
@@ -116,20 +130,26 @@ const PaymentReceipts = () => {
     };
 
     paymentsList.forEach((payment) => {
-      const amount = payment.amount || 0;
+      const amount = parseFloat(payment.amount) || 0;
       stats.totalAmount += amount;
 
-      const mode = (payment.paymentMode || "").toLowerCase();
+      const mode = (payment.method || payment.paymentMode || "")
+        .toLowerCase()
+        .trim();
       if (mode === "cash") {
         stats.cashAmount += amount;
         stats.cashCount++;
       } else if (mode === "cheque") {
         stats.chequeAmount += amount;
         stats.chequeCount++;
-      } else if (mode === "upi") {
+      } else if (mode === "upi" || mode === "online") {
         stats.upiAmount += amount;
         stats.upiCount++;
-      } else if (mode === "net banking" || mode === "netbanking") {
+      } else if (
+        mode === "net banking" ||
+        mode === "netbanking" ||
+        mode === "bank"
+      ) {
         stats.netBankingAmount += amount;
         stats.netBankingCount++;
       }
@@ -168,16 +188,25 @@ const PaymentReceipts = () => {
   const filteredPayments = payments
     .filter((payment) => {
       const searchLower = searchTerm.toLowerCase();
+      const rawMode = (payment.method || payment.paymentMode || "")
+        .toLowerCase()
+        .trim();
+
+      // Normalize mode for grouping/filtering matches
+      let normalizedMode = rawMode;
+      if (rawMode === "online") normalizedMode = "upi";
+      if (rawMode === "bank" || rawMode === "netbanking")
+        normalizedMode = "net banking";
+
       const matchesSearch =
         !searchTerm ||
         (payment.partyName || "").toLowerCase().includes(searchLower) ||
         (payment.receiptNumber || "").toString().includes(searchLower) ||
-        (payment.paymentMode || "").toLowerCase().includes(searchLower);
+        rawMode.includes(searchLower);
 
       const matchesMode =
         paymentModeFilter === "all" ||
-        (payment.paymentMode || "").toLowerCase() ===
-          paymentModeFilter.toLowerCase();
+        normalizedMode === paymentModeFilter.toLowerCase();
 
       const matchesStatus =
         statusFilter === "all" ||
@@ -206,9 +235,9 @@ const PaymentReceipts = () => {
             new Date(b.paymentDate || b.createdAt)
           );
         case "amount-desc":
-          return (b.amount || 0) - (a.amount || 0);
+          return (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0);
         case "amount-asc":
-          return (a.amount || 0) - (b.amount || 0);
+          return (parseFloat(a.amount) || 0) - (parseFloat(b.amount) || 0);
         case "party-asc":
           return (a.partyName || "").localeCompare(b.partyName || "");
         case "party-desc":
@@ -592,7 +621,14 @@ const PaymentReceipts = () => {
             </thead>
             <tbody>
               {paginatedPayments.map((payment) => (
-                <tr key={payment._id || payment.id}>
+                <tr
+                  key={payment._id || payment.id}
+                  style={
+                    activeMenu === (payment._id || payment.id)
+                      ? { position: "relative", zIndex: 1001 }
+                      : {}
+                  }
+                >
                   <td className="receipt-no">{payment.id || "N/A"}</td>
                   <td>
                     {formatDate(payment.paymentDate || payment.createdAt)}
@@ -603,10 +639,14 @@ const PaymentReceipts = () => {
                       "N/A"}
                   </td>
                   <td className="amount">
-                    ₹{(payment.amount || 0).toLocaleString("en-IN")}
+                    ₹{(parseFloat(payment.amount) || 0).toLocaleString("en-IN")}
                     {payment.unusedAmount > 0 && (
                       <div className="unused-amount">
-                        (₹{payment.unusedAmount.toLocaleString("en-IN")} Unused)
+                        (₹
+                        {(parseFloat(payment.unusedAmount) || 0).toLocaleString(
+                          "en-IN",
+                        )}{" "}
+                        Unused)
                       </div>
                     )}
                   </td>
@@ -634,19 +674,26 @@ const PaymentReceipts = () => {
                       >
                         <FaPrint />
                       </button>
-                      <div className="menu-container">
+                      <div
+                        className="menu-container"
+                        ref={
+                          activeMenu === (payment._id || payment.id)
+                            ? menuRef
+                            : null
+                        }
+                      >
                         <button
                           className="icon-btn"
-                          onClick={() =>
-                            setActiveMenu(
-                              activeMenu === payment._id ? null : payment._id,
-                            )
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const pid = payment._id || payment.id;
+                            setActiveMenu(activeMenu === pid ? null : pid);
+                          }}
                           title="More options"
                         >
                           <FaEllipsisV />
                         </button>
-                        {activeMenu === payment._id && (
+                        {activeMenu === (payment._id || payment.id) && (
                           <div className="action-menu">
                             <button
                               onClick={() => {

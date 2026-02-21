@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaPlus,
   FaSearch,
@@ -10,11 +10,11 @@ import {
   FaEllipsisV,
 } from "react-icons/fa";
 import billService from "../../services/billService";
-import paymentService from "../../services/paymentService";
 import "./billsList.scss";
 
 const BillsList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [bills, setBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,28 +25,22 @@ const BillsList = () => {
     partiallyPaid: 0,
   });
 
-  // Filter and Sort States
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(999999);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(null);
 
-  // Payment Modal State
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedBill, setSelectedBill] = useState(null);
-  const [paymentAction, setPaymentAction] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [paymentNote, setPaymentNote] = useState("");
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [billToCancel, setBillToCancel] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     fetchBills();
-  }, []);
+  }, [location.state?.refresh]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -66,11 +60,10 @@ const BillsList = () => {
   const fetchBills = async () => {
     try {
       setLoading(true);
-      const billsData = await billService.getBills();
-      console.log("Bills data:", billsData);
+      const billsData = await billService.getBills({ size: 1000 });
 
-      const bills = billsData?.rows || billsData || [];
-      console.log("Extracted bills:", bills);
+      const bills =
+        billsData?.rows || (Array.isArray(billsData) ? billsData : []);
       setBills(bills);
       calculateStats(bills);
     } catch (error) {
@@ -94,11 +87,13 @@ const BillsList = () => {
       const total = parseFloat(bill.totalAmount || bill.total || 0);
       stats.totalSales += total;
 
-      if (bill.status === "paid") {
+      const status = bill.status?.toLowerCase()?.replace(" ", "_") || "pending";
+
+      if (status === "paid") {
         stats.paid += total;
-      } else if (bill.status === "unpaid" || bill.status === "pending") {
+      } else if (status === "unpaid" || status === "pending") {
         stats.unpaid += total;
-      } else if (bill.status === "partially_paid") {
+      } else if (status === "partially_paid" || status === "partial") {
         stats.partiallyPaid += total;
       }
     });
@@ -106,13 +101,22 @@ const BillsList = () => {
     setStats(stats);
   };
 
-  const getStatusCount = (status) => {
-    if (status === "unpaid") {
-      return bills.filter(
-        (b) => b.status === "unpaid" || b.status === "pending",
-      ).length;
-    }
-    return bills.filter((b) => b.status === status).length;
+  const getStatusCount = (statusToCount) => {
+    const targetStatus = statusToCount?.toLowerCase();
+
+    return bills.filter((b) => {
+      const bStatus = b.status?.toLowerCase()?.replace(" ", "_") || "pending";
+
+      if (targetStatus === "unpaid" || targetStatus === "pending") {
+        return bStatus === "unpaid" || bStatus === "pending";
+      }
+
+      if (targetStatus === "partially_paid" || targetStatus === "partial") {
+        return bStatus === "partially_paid" || bStatus === "partial";
+      }
+
+      return bStatus === targetStatus;
+    }).length;
   };
 
   const formatDate = (dateString) => {
@@ -129,10 +133,13 @@ const BillsList = () => {
     const statusMap = {
       paid: { label: "Paid", class: "paid" },
       unpaid: { label: "Unpaid", class: "unpaid" },
-      partially_paid: { label: "Partially Paid", class: "partial" },
+      pending: { label: "Pending", class: "unpaid" },
+      partial: { label: "Partially", class: "partial" },
       cancelled: { label: "Cancelled", class: "cancelled" },
     };
-    const statusInfo = statusMap[status] || { label: status, class: "unpaid" };
+    const statusKey = status?.toLowerCase()?.trim();
+    const statusInfo = statusMap[statusKey] ||
+      statusMap[status] || { label: status || "Pending", class: "unpaid" };
     return (
       <span className={`status-badge ${statusInfo.class}`}>
         {statusInfo.label}
@@ -140,102 +147,44 @@ const BillsList = () => {
     );
   };
 
-  const handleStatusChange = async (bill, newStatus) => {
+  const handleStatusChange = (bill, newStatus) => {
     setStatusDropdownOpen(null);
 
-    // If status is paid or partial, show payment modal
     if (newStatus === "paid" || newStatus === "partially_paid") {
-      setSelectedBill(bill);
-      setPaymentAction(newStatus);
-
-      // For paid, set amount to pending amount
-      if (newStatus === "paid") {
-        const pendingAmount =
-          parseFloat(bill.totalAmount || 0) - parseFloat(bill.paidAmount || 0);
-        setPaymentAmount(pendingAmount.toString());
-      } else {
-        setPaymentAmount("");
-      }
-
-      setShowPaymentModal(true);
-      return;
-    }
-
-    // For cancelled or unpaid, directly update status
-    try {
-      await billService.editBill(bill._id || bill.id, { status: newStatus });
-      await fetchBills();
-      console.log(
-        `✅ Bill ${bill._id || bill.id} status updated to ${newStatus}`,
-      );
-    } catch (error) {
-      console.error("Error updating bill status:", error);
-      alert("Failed to update bill status. Please try again.");
-    }
-  };
-
-  const handlePaymentSubmit = async () => {
-    if (!selectedBill) return;
-
-    const amount = parseFloat(paymentAmount);
-    if (!amount || amount <= 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-
-    const pendingAmount =
-      parseFloat(selectedBill.totalAmount || 0) -
-      parseFloat(selectedBill.paidAmount || 0);
-    if (amount > pendingAmount) {
-      alert(
-        `Amount cannot exceed pending amount of ₹${pendingAmount.toLocaleString()}`,
+      navigate(
+        `/vendor/add-payment?billId=${bill._id || bill.id}&action=${newStatus}`,
       );
       return;
     }
 
-    try {
-      // Create payment record
-      const paymentData = {
-        customerId: selectedBill.customerId || selectedBill.customer?.id,
-        type: "credit",
-        subType: "customer",
-        amount: amount,
-        paymentDate: new Date().toISOString().split("T")[0],
-        method: paymentMethod,
-        note: paymentNote || `Payment for bill ${selectedBill.billNumber}`,
-        status: "completed",
-        adjustedInvoices: [
-          {
-            billId: selectedBill._id || selectedBill.id,
-            payAmount: amount,
-          },
-        ],
-      };
-
-      console.log("Creating payment:", paymentData);
-      await paymentService.createPayment(paymentData);
-
-      // Refresh bills
-      await fetchBills();
-
-      // Close modal
-      setShowPaymentModal(false);
-      setSelectedBill(null);
-      setPaymentAmount("");
-      setPaymentNote("");
-
-      alert("Payment recorded successfully!");
-    } catch (error) {
-      console.error("Error recording payment:", error);
-      alert("Failed to record payment. Please try again.");
+    if (newStatus === "cancelled") {
+      setBillToCancel(bill);
+      setShowCancelModal(true);
+      return;
     }
   };
 
-  const closePaymentModal = () => {
-    setShowPaymentModal(false);
-    setSelectedBill(null);
-    setPaymentAmount("");
-    setPaymentNote("");
+  const handleConfirmCancel = async () => {
+    if (!billToCancel) return;
+    try {
+      setCancelLoading(true);
+      await billService.editBill(billToCancel._id || billToCancel.id, {
+        status: "cancelled",
+      });
+      await fetchBills();
+      setShowCancelModal(false);
+      setBillToCancel(null);
+    } catch (error) {
+      console.error("Error cancelling bill:", error);
+      alert("Failed to cancel bill. Please try again.");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleCloseCancelModal = () => {
+    setShowCancelModal(false);
+    setBillToCancel(null);
   };
 
   const filteredBills = bills
@@ -247,10 +196,16 @@ const BillsList = () => {
         bill.customerName?.toLowerCase().includes(searchLower) ||
         bill.customer?.customerName?.toLowerCase().includes(searchLower);
 
+      const billStatusRaw = bill.status?.toLowerCase() || "pending";
+      const billStatus = billStatusRaw.replace(" ", "_");
+      const filterValue = statusFilter.toLowerCase();
+
       const matchesStatus =
-        statusFilter === "all" ||
-        bill.status === statusFilter ||
-        (statusFilter === "unpaid" && bill.status === "pending");
+        filterValue === "all" ||
+        billStatus === filterValue ||
+        (filterValue === "partially_paid" && billStatus === "partial") ||
+        (filterValue === "pending" &&
+          (billStatus === "pending" || billStatus === "unpaid"));
 
       return matchesSearch && matchesStatus;
     })
@@ -307,18 +262,25 @@ const BillsList = () => {
         </button>
       </div>
 
-      {/* Stats Cards with Date Filter */}
       <div className="stats-section">
         <div className="stats-grid">
-          <div className="stat-card">
+          <div
+            className={`stat-card ${statusFilter === "all" ? "active" : ""}`}
+            onClick={() => setStatusFilter("all")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="stat-info">
-              <span className="stat-label">Total Sales ({bills.length})</span>
+              <span className="stat-label">Total ({bills.length})</span>
               <span className="stat-value">
                 ₹{stats.totalSales.toLocaleString("en-IN")}
               </span>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className={`stat-card ${statusFilter === "unpaid" || statusFilter === "pending" ? "active" : ""}`}
+            onClick={() => setStatusFilter("pending")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="stat-info">
               <span className="stat-label">
                 Unpaid ({getStatusCount("unpaid")})
@@ -328,7 +290,11 @@ const BillsList = () => {
               </span>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className={`stat-card ${statusFilter === "paid" ? "active" : ""}`}
+            onClick={() => setStatusFilter("paid")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="stat-info">
               <span className="stat-label">
                 Paid ({getStatusCount("paid")})
@@ -338,7 +304,11 @@ const BillsList = () => {
               </span>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className={`stat-card ${statusFilter === "partially_paid" ? "active" : ""}`}
+            onClick={() => setStatusFilter("partially_paid")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="stat-info">
               <span className="stat-label">
                 Partially Paid ({getStatusCount("partially_paid")})
@@ -386,6 +356,15 @@ const BillsList = () => {
                   All Invoices
                 </button>
                 <button
+                  className={statusFilter === "pending" ? "active" : ""}
+                  onClick={() => {
+                    setStatusFilter("pending");
+                    setShowFilters(false);
+                  }}
+                >
+                  Pending / Unpaid
+                </button>
+                <button
                   className={statusFilter === "paid" ? "active" : ""}
                   onClick={() => {
                     setStatusFilter("paid");
@@ -395,15 +374,6 @@ const BillsList = () => {
                   Paid
                 </button>
                 <button
-                  className={statusFilter === "unpaid" ? "active" : ""}
-                  onClick={() => {
-                    setStatusFilter("unpaid");
-                    setShowFilters(false);
-                  }}
-                >
-                  Unpaid
-                </button>
-                <button
                   className={statusFilter === "partially_paid" ? "active" : ""}
                   onClick={() => {
                     setStatusFilter("partially_paid");
@@ -411,6 +381,15 @@ const BillsList = () => {
                   }}
                 >
                   Partially Paid
+                </button>
+                <button
+                  className={statusFilter === "cancelled" ? "active" : ""}
+                  onClick={() => {
+                    setStatusFilter("cancelled");
+                    setShowFilters(false);
+                  }}
+                >
+                  Cancelled
                 </button>
               </div>
             )}
@@ -515,76 +494,86 @@ const BillsList = () => {
                   </td>
                   <td>
                     <div className="status-dropdown-container">
-                      <button
-                        className={`status-dropdown-trigger ${bill.status || "unpaid"}`}
-                        onClick={() => {
-                          if (statusDropdownOpen === (bill._id || bill.id)) {
-                            setStatusDropdownOpen(null);
-                          } else {
-                            setStatusDropdownOpen(bill._id || bill.id);
-                          }
+                      {/* Show status badge always */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
-                        {getStatusBadge(bill.status || "unpaid")}
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="currentColor"
-                          style={{ marginLeft: "4px", opacity: 0.6 }}
-                        >
-                          <path d="M6 8L2 4h8L6 8z" />
-                        </svg>
-                      </button>
+                        {getStatusBadge(bill.status || "partial")}
 
-                      {statusDropdownOpen === (bill._id || bill.id) && (
-                        <div className="status-dropdown-menu">
+                        {(bill.status === "pending" ||
+                          bill.status === "partial" ||
+                          bill.status === "cancelled") && (
                           <button
-                            className="status-option unpaid"
-                            onClick={() => handleStatusChange(bill, "unpaid")}
+                            className={`status-dropdown-trigger ${bill.status || "partial"}`}
+                            onClick={() => {
+                              if (
+                                statusDropdownOpen === (bill._id || bill.id)
+                              ) {
+                                setStatusDropdownOpen(null);
+                              } else {
+                                setStatusDropdownOpen(bill._id || bill.id);
+                              }
+                            }}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "0 2px",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
                           >
-                            Unpaid
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="currentColor"
+                              style={{ opacity: 0.6 }}
+                            >
+                              <path d="M6 8L2 4h8L6 8z" />
+                            </svg>
                           </button>
-                          <button
-                            className="status-option paid"
-                            onClick={() => handleStatusChange(bill, "paid")}
-                          >
-                            Paid
-                          </button>
-                          <button
-                            className="status-option partial"
-                            onClick={() =>
-                              handleStatusChange(bill, "partially_paid")
-                            }
-                          >
-                            Partially Paid
-                          </button>
-                          <button
-                            className="status-option cancelled"
-                            onClick={() =>
-                              handleStatusChange(bill, "cancelled")
-                            }
-                          >
-                            Cancelled
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
+
+                      {/* Dropdown menu — only Cancelled option */}
+                      {statusDropdownOpen === (bill._id || bill.id) &&
+                        (bill.status === "pending" ||
+                          bill.status === "unpaid" ||
+                          bill.status === "partially_paid") && (
+                          <div className="status-dropdown-menu">
+                            <button
+                              className="status-option cancelled"
+                              onClick={() =>
+                                handleStatusChange(bill, "cancelled")
+                              }
+                            >
+                              Cancelled
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </td>
                   <td>
                     <div className="actions-cell">
-                      {bill.status !== "paid" && (
-                        <button
-                          className="record-payment-btn"
-                          onClick={() =>
-                            navigate(
-                              `/vendor/add-payment?billId=${bill._id || bill.id}`,
-                            )
-                          }
-                        >
-                          Record Payment
-                        </button>
-                      )}
+                      {/* Hide Record Payment when paid or cancelled */}
+                      {bill.status !== "paid" &&
+                        bill.status !== "cancelled" && (
+                          <button
+                            className="record-payment-btn"
+                            onClick={() =>
+                              navigate(
+                                `/vendor/add-payment?billId=${bill._id || bill.id}`,
+                              )
+                            }
+                          >
+                            Record Payment
+                          </button>
+                        )}
                       <button
                         className="icon-btn"
                         onClick={async () => {
@@ -634,153 +623,114 @@ const BillsList = () => {
       </div>
 
       {/* Pagination */}
-      {filteredBills.length > 0 && (
-        <div className="pagination">
-          <div className="rows-per-page">
-            <span>Rows per page:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="999999">All</option>
-            </select>
-          </div>
-          <div className="page-info">
-            {startIndex + 1}-{Math.min(endIndex, filteredBills.length)} of{" "}
-            {filteredBills.length}
-          </div>
-          <div className="page-controls">
-            <button
-              className="page-btn"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-            >
-              ←
-            </button>
-            <button
-              className="page-btn"
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-            >
-              →
-            </button>
-          </div>
+      <div className="pagination">
+        <div className="rows-per-page">
+          <span>Rows per page:</span>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="999999">All</option>
+          </select>
         </div>
-      )}
-
-      {/* Payment Modal */}
-      {showPaymentModal && selectedBill && (
-        <div className="payment-modal-overlay" onClick={closePaymentModal}>
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                {paymentAction === "paid"
-                  ? "Record Full Payment"
-                  : "Record Partial Payment"}
-              </h2>
-              <button className="close-btn" onClick={closePaymentModal}>
-                ✕
+        <div className="page-info">
+          {startIndex + 1}–{Math.min(endIndex, filteredBills.length)} of{" "}
+          {filteredBills.length}
+        </div>
+        <div className="page-controls">
+          <button
+            className="page-btn"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(1)}
+            title="First page"
+          >
+            «
+          </button>
+          <button
+            className="page-btn"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+          >
+            ←
+          </button>
+          {/* Page number buttons */}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            const start = Math.max(
+              1,
+              Math.min(currentPage - 2, totalPages - 4),
+            );
+            const page = start + i;
+            if (page > totalPages) return null;
+            return (
+              <button
+                key={page}
+                className={`page-btn ${currentPage === page ? "active" : ""}`}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
               </button>
+            );
+          })}
+          <button
+            className="page-btn"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            →
+          </button>
+          <button
+            className="page-btn"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(totalPages)}
+            title="Last page"
+          >
+            »
+          </button>
+        </div>
+      </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && billToCancel && (
+        <div className="cancel-modal-overlay" onClick={handleCloseCancelModal}>
+          <div className="cancel-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="cancel-modal-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#FEF3C7" />
+                <path
+                  d="M12 8v4M12 16h.01"
+                  stroke="#D97706"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
-
-            <div className="modal-body">
-              {/* Bill Info */}
-              <div className="bill-info-card">
-                <div className="info-row">
-                  <span className="label">Invoice No:</span>
-                  <span className="value">{selectedBill.billNumber}</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Customer:</span>
-                  <span className="value">
-                    {selectedBill.customerName ||
-                      selectedBill.customer?.customerName}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Total Amount:</span>
-                  <span className="value amount">
-                    ₹{(selectedBill.totalAmount || 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Paid Amount:</span>
-                  <span className="value amount-paid">
-                    ₹{(selectedBill.paidAmount || 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="info-row highlight">
-                  <span className="label">Pending Amount:</span>
-                  <span className="value amount-pending">
-                    ₹
-                    {(
-                      parseFloat(selectedBill.totalAmount || 0) -
-                      parseFloat(selectedBill.paidAmount || 0)
-                    ).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Payment Form */}
-              <div className="payment-form">
-                <div className="form-group">
-                  <label htmlFor="paymentAmount">
-                    Payment Amount *
-                    {paymentAction === "paid" && (
-                      <span className="hint">(Full pending amount)</span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    id="paymentAmount"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    readOnly={paymentAction === "paid"}
-                    className={paymentAction === "paid" ? "readonly" : ""}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="paymentMethod">Payment Method *</label>
-                  <select
-                    id="paymentMethod"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="upi">UPI</option>
-                    <option value="netbanking">Net Banking</option>
-                    <option value="card">Card</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="paymentNote">Note (Optional)</label>
-                  <textarea
-                    id="paymentNote"
-                    value={paymentNote}
-                    onChange={(e) => setPaymentNote(e.target.value)}
-                    placeholder="Add any notes about this payment..."
-                    rows="3"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={closePaymentModal}>
-                Cancel
+            <h2 className="cancel-modal-title">Cancel Invoice?</h2>
+            <p className="cancel-modal-desc">
+              Are you sure you want to cancel invoice{" "}
+              <strong>{billToCancel.billNumber}</strong>? This action cannot be
+              undone.
+            </p>
+            <div className="cancel-modal-actions">
+              <button
+                className="cancel-modal-btn-no"
+                onClick={handleCloseCancelModal}
+                disabled={cancelLoading}
+              >
+                No, Keep It
               </button>
-              <button className="btn-submit" onClick={handlePaymentSubmit}>
-                Record Payment
+              <button
+                className="cancel-modal-btn-yes"
+                onClick={handleConfirmCancel}
+                disabled={cancelLoading}
+              >
+                {cancelLoading ? "Cancelling..." : "Yes, Cancel Invoice"}
               </button>
             </div>
           </div>

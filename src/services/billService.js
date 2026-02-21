@@ -10,9 +10,9 @@ const billService = {
     }
   },
 
-  getBills: async () => {
+  getBills: async (params = {}) => {
     try {
-      const response = await api.get("/api/bills");
+      const response = await api.get("/api/bills", { params });
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -22,7 +22,6 @@ const billService = {
   getBillById: async (id) => {
     try {
       const response = await api.get(`/api/bills/${id}`);
-      console.log(response);
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -54,7 +53,7 @@ const billService = {
       throw error.response?.data || error;
     }
   },
-  
+
   downloadPDF: async (id) => {
     try {
       const htmlData = await billService.getBillHtml(id);

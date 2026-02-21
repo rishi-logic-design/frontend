@@ -1,17 +1,4 @@
-$sidebar-width-open: 250px;
-$sidebar-width-closed: 70px;
-
-// GimBooks Dark Theme Colors
-$bg-dark: #2c2f48;
-$bg-darker: #252839;
-$text-primary: #e8e9f3;
-$text-secondary: #a8aac5;
-$accent-yellow: #ffd93d;
-$accent-purple: #8b7dd8;
-$hover-bg: #363a54;
-$active-bg: #4a4e6a;
-$border-color: #3a3e5a;
-$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@use "../components//homePage/bill/bill-vars.scss" as *;
 
 .sidebar {
   position: fixed;
@@ -166,7 +153,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 12px;
+  // padding: 8px 12px;
 
   &::-webkit-scrollbar {
     width: 5px;
@@ -229,7 +216,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     transition: $transition;
     color: $text-secondary;
     flex-shrink: 0;
-
+    transition: all 1s ease;
     &.expanded {
       transform: rotate(180deg);
     }
@@ -306,10 +293,9 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .submenu {
-  padding-left: 46px;
   margin-top: 4px;
   margin-bottom: 4px;
-  animation: slideDown 0.2s ease;
+  animation: slideDown 1s ease;
 
   @keyframes slideDown {
     from {
@@ -324,19 +310,20 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .submenu-item {
-    padding: 9px 14px;
+    padding: 9px 0px 14px 46px;
     font-size: 13px;
     color: $text-secondary;
     cursor: pointer;
     border-radius: 6px;
-    transition: all 0.15s ease;
+    transition: all 1s ease;
     margin-bottom: 2px;
     font-weight: 400;
 
     &:hover {
       background: $hover-bg;
       color: $text-primary;
-      padding-left: 18px;
+      padding-left: 40px;
+      transition: all 0.15s ease;
     }
 
     &.active {

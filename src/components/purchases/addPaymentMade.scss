@@ -1,0 +1,233 @@
+@use "../homePage/bill/bill-vars" as *;
+
+.add-payment-made-page {
+  min-height: 100vh;
+  background: #f1f3f6;
+  padding: 20px;
+
+  .payment-form-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    .section-header-main {
+      padding: 15px 25px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+
+        .cancel-btn {
+          background: #eee;
+          color: #333;
+          border: 1px solid #ccc;
+          padding: 6px 20px;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          font-size: 12px;
+        }
+
+        .submit-btn {
+          background: #323743;
+          color: #fff;
+          border: none;
+          padding: 6px 25px;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .form-container-inner {
+      padding: 25px;
+
+      .back-nav {
+        margin-bottom: 20px;
+        .back-btn {
+          background: #323743;
+          color: #fff;
+          border: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 40px;
+        padding: 30px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background: #fdfdfd;
+        position: relative;
+
+        .form-section {
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+        }
+
+        .input-group-row {
+          display: flex;
+          gap: 20px;
+          .input-field {
+            flex: 1;
+          }
+        }
+
+        .input-field {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+
+          label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: #fdfdfd;
+            padding: 0 8px;
+            font-size: 11px;
+            color: #888;
+            font-weight: 600;
+            z-index: 1;
+          }
+
+          input,
+          select {
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            width: 100%;
+
+            &:focus {
+              border-color: #dbd836;
+              box-shadow: 0 0 0 2px rgba(219, 216, 54, 0.1);
+            }
+          }
+
+          &.full-width {
+            width: 100%;
+          }
+        }
+      }
+
+      .unpaid-list-section {
+        margin-top: 30px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: hidden;
+
+        .section-title {
+          background: #e3e6f0;
+          padding: 10px;
+          text-align: center;
+          font-weight: 700;
+          font-size: 13px;
+          color: #444;
+          border-bottom: 1px solid #ccc;
+        }
+
+        .unpaid-table-wrapper {
+          .unpaid-table {
+            width: 100%;
+            border-collapse: collapse;
+
+            thead {
+              background: #f8f9fc;
+              th {
+                padding: 10px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #555;
+                border-bottom: 1px solid #eee;
+                border-right: 1px solid #eee;
+              }
+            }
+
+            tbody {
+              td {
+                padding: 10px;
+                text-align: center;
+                font-size: 13px;
+                border-bottom: 1px solid #eee;
+                border-right: 1px solid #eee;
+
+                .payment-amt-input {
+                  width: 100%;
+                  padding: 6px;
+                  border: 1px solid #ccc;
+                  border-radius: 20px;
+                  text-align: center;
+                  background: #f9f9f9;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .payment-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        padding: 20px;
+        gap: 10px;
+
+        .summary-row {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+
+          label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+          }
+
+          input {
+            width: 180px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: right;
+            color: #666;
+          }
+
+          &.total {
+            input {
+              font-weight: 700;
+              color: #000;
+            }
+          }
+        }
+      }
+    }
+  }
+}

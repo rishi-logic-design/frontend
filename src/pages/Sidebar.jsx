@@ -9,11 +9,10 @@ import {
   FaFileInvoice,
   FaCalculator,
   FaCog,
-  FaPaypal,
-  FaBoxOpen,
   FaHome,
-  FaUsers,
   FaBolt,
+  FaShoppingBasket,
+  FaTruck,
 } from "react-icons/fa";
 import vendorProfileImageService from "../services/vendorProfileImageService";
 
@@ -71,7 +70,27 @@ const Sidebar = () => {
         { name: "New Challan", path: "/vendor/new-challan" },
         { name: "Invoices", path: "/vendor/bills" },
         { name: "Payment Receipts", path: "/vendor/payment-receipts" },
+        { name: "Credit Note", path: "/vendor/payment-receipts" },
+        { name: "E-Invoice", path: "/vendor/e-invoice" },
+        { name: "Sales Debit Note", path: "/vendor/payment-receipts" },
       ],
+    },
+    {
+      type: "dropdown",
+      name: "Purchase",
+      icon: FaShoppingBasket,
+      section: "purchase",
+      items: [
+        { name: "Purchase List", path: "/vendor/purchases" },
+        { name: "Payments Made", path: "/vendor/payments-made" },
+        { name: "New Purchase", path: "/vendor/new-purchase" },
+      ],
+    },
+    {
+      type: "single",
+      name: "e-Waybill",
+      icon: FaTruck,
+      path: "/vendor/ewaybill",
     },
     {
       type: "dropdown",
@@ -79,28 +98,10 @@ const Sidebar = () => {
       icon: FaFileInvoice,
       section: "master",
       items: [
-        { name: "New Challan", path: "/vendor/new-challan" },
-        { name: "Invoices", path: "/vendor/bills" },
-        { name: "Payment Receipts", path: "/vendor/payment-receipts" },
+        { name: "Customer", path: "/vendor/customer" },
+        { name: "vendor", path: "/vendor/vendor" },
+        { name: "product", path: "/vendor/product" },
       ],
-    },
-    {
-      type: "single",
-      name: "Customer",
-      icon: FaUsers,
-      path: "/vendor/customer",
-    },
-    {
-      type: "single",
-      name: "Product",
-      icon: FaBoxOpen,
-      path: "/vendor/product",
-    },
-    {
-      type: "single",
-      name: "Payment",
-      icon: FaPaypal,
-      path: "/vendor/payment",
     },
     {
       type: "single",
@@ -108,7 +109,6 @@ const Sidebar = () => {
       icon: FaCog,
       path: "/vendor/account",
     },
-
     {
       type: "dropdown",
       name: "Settings",

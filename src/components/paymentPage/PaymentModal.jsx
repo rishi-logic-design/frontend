@@ -31,7 +31,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
-  // Fetch customers on mount
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -66,15 +65,12 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
         reference: payment.reference || "",
         note: payment.note || "",
 
-        // Bank fields
         bankName: payment.bankName || "",
         accountNumber: payment.accountNumber || "",
         ifscCode: payment.ifscCode || "",
 
-        // UPI fields
         upiId: payment.upiId || "",
 
-        // Cheque fields
         chequeNumber: payment.chequeNumber || "",
         chequeDate: payment.chequeDate?.split("T")[0] || "",
         chequeBankName: payment.chequeBankName || "",
@@ -108,7 +104,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
     try {
       const response = await customerService.getCustomers();
 
-      // ✅ FIX HERE
       const customerList = response.data?.rows || [];
 
       console.log("Customers fetched:", customerList.length);
@@ -126,7 +121,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
     setSearchTerm(value);
     setShowCustomerDropdown(true);
 
-    // Clear selected customer if search is cleared
     if (!value) {
       setSelectedCustomer(null);
       setFormData((prev) => ({ ...prev, customerId: "" }));
@@ -141,7 +135,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
     setFormData((prev) => ({ ...prev, customerId: customer.id }));
     setShowCustomerDropdown(false);
 
-    // Clear customer error if exists
     if (errors.customerId) {
       setErrors((prev) => ({ ...prev, customerId: "" }));
     }
@@ -154,7 +147,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
       [name]: value,
     }));
 
-    // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -188,7 +180,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
       newErrors.paymentDate = "Payment date is required";
     }
 
-    // Payment date should not be in future
     const selectedDate = new Date(formData.paymentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -196,7 +187,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
       newErrors.paymentDate = "Payment date cannot be in future";
     }
 
-    // Method-specific validations
     if (formData.method === "bank") {
       if (!formData.bankName) {
         newErrors.bankName = "Bank name is required";
@@ -257,7 +247,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
         customerId: Number(formData.customerId),
         amount: Number(formData.amount),
 
-        // ✅ IMPORTANT FIXES
         ifscCode: formData.ifscCode ? formData.ifscCode.toUpperCase() : null,
 
         chequeDate:
@@ -290,16 +279,6 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getCustomerDisplay = (customer) => {
-    const name =
-      customer.businessName ||
-      customer.customerName ||
-      customer.name ||
-      "Unknown";
-    const phone = customer.phoneNumber || customer.mobileNumber || "";
-    return phone ? `${name} (${phone})` : name;
   };
 
   return (

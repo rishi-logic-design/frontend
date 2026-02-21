@@ -393,7 +393,7 @@ const BillDetails = () => {
               </ul>
             ) : null}
           </div>
-        )}
+        )}  
 
         {/* Signature/Stamp */}
         {bill?.showSignatureStamp && bill?.signatureStamp && (

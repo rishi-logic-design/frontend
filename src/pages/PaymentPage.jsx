@@ -4,6 +4,7 @@ import paymentService from "../services/paymentService";
 import { getCustomerById } from "../services/customerService";
 import PaymentModal from "../components/paymentPage/PaymentModal";
 import { useNavigate } from "react-router-dom";
+import { FiSearch } from "react-icons/fi";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ const PaymentPage = () => {
     toDate: "",
   });
 
+  const [activeModeFilter, setActiveModeFilter] = useState("All");
+
   const [stats, setStats] = useState({
     totalTransactions: 0,
     totalAmount: 0,
@@ -35,6 +38,13 @@ const PaymentPage = () => {
     bankOpening: "0.00",
     cashBalance: "0.00",
     bankBalance: "0.00",
+    modeStats: {
+      All: { count: 0, amount: 0 },
+      Cash: { count: 0, amount: 0 },
+      Cheque: { count: 0, amount: 0 },
+      UPI: { count: 0, amount: 0 },
+      "Net Banking": { count: 0, amount: 0 },
+    },
   });
 
   useEffect(() => {
@@ -57,25 +67,47 @@ const PaymentPage = () => {
       const response = await paymentService.getPayments(params);
       const paymentData = response.rows || response.data || [];
       setPayments(paymentData);
-      console.log(response);
-      // Calculate stats
-      const totalAmount = paymentData.reduce(
-        (sum, payment) => sum + parseFloat(payment.amount || 0),
-        0,
-      );
+
+      // Calculate mode-specific stats
+      const modeStats = {
+        All: { count: paymentData.length, amount: 0 },
+        Cash: { count: 0, amount: 0 },
+        Cheque: { count: 0, amount: 0 },
+        UPI: { count: 0, amount: 0 },
+        "Net Banking": { count: 0, amount: 0 },
+      };
+
+      paymentData.forEach((payment) => {
+        const amount = parseFloat(payment.amount || 0);
+        modeStats.All.amount += amount;
+
+        const mode = (payment.method || payment.paymentMode || "")
+          .toLowerCase()
+          .trim();
+        if (mode === "cash") {
+          modeStats.Cash.count++;
+          modeStats.Cash.amount += amount;
+        } else if (mode === "cheque") {
+          modeStats.Cheque.count++;
+          modeStats.Cheque.amount += amount;
+        } else if (mode === "upi" || mode === "online") {
+          modeStats.UPI.count++;
+          modeStats.UPI.amount += amount;
+        } else {
+          modeStats["Net Banking"].count++;
+          modeStats["Net Banking"].amount += amount;
+        }
+      });
+
       setStats((prev) => ({
         ...prev,
         totalTransactions: paymentData.length,
-        totalAmount: totalAmount,
+        totalAmount: modeStats.All.amount,
+        modeStats,
       }));
     } catch (error) {
       console.error("Error fetching payments:", error);
       setPayments([]);
-      setStats((prev) => ({
-        ...prev,
-        totalTransactions: 0,
-        totalAmount: 0,
-      }));
     } finally {
       setLoading(false);
     }
@@ -122,14 +154,12 @@ const PaymentPage = () => {
   const handleEditPayment = (payment) => {
     setShowModal(true);
     setEditingPayment(null);
-
     loadPaymentDetails(payment.id);
   };
 
   const loadPaymentDetails = async (paymentId) => {
     try {
       const fullPayment = await paymentService.getPaymentById(paymentId);
-
       let customerData = null;
       if (fullPayment.customerId) {
         try {
@@ -138,7 +168,6 @@ const PaymentPage = () => {
           console.error("Error fetching customer:", err);
         }
       }
-
       setEditingPayment({
         ...fullPayment,
         Customer: customerData || fullPayment.Customer,
@@ -209,6 +238,7 @@ const PaymentPage = () => {
       toDate: "",
     });
     setSearchQuery("");
+    setActiveModeFilter("All");
   };
 
   const hasActiveFilters = () => {
@@ -217,26 +247,43 @@ const PaymentPage = () => {
       filters.subType ||
       filters.fromDate ||
       filters.toDate ||
-      searchQuery
+      searchQuery ||
+      activeModeFilter !== "All"
     );
   };
 
   const filteredData = payments.filter((item) => {
+    if (activeModeFilter !== "All") {
+      const mode = (item.method || item.paymentMode || "").toLowerCase().trim();
+      if (activeModeFilter === "Cash" && mode !== "cash") return false;
+      if (activeModeFilter === "Cheque" && mode !== "cheque") return false;
+      if (activeModeFilter === "UPI" && mode !== "upi" && mode !== "online")
+        return false;
+      if (activeModeFilter === "Net Banking") {
+        if (["cash", "cheque", "upi", "online"].includes(mode)) return false;
+      }
+    }
+
     if (!searchQuery) return true;
 
     const customerName =
       item.Customer?.name ||
       item.Customer?.companyName ||
       item.Customer?.businessName ||
+      item.customer?.customerName ||
+      item.customer?.companyName ||
+      item.customer?.businessName ||
       "";
     const paymentNumber = item.paymentNumber || "";
     const reference = item.reference || "";
+    const method = item.method || item.paymentMode || "";
 
     const query = searchQuery.toLowerCase();
     return (
       customerName.toLowerCase().includes(query) ||
       paymentNumber.toLowerCase().includes(query) ||
-      reference.toLowerCase().includes(query)
+      reference.toLowerCase().includes(query) ||
+      method.toLowerCase().includes(query)
     );
   });
 
@@ -285,201 +332,137 @@ const PaymentPage = () => {
     return statusColors[status] || "badge-secondary";
   };
 
-  return (  
+  return (
     <div className="payment-page">
-      <div className="payment-header">
-        <h1 className="page-title">
-          {activeBook === "cash" ? "Cash Book" : "Bank Book"}
-        </h1>
-        <div className="header-actions">
-          {parseFloat(
-            activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
-          ) === 0 && (
-            <button
-              className="opening-balance-btn"
-              onClick={() => setShowOpeningBalanceModal(true)}
-              title="Set Opening Balance"
-            >
-              Set Opening Balance
-            </button>
-          )}
-          <button
-            className="add-btn"
-            title="Add New Entry"
-            onClick={handleAddPayment}
+      <div className="dashboard-summary">
+        {Object.keys(stats.modeStats).map((mode) => (
+          <div
+            key={mode}
+            className={`summary-card ${activeModeFilter === mode ? "active" : ""} ${mode.toLowerCase().replace(" ", "-")}`}
+            onClick={() => setActiveModeFilter(mode)}
           >
-            +
+            <div className="card-header">
+              <span className="mode-name">
+                {mode} ({stats.modeStats[mode].count})
+              </span>
+            </div>
+            <div className="card-body">
+              <span className="mode-amount">
+                {formatAmount(stats.modeStats[mode].amount)}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div className="date-filter-standalone">
+          <button
+            className="filter-date-btn"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Filter by Date
           </button>
         </div>
       </div>
 
-      <div className="tabs-container">
-        <button
-          className={`tab ${activeTab === "credit" ? "active" : ""}`}
-          onClick={() => {
-            setActiveTab("credit");
-            setExpandedItem(null);
-          }}
-        >
-          Credit
-        </button>
-        <button
-          className={`tab ${activeTab === "debit" ? "active" : ""}`}
-          onClick={() => {
-            setActiveTab("debit");
-            setExpandedItem(null);
-          }}
-        >
-          Debit
-        </button>
-      </div>
-
-      {/* Summary Section - Always Visible */}
-      <div className="summary-section">
-        {parseFloat(
-          activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
-        ) > 0 && (
-          <div className="summary-row">
-            <span className="summary-label">Opening Balance</span>
-            <span className="summary-value">
-              {formatAmount(
-                activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
-              )}
-            </span>
-          </div>
-        )}
-        {parseFloat(
-          activeBook === "cash" ? stats.cashOpening : stats.bankOpening,
-        ) > 0 && (
-          <div className="summary-row">
-            {/* <span className="summary-label">Current Balance</span>
-            <span className="summary-value amount-highlight">
-              {formatAmount(
-                activeBook === "cash" ? stats.cashBalance : stats.bankBalance,
-              )}
-            </span> */}
-          </div>
-        )}
-        <div className="summary-row">
-          <span className="summary-label">Total Transactions</span>
-          <span className="summary-value">{stats.totalTransactions}</span>
-        </div>
-        <div className="summary-row">
-          <span className="summary-label">Total Amount</span>
-          <span className="summary-value amount-highlight">
-            {formatAmount(stats.totalAmount)}
-          </span>
-        </div>
-      </div>
-
-      <div className="search-section">
-        <div className="search-box">
-          <svg
-            className="search-icon-left"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-          >
-            <path
-              d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4"
-              stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
+      <div className="toolbar-section">
+        <div className="search-bar">
+          <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Search by customer, payment number, or reference"
-            className="search-input"
+            placeholder="Search by receipt no, party name, or payment mode..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          {searchQuery && (
-            <button
-              className="clear-search"
-              onClick={() => setSearchQuery("")}
-              title="Clear search"
-            >
-              ×
-            </button>
-          )}
         </div>
-        <button
-          className={`menu-icon-btn ${showFilters ? "active" : ""} ${hasActiveFilters() ? "has-filters" : ""}`}
-          title="Filter options"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 6h16M7 12h10M10 18h4"
+        <div className="toolbar-filters">
+          <button className="filter-btn">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            Payment Mode
+          </button>
+          <button className="filter-btn">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+            Sort By
+          </button>
+        </div>
       </div>
 
-      {/* Filter Panel */}
       {showFilters && (
-        <div className="filter-panel">
-          <div className="filter-header">
-            <h3>Filters</h3>
-            {hasActiveFilters() && (
-              <button className="clear-filters-btn" onClick={clearFilters}>
-                Clear All
+        <div className="filter-panel-overlay">
+          <div className="filter-panel-content">
+            <div className="filter-header">
+              <h3>Date Range</h3>
+              <button
+                className="close-btn"
+                onClick={() => setShowFilters(false)}
+              >
+                ×
               </button>
-            )}
-          </div>
-          <div className="filter-grid">
-            <div className="filter-group">
-              <label>Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
             </div>
-
-            <div className="filter-group">
-              <label>Sub Type</label>
-              <select
-                value={filters.subType}
-                onChange={(e) => handleFilterChange("subType", e.target.value)}
-              >
-                <option value="">All Types</option>
-                <option value="customer">Customer</option>
-                <option value="vendor">Vendor</option>
-                <option value="cash-deposit">Cash Deposit</option>
-                <option value="cash-withdrawal">Cash Withdrawal</option>
-                <option value="bank-charges">Bank Charges</option>
-                <option value="electricity-bill">Electricity Bill</option>
-                <option value="miscellaneous">Miscellaneous</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>From Date</label>
-              <input
-                type="date"
-                value={filters.fromDate}
-                onChange={(e) => handleFilterChange("fromDate", e.target.value)}
-              />
-            </div>
-
-            <div className="filter-group">
-              <label>To Date</label>
-              <input
-                type="date"
-                value={filters.toDate}
-                onChange={(e) => handleFilterChange("toDate", e.target.value)}
-              />
+            <div className="filter-body">
+              <div className="filter-row">
+                <div className="filter-group">
+                  <label>From Date</label>
+                  <input
+                    type="date"
+                    value={filters.fromDate}
+                    onChange={(e) =>
+                      handleFilterChange("fromDate", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="filter-group">
+                  <label>To Date</label>
+                  <input
+                    type="date"
+                    value={filters.toDate}
+                    onChange={(e) =>
+                      handleFilterChange("toDate", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+              <div className="filter-actions">
+                <button className="clear-btn" onClick={clearFilters}>
+                  Clear
+                </button>
+                <button
+                  className="apply-btn"
+                  onClick={() => setShowFilters(false)}
+                >
+                  Apply
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -511,12 +494,21 @@ const PaymentPage = () => {
           </div>
         ) : filteredData.length === 0 ? (
           <div className="empty-state">
-            <p>No payments found</p>
-            {hasActiveFilters() && (
-              <button className="clear-filters-btn" onClick={clearFilters}>
-                Clear Filters
-              </button>
-            )}
+            <div className="empty-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <p>No payment receipts found</p>
           </div>
         ) : (
           filteredData.map((entry) => (
@@ -563,7 +555,8 @@ const PaymentPage = () => {
                       "Unknown"}
                   </span>
                   <span className="entry-meta">
-                    {getPaymentMethodIcon(entry.method)} {entry.method} •{" "}
+                    {getPaymentMethodIcon(entry.method || entry.paymentMode)}{" "}
+                    {entry.method || entry.paymentMode} •{" "}
                     {formatDate(entry.paymentDate)}
                   </span>
                 </div>

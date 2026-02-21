@@ -4,7 +4,6 @@ import ledgerService from "../../services/ledgerService";
 import customerService from "../../services/customerService";
 import "./exportLedger.scss";
 
-
 const ExportLedger = () => {
   const navigate = useNavigate();
   const { id } = useParams();

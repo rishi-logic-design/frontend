@@ -10,7 +10,6 @@ import AddPayment from "./components/sales/AddPayment";
 import ChallanDetails from "./components/sales/ChallanDetails";
 import BillDetails from "./components/sales/BillDetails";
 import AddProduct from "./components/productPage/AddProduct";
-import AddCustomer from "./components/customerPage/AddCustomer";
 import CustomerDetails from "./components/customerPage/CostomerDetails";
 import ExportLedger from "./components/customerPage/ExportLedger";
 import ProductPage from "./pages/ProductPage";
@@ -26,6 +25,13 @@ import NotificationToast from "./components/notificationPage/NotificationToast";
 import NotificationSidebar from "./components/notificationPage/NotificationSidebar";
 import PaymentReceipts from "./components/sales/PaymentReceipts";
 import BillsList from "./components/sales/BillsList";
+import AddVendorPage from "./components/master/AddVendorPage";
+import EWayBill from "./pages/EWayBill";
+import EInvoice from "./components/sales/EInvoice";
+import PurchaseList from "./components/purchases/PurchaseList";
+import NewPurchase from "./components/purchases/NewPurchase";
+import PaymentsMade from "./components/purchases/PaymentsMade";
+import AddPaymentMade from "./components/purchases/AddPaymentMade";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -74,6 +80,7 @@ const App = () => {
           <Route path="dashboard" element={<HomePage />} />
           <Route path="customer" element={<Customer />} />
           <Route path="product" element={<ProductPage />} />
+          <Route path="vendor" element={<AddVendorPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="account/edit-profile" element={<EditProfile />} />
           <Route path="account/payment" element={<Payment />} />
@@ -160,15 +167,6 @@ const App = () => {
             }
           />
           <Route
-            path="add-customer"
-            element={
-              <ProtectedRoute>
-                <AddCustomer />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="add-product"
             element={
               <ProtectedRoute>
@@ -178,10 +176,50 @@ const App = () => {
           />
 
           <Route
-            path="payment"
+            path="ewaybill"
             element={
               <ProtectedRoute>
-                <PaymentPage />
+                <EWayBill />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="e-invoice"
+            element={
+              <ProtectedRoute>
+                <EInvoice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="purchases"
+            element={
+              <ProtectedRoute>
+                <PurchaseList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="new-purchase"
+            element={
+              <ProtectedRoute>
+                <NewPurchase />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="payments-made"
+            element={
+              <ProtectedRoute>
+                <PaymentsMade />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="add-payment-made"
+            element={
+              <ProtectedRoute>
+                <AddPaymentMade />
               </ProtectedRoute>
             }
           />

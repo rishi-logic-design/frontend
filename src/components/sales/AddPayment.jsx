@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./addPayment.scss";
 import customerService from "../../services/customerService";
 import paymentService from "../../services/paymentService";
+import billService from "../../services/billService";
 import { uploadPaymentAttachment } from "../../utils/firebaseStorage";
 import { useNotifications } from "../../context/NotificationContext";
 
 const AddPayment = () => {
   const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillBillId = searchParams.get("billId");
+  const prefillAction = searchParams.get("action");
+
   const [formData, setFormData] = useState({
     type: "",
     subType: "",
@@ -37,12 +42,114 @@ const AddPayment = () => {
   const [selectedCustomerData, setSelectedCustomerData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillBill, setPrefillBill] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetchCustomers();
+    fetchCustomers().then(() => {
+      if (prefillBillId) {
+        prefillFromBill(prefillBillId);
+      }
+    });
   }, []);
+
+  const prefillFromBill = async (billId) => {
+    try {
+      setPrefillLoading(true);
+      const billData = await billService.getBillById(billId);
+      const bill = billData?.bill || billData;
+      setPrefillBill(bill);
+
+      const customerId =
+        bill.customerId || bill.customer?.id || bill.customer?._id;
+
+      const totalAmt = parseFloat(bill.totalWithGST || bill.totalAmount || 0);
+      const paidAmt = parseFloat(bill.paidAmount || 0);
+      const pendingAmount = totalAmt - paidAmt;
+
+      const fillAmount =
+        prefillAction === "paid" ? pendingAmount.toString() : "";
+
+      setFormData((prev) => ({
+        ...prev,
+        type: "credit",
+        subType: "customer",
+        customerId: customerId || "",
+        amount: fillAmount,
+        adjustedInvoices:
+          prefillAction === "paid" && pendingAmount > 0
+            ? [{ billId: bill._id || bill.id, payAmount: pendingAmount }]
+            : [],
+      }));
+
+      if (customerId) {
+        try {
+          setLoadingInvoices(true);
+
+          const customerData = bill.customer || {};
+          setSelectedCustomerData(customerData);
+
+          const address =
+            parseAddress(
+              customerData.officeAddress || customerData.homeAddress,
+            ) ||
+            customerData.address ||
+            "";
+          const gstNumber = customerData.gstNumber || "";
+
+          setFormData((prev) => ({
+            ...prev,
+            homeAddress: address,
+            gstNumber,
+            totalOutstanding: pendingAmount,
+          }));
+
+          // Show ONLY this specific bill in the invoices list
+          setPendingInvoices([
+            {
+              id: bill._id || bill.id,
+              billNumber: bill.billNumber,
+              billDate: bill.billDate || bill.createdAt,
+              totalAmount: totalAmt,
+              paidAmount: paidAmt,
+              pendingAmount: pendingAmount,
+            },
+          ]);
+        } catch (err) {
+          console.error("Error fetching customer data for prefill:", err);
+        } finally {
+          setLoadingInvoices(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error prefilling bill data:", error);
+    } finally {
+      setPrefillLoading(false);
+    }
+  };
+
+  const parseAddress = (raw) => {
+    if (!raw) return "";
+    try {
+      const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return [
+        obj.streetNo || obj.street || "",
+        obj.houseNo || obj.house || "",
+        obj.residencyName || obj.building || obj.buildingNo || "",
+        obj.officeNo || obj.office || "",
+        obj.area || obj.locality || "",
+        obj.city || "",
+        obj.state || "",
+        obj.pinCode || obj.pin || "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+    } catch {
+      return typeof raw === "string" ? raw : "";
+    }
+  };
 
   const fetchCustomers = async () => {
     const vendorData = JSON.parse(localStorage.getItem("vendorData"));
@@ -58,11 +165,12 @@ const AddPayment = () => {
       } else if (Array.isArray(response)) {
         customerList = response;
       }
-      console.log(response);
       setCustomers(customerList);
+      return customerList;
     } catch (error) {
       console.error("Error fetching customers:", error);
       setCustomers([]);
+      return [];
     }
   };
 
@@ -83,7 +191,7 @@ const AddPayment = () => {
     setFormData((prev) => ({
       ...prev,
       customerId,
-      adjustedInvoices: [], // Reset adjusted invoices
+      adjustedInvoices: [],
     }));
 
     if (!customerId) {
@@ -91,7 +199,7 @@ const AddPayment = () => {
       setPendingInvoices([]);
       setFormData((prev) => ({
         ...prev,
-        address: "",
+        homeAddress: "",
         gstNumber: "",
         totalOutstanding: 0,
       }));
@@ -109,8 +217,7 @@ const AddPayment = () => {
       setSelectedCustomerData(customerData);
 
       const address =
-        customerData.officeAddress?.address ||
-        customerData.homeAddress?.address ||
+        parseAddress(customerData.officeAddress || customerData.homeAddress) ||
         customerData.address ||
         "";
       const gstNumber = customerData.gstNumber || "";
@@ -119,9 +226,6 @@ const AddPayment = () => {
         paymentService.getCustomerOutstanding(customerId),
         paymentService.getCustomerPendingInvoices(customerId),
       ]);
-
-      console.log("Outstanding response:", outstandingResponse);
-      console.log("Invoices response:", invoicesResponse);
 
       const outstanding = parseFloat(
         outstandingResponse.outstanding ||
@@ -132,7 +236,7 @@ const AddPayment = () => {
 
       setFormData((prev) => ({
         ...prev,
-        address,
+        homeAddress: address,
         gstNumber,
         totalOutstanding: outstanding,
       }));
@@ -156,28 +260,31 @@ const AddPayment = () => {
 
       let newAdjustedInvoices;
       if (amount === 0) {
-        // Remove if amount is 0
         newAdjustedInvoices = prev.adjustedInvoices.filter(
           (inv) => inv.billId !== invoiceId,
         );
       } else if (existingIndex !== -1) {
-        // Update existing
         newAdjustedInvoices = [...prev.adjustedInvoices];
         newAdjustedInvoices[existingIndex] = {
           billId: invoiceId,
           payAmount: amount,
         };
       } else {
-        // Add new
         newAdjustedInvoices = [
           ...prev.adjustedInvoices,
           { billId: invoiceId, payAmount: amount },
         ];
       }
 
+      const totalAdjusted = newAdjustedInvoices.reduce(
+        (sum, inv) => sum + parseFloat(inv.payAmount || 0),
+        0,
+      );
+
       return {
         ...prev,
         adjustedInvoices: newAdjustedInvoices,
+        amount: totalAdjusted > 0 ? totalAdjusted.toString() : prev.amount,
       };
     });
   };
@@ -185,7 +292,6 @@ const AddPayment = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("File size should not exceed 5MB");
         return;
@@ -209,37 +315,27 @@ const AddPayment = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate type
     if (!formData.type) {
       newErrors.type = "Payment type (Credit/Debit) is required";
     }
-
-    // Validate subType
     if (!formData.subType) {
       newErrors.subType = "Sub-type is required";
     }
 
-    // Validate customer for customer payments
     if (formData.subType === "customer" && !formData.customerId) {
       newErrors.customerId = "Customer is required";
     }
-
-    // Validate amount
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       newErrors.amount = "Valid amount is required";
     }
 
-    // Validate payment date
     if (!formData.paymentDate) {
       newErrors.paymentDate = "Payment date is required";
     }
-
-    // Validate payment method
     if (!formData.method) {
       newErrors.method = "Payment method is required";
     }
 
-    // Validate adjusted invoices total matches payment amount
     if (formData.adjustedInvoices.length > 0) {
       const totalAdjusted = formData.adjustedInvoices.reduce(
         (sum, inv) => sum + parseFloat(inv.payAmount || 0),
@@ -292,29 +388,50 @@ const AddPayment = () => {
         amount: parseFloat(formData.amount),
         paymentDate: formData.paymentDate,
         method: formData.method,
+        paymentMode: formData.method, 
         reference: formData.reference || null,
         note: formData.note || null,
         attachments: attachmentUrl ? [attachmentUrl] : [],
         status: "completed",
       };
 
-      // Add adjusted invoices if any bills were selected for payment
       if (formData.adjustedInvoices.length > 0) {
         paymentData.adjustedInvoices = formData.adjustedInvoices;
       }
 
-      console.log("Submitting payment data:", paymentData);
-
       const response = await paymentService.createPayment(paymentData);
 
-      console.log("Payment created successfully:", response);
-      await fetchNotifications();
+      if (prefillBillId) {
+        try {
+          const totalAmt = parseFloat(
+            prefillBill.totalWithGST || prefillBill.totalAmount || 0,
+          );
+          const alreadyPaid = parseFloat(prefillBill.paidAmount || 0);
+          const currentPay = parseFloat(formData.amount || 0);
+          const newPaid = alreadyPaid + currentPay;
 
+          if (newPaid >= totalAmt) {
+            await billService.markBillPaid(prefillBillId);
+          } else {
+            await billService.editBill(prefillBillId, {
+              status: "partially_paid",
+              paidAmount: newPaid.toFixed(2),
+              pendingAmount: (totalAmt - newPaid).toFixed(2),
+            });
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 800));
+        } catch (billErr) {
+          console.error("Could not update bill status:", billErr);
+        }
+      }
+
+      await fetchNotifications();
       setShowSuccessModal(true);
 
       setTimeout(() => {
         setShowSuccessModal(false);
-        navigate("/vendor/home", { state: { refresh: true } });
+        navigate("/vendor/bills", { state: { refresh: true } });
       }, 2000);
     } catch (error) {
       console.error("Error creating payment:", error);
@@ -339,15 +456,29 @@ const AddPayment = () => {
     );
   };
 
+  if (prefillLoading) {
+    return (
+      <div className="ap-fullscreen-loader">
+        <div className="ap-loader-ring">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <p>Loading bill details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="add-payment-page">
-      {/* Success Modal */}
+      
       {showSuccessModal && (
         <div className="success-modal-overlay">
           <div className="success-modal">
             <div className="success-icon">
               <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#10B981" />
+                <circle cx="12" cy="12" r="10" fill="#f59e0b" />
                 <path
                   d="M8 12l3 3 5-6"
                   stroke="white"
@@ -367,7 +498,15 @@ const AddPayment = () => {
         <button className="back-btn" onClick={() => navigate(-1)}>
           ←
         </button>
-        <h1>Add Payment</h1>
+        <div className="header-text">
+          <h1>{prefillBillId ? "Record Payment" : "Add Payment"}</h1>
+          {prefillBill && (
+            <span className="header-sub">
+              {prefillBill.billNumber} &nbsp;·&nbsp;
+              {prefillBill.customerName || prefillBill.customer?.customerName}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="payment-form-container">
@@ -471,7 +610,11 @@ const AddPayment = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="totalOutstanding">Total Outstanding</label>
+                    <label htmlFor="totalOutstanding">
+                      {prefillBillId
+                        ? "Pending Amount (This Bill)"
+                        : "Total Outstanding"}
+                    </label>
                     <input
                       type="text"
                       id="totalOutstanding"
@@ -491,7 +634,7 @@ const AddPayment = () => {
                   ) : (
                     pendingInvoices.length > 0 && (
                       <div className="invoices-section">
-                        <h3>Adjust Against Invoices (Optional)</h3>
+                        <h3>Adjust Against Invoices</h3>
                         <p className="invoices-hint">
                           Allocate payment amount to specific invoices
                         </p>
@@ -533,19 +676,45 @@ const AddPayment = () => {
                               </div>
                               <div className="pay-amount-input">
                                 <label>Pay Amount:</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max={invoice.pendingAmount}
-                                  step="0.01"
-                                  placeholder="₹0"
-                                  onChange={(e) =>
-                                    handleInvoiceAmountChange(
-                                      invoice.id,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "8px",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="₹0"
+                                    value={
+                                      formData.adjustedInvoices.find(
+                                        (inv) => inv.billId === invoice.id,
+                                      )?.payAmount || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleInvoiceAmountChange(
+                                        invoice.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    className="pay-full-btn"
+                                    onClick={() =>
+                                      handleInvoiceAmountChange(
+                                        invoice.id,
+                                        parseFloat(
+                                          invoice.pendingAmount,
+                                        ).toFixed(2),
+                                      )
+                                    }
+                                  >
+                                    Pay Full
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -587,18 +756,43 @@ const AddPayment = () => {
           {/* Amount */}
           <div className="form-group">
             <label htmlFor="amount">Amount *</label>
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount}
-              onChange={handleInputChange}
-              placeholder="Enter Amount"
-              className={errors.amount ? "error" : ""}
-              required
-              min="0"
-              step="0.01"
-            />
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                value={formData.amount}
+                onChange={handleInputChange}
+                placeholder="Enter Amount"
+                className={errors.amount ? "error" : ""}
+                style={{ flex: 1 }}
+                required
+                min="0"
+                step="0.01"
+              />
+              {prefillBillId && (
+                <button
+                  type="button"
+                  className="pay-full-btn-main"
+                  onClick={() => {
+                    const totalAmt = parseFloat(
+                      prefillBill.totalWithGST || prefillBill.totalAmount || 0,
+                    );
+                    const paidAmt = parseFloat(prefillBill.paidAmount || 0);
+                    const pending = (totalAmt - paidAmt).toFixed(2);
+
+                    setFormData((prev) => ({ ...prev, amount: pending }));
+
+                    // Also update adjusted invoices if only one
+                    if (pendingInvoices.length === 1) {
+                      handleInvoiceAmountChange(pendingInvoices[0].id, pending);
+                    }
+                  }}
+                >
+                  Full Paid
+                </button>
+              )}
+            </div>
             {errors.amount && (
               <span className="error-message">{errors.amount}</span>
             )}
@@ -616,13 +810,13 @@ const AddPayment = () => {
               required
             >
               <option value="">Select Payment Method</option>
-              <option value="cash">Cash</option>
-              <option value="bank">Bank Transfer</option>
-              <option value="online">Online</option>
-              <option value="upi">UPI</option>
-              <option value="cheque">Cheque</option>
-              <option value="card">Card</option>
-              <option value="other">Other</option>
+              <option value="cash">💵 Cash</option>
+              <option value="bank">🏦 Bank Transfer</option>
+              <option value="upi">📱 UPI</option>
+              <option value="cheque">📝 Cheque</option>
+              <option value="card">💳 Card</option>
+              <option value="online">🌐 Online</option>
+              <option value="other">💰 Other</option>
             </select>
             {errors.method && (
               <span className="error-message">{errors.method}</span>

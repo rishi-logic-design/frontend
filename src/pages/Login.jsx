@@ -48,7 +48,6 @@ const Login = () => {
     }
   };
 
-  // Send OTP
   const sendOtp = async () => {
     setMessage({ text: "", type: "" });
 
@@ -101,7 +100,6 @@ const Login = () => {
     }
   };
 
-  // Verify OTP
   const verifyOtp = async () => {
     setMessage({ text: "", type: "" });
     const otpValue = otp.join("");
@@ -151,7 +149,6 @@ const Login = () => {
     }
   };
 
-  // OTP Input Handlers
   const handleOtpChange = (index, value) => {
     if (!/^[0-9]?$/.test(value)) return;
 
@@ -185,7 +182,6 @@ const Login = () => {
     document.getElementById(`otp-${lastIndex}`)?.focus();
   };
 
-  // Resend OTP
   const handleResendOtp = async () => {
     setOtp(["", "", "", "", "", ""]);
     if (window.recaptchaVerifier) {
@@ -195,7 +191,6 @@ const Login = () => {
     await sendOtp();
   };
 
-  // Change Number
   const handleChangeNumber = () => {
     setStep("enterPhone");
     setOtp(["", "", "", "", "", ""]);
@@ -208,7 +203,6 @@ const Login = () => {
     }
   };
 
-  // Message Icon Component
   const MessageIcon = ({ type }) => {
     const icons = {
       success: "M20 6L9 17l-5-5",

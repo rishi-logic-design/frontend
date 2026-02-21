@@ -22,14 +22,14 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   justify-content: space-between;
 }
 
-.customer-page {
+.vendor-page {
   padding: 20px;
   background: $bg-page;
   min-height: 100vh;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.customer-header {
+.vendor-header {
   margin: -20px -20px 20px -20px;
   padding: 12px 25px;
   background: #fff;
@@ -72,7 +72,7 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 // Toolbar
-.customer-toolbar {
+.vendor-toolbar {
   @include flex-between;
   margin-bottom: 15px;
   gap: 20px;
@@ -100,15 +100,17 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     width: 100%;
     padding: 10px 15px 10px 45px;
     border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 15px;
-    background: #f9f9f9;
+    border-radius: $radius-sm;
+    font-size: 14px;
     outline: none;
     transition: all 0.2s;
 
     &:focus {
       border-color: $primary;
-      background: #fff;
+      box-shadow: 0 0 0 2px rgba(255, 204, 41, 0.2);
+    }
+    &::placeholder {
+      color: $text-light;
     }
   }
 }
@@ -116,135 +118,142 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 .toolbar-actions {
   display: flex;
   gap: 12px;
-}
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  .action-btn {
+    @include flex-center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: $radius-sm;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 
-  &.upload-btn,
-  &.excel-btn {
-    background: #e0e0e0;
-    color: #333;
-    border-color: #d0d0d0;
-    &:hover {
-      background: #d5d5d5;
+    &.upload-btn {
+      background: #e5e5e5;
+      color: #333;
+      &:hover {
+        background: #dcdcdc;
+      }
+    }
+
+    &.excel-btn {
+      background: #e5e5e5;
+      color: #333;
+      &:hover {
+        background: #dcdcdc;
+      }
+    }
+
+    &.add-vendor-btn {
+      background: $primary;
+      color: #111;
+      &:hover {
+        background: $primary-hover;
+      }
     }
   }
-
-  &.add-btn {
-    background: $primary;
-    color: #000;
-    &:hover {
-      background: $primary-hover;
-    }
-  }
 }
 
-// Table
-.customer-table-container {
-  background: $bg-card;
+// Table Styling
+.vendor-table-wrapper {
+  background: #fff;
   border-radius: $radius;
   box-shadow: $shadow;
   overflow: hidden;
-  margin-bottom: 20px;
 }
 
-.customer-table {
+.vendor-table {
   width: 100%;
   border-collapse: collapse;
 
-  thead tr {
-    background: #e9e9e9;
-    th {
-      padding: 12px 15px;
+  thead {
+    background: #f8f9fa;
+    tr th {
+      padding: 14px 18px;
       text-align: left;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: $text-muted;
+      color: #666;
+      border-bottom: 2px solid #eee;
+      white-space: nowrap;
       text-transform: capitalize;
-      border-bottom: 1px solid $border;
     }
   }
 
-  tbody {
-    .customer-row {
-      border-bottom: 1px solid #eeeeee;
-      &:hover {
-        background: #fff9e6; // Light amber on hover
-      }
+  tbody tr {
+    border-bottom: 1px solid #f2f2f2;
+    transition: all 0.15s;
 
-      &.selected {
-        background: #fff4d1;
-      }
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover {
+      background: #fafafa;
+    }
 
-      td {
-        padding: 15px;
-        font-size: 13px;
-        color: $text-main;
-        vertical-align: top;
-      }
+    td {
+      padding: 12px 18px;
+      font-size: 14px;
+      color: $text-main;
+      vertical-align: middle;
     }
   }
 }
 
+// Action Icons in Table
 .action-cell {
   display: flex;
-  gap: 6px;
-}
+  gap: 8px;
 
-.icon-btn {
-  @include flex-center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    @include flex-center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
 
-  &.edit {
-    color: #4c6ef5;
-    &:hover {
+    &.edit-icon-btn {
       background: #f0f4ff;
-      border-color: #4c6ef5;
+      color: #4c6ef5;
+      &:hover {
+        background: #e0e7ff;
+      }
     }
-  }
-  &.delete {
-    color: #fa5252;
-    &:hover {
+
+    &.delete-icon-btn {
       background: #fff5f5;
-      border-color: #fa5252;
+      color: #fa5252;
+      &:hover {
+        background: #ffe3e3;
+      }
     }
   }
 }
 
 // Pagination
-.pagination-container {
+.vendor-pagination {
   @include flex-between;
-  padding: 10px 0;
-  color: #333;
-  font-size: 13px;
+  padding: 20px 5px;
+  color: $text-muted;
+  font-size: 14px;
 
   .rows-per-page {
     display: flex;
     align-items: center;
-    gap: 8px;
-
+    gap: 10px;
     select {
       padding: 4px 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       border-radius: 4px;
-      background: #fff;
+      outline: none;
+      &:focus {
+        border-color: $primary;
+      }
     }
   }
 
@@ -253,36 +262,32 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     align-items: center;
     gap: 15px;
 
-    .page-info {
-      color: #666;
-    }
-
     .nav-btns {
       display: flex;
       gap: 5px;
-
       button {
+        width: 32px;
+        height: 32px;
         @include flex-center;
-        width: 30px;
-        height: 30px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #ddd;
         background: #fff;
         border-radius: 4px;
         cursor: pointer;
+        color: #666;
         transition: all 0.2s;
 
+        &:hover:not(:disabled) {
+          background: #f5f5f5;
+          border-color: #ccc;
+        }
         &:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
-
-        &:hover:not(:disabled) {
-          background: #f5f5f5;
-        }
-
         &.active {
           background: $primary;
           border-color: $primary;
+          color: #111;
           font-weight: 700;
         }
       }
@@ -290,7 +295,8 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 }
 
-// Drawers & Modals
+// ─── Drawers & Modals ─────────────────────────────────────────────────────────
+
 .drawer-overlay,
 .modal-overlay {
   position: fixed;
@@ -424,41 +430,18 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
   }
 
-  input {
+  input,
+  select {
     padding: 10px 12px;
     border: 1.2px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    background: #fff;
     transition: all 0.2s;
     &:focus {
       border-color: $primary;
       box-shadow: 0 0 0 3px rgba(255, 204, 41, 0.2);
       outline: none;
-    }
-  }
-}
-
-.avatar-upload-wrap {
-  text-align: center;
-  margin-bottom: 30px;
-
-  .avatar-preview {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #f8f9fa;
-    margin: 0 auto 12px;
-    border: 2px solid #eee;
-  }
-
-  .upload-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #4c6ef5;
-    cursor: pointer;
-    &:hover {
-      text-decoration: underline;
     }
   }
 }
@@ -497,5 +480,70 @@ $shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       height: 42px;
       font-weight: 600;
     }
+  }
+}
+
+// ─── Create Vendor Page (Standalone) ──────────────────────────────────────────
+.create-vendor-page {
+  padding: 24px;
+  background: $bg-page;
+  min-height: 100vh;
+}
+
+.create-vendor-header {
+  @extend .vendor-header;
+  margin: -24px -24px 24px -24px;
+}
+
+.create-vendor-card {
+  background: #fff;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  .form-section-title {
+    @extend .section-title;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+}
+
+.create-form-grid {
+  @extend .form-grid;
+  margin-bottom: 25px;
+}
+
+.create-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+
+  button {
+    padding: 10px 25px;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+}
+
+.form-alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+
+  &--error {
+    background: #fff5f5;
+    color: #fa5252;
+    border: 1px solid #ffd8d8;
+  }
+  &--success {
+    background: #f6ffed;
+    color: #52c41a;
+    border: 1px solid #b7eb8f;
   }
 }
