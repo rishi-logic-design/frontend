@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MdDelete, MdAdd, MdCloudUpload } from "react-icons/md";
+import {
+  MdDelete,
+  MdAdd,
+  MdCloudUpload,
+  MdArrowBack,
+  MdSave,
+  MdShoppingCart,
+  MdPerson,
+  MdLayers,
+  MdDescription,
+  MdFingerprint,
+} from "react-icons/md";
+import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import purchaseService from "../../services/purchaseService";
 import vendorVendorService from "../../services/vendorVendorService";
 import productService from "../../services/productService";
@@ -25,11 +37,16 @@ const NewPurchase = () => {
   const [sellers, setSellers] = useState([]);
   const [products, setProducts] = useState([]);
   const [vendorData, setVendorData] = useState(null);
+  const [showModal, setShowModal] = useState({
+    show: false,
+    success: true,
+    message: "",
+  });
 
   const [formData, setFormData] = useState({
     purchaseType: "Tax Invoice",
     prefix: "PUR",
-    purchaseNumber: "1",
+    purchaseNumber: "",
     purchaseDate: new Date().toISOString().split("T")[0],
     sellerId: "",
   });
@@ -131,29 +148,73 @@ const NewPurchase = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.sellerId) return alert("Please select a seller");
-    if (!formData.purchaseNumber) return alert("Please enter purchase number");
+    if (!formData.sellerId) {
+      setShowModal({
+        show: true,
+        success: false,
+        message: "Please select a seller",
+      });
+      return;
+    }
+    if (!formData.purchaseNumber) {
+      setShowModal({
+        show: true,
+        success: false,
+        message: "Please enter purchase number",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
+
+      // Validation: Check for duplicate invoice number for the same seller
+      const existingData = await purchaseService.getPurchases({ size: 1000 });
+      const allPurchases = existingData?.data?.rows || existingData?.rows || [];
+      const isDuplicate = allPurchases.some(
+        (p) =>
+          (p.sellerId === formData.sellerId ||
+            p.VendorId === formData.sellerId) &&
+          p.purchaseNumber === formData.purchaseNumber,
+      );
+
+      if (isDuplicate) {
+        setLoading(false);
+        return setShowModal({
+          show: true,
+          success: false,
+          message: `Invoice number "${formData.purchaseNumber}" already exists for this seller. Please use a unique number.`,
+        });
+      }
+
       const subtotal = calculateSubtotal();
       const gstTotal = calculateGst();
       const totalAmount = subtotal + gstTotal;
 
       const payload = {
         ...formData,
-        items,
+        items: items.filter((i) => i.itemName),
         termsAndConditions: terms.join("\n"),
         signature: signatureUrl,
-        status: "Unpaid",
+        status: "unpaid",
         totalAmount: totalAmount,
         paidAmount: 0,
+        pendingAmount: totalAmount,
       };
+
       await purchaseService.createPurchase(payload);
-      alert("Purchase created successfully!");
-      navigate("/vendor/purchases");
+      setShowModal({
+        show: true,
+        success: true,
+        message: "Purchase bill created successfully!",
+      });
+      setTimeout(() => navigate("/vendor/purchases"), 2000);
     } catch (error) {
-      alert(error.message || "Failed to create purchase");
+      setShowModal({
+        show: true,
+        success: false,
+        message: error.message || "Failed to create purchase",
+      });
     } finally {
       setLoading(false);
     }
@@ -161,263 +222,400 @@ const NewPurchase = () => {
 
   return (
     <div className="new-purchase-page">
-      <div className="np-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
-        <h1>New Purchase</h1>
+      {showModal.show && (
+        <div className="custom-modal-overlay">
+          <div
+            className={`custom-modal ${showModal.success ? "success" : "error"}`}
+          >
+            <div
+              className={`modal-icon ${showModal.success ? "success" : "error"}`}
+            >
+              {showModal.success ? <FaCheckCircle /> : <FaExclamationCircle />}
+            </div>
+            <h3>{showModal.success ? "Success" : "Error"}</h3>
+            <p>{showModal.message}</p>
+            {!showModal.success && (
+              <button
+                className="close-btn"
+                onClick={() => setShowModal({ ...showModal, show: false })}
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="page-header-container">
+        <div className="header-info">
+          <button className="back-btn-pill" onClick={() => navigate(-1)}>
+            <MdArrowBack /> Back
+          </button>
+          <h1>Create New Purchase</h1>
+          <p>Record a new purchase bill from your vendor</p>
+        </div>
+        <div className="header-actions">
+          <button className="btn-outline" onClick={() => navigate(-1)}>
+            Discard
+          </button>
+          <button
+            className={`btn-dark ${loading ? "disabled" : ""}`}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            <MdSave /> {loading ? "Saving..." : "Save Purchase"}
+          </button>
+        </div>
       </div>
 
-      <div className="np-container">
-        {/* Top Section */}
-        <div className="np-card top-section">
-          <div className="section-left">
-            <div className="type-selection">
-              <label>
-                <input
-                  type="radio"
-                  name="type"
-                  checked={formData.purchaseType === "Tax Invoice"}
-                  onChange={() =>
-                    setFormData({ ...formData, purchaseType: "Tax Invoice" })
-                  }
-                />{" "}
-                Tax Invoice
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="type"
-                  checked={formData.purchaseType === "Bill of Supply"}
-                  onChange={() =>
-                    setFormData({ ...formData, purchaseType: "Bill of Supply" })
-                  }
-                />{" "}
-                Bill of Supply
-              </label>
+      <div className="main-form-content">
+        <div className="info-grid">
+          <div className="form-card">
+            <div className="card-header">
+              <h3>
+                <MdLayers /> Bill Configuration
+              </h3>
+              <div className="type-radio-group">
+                <label>
+                  <input
+                    type="radio"
+                    checked={formData.purchaseType === "Tax Invoice"}
+                    onChange={() =>
+                      setFormData({ ...formData, purchaseType: "Tax Invoice" })
+                    }
+                  />{" "}
+                  Tax Invoice
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    checked={formData.purchaseType === "Bill of Supply"}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        purchaseType: "Bill of Supply",
+                      })
+                    }
+                  />{" "}
+                  Bill of Supply
+                </label>
+              </div>
             </div>
-            <div className="invoice-inputs">
-              <div className="input-group">
-                <label>Invoice Purchase Prefix</label>
-                <input
-                  type="text"
-                  value={formData.prefix}
-                  onChange={(e) =>
-                    setFormData({ ...formData, prefix: e.target.value })
-                  }
-                />
-              </div>
-              <div className="input-group">
-                <label>Invoice Purchase No.</label>
-                <input
-                  type="text"
-                  value={formData.purchaseNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, purchaseNumber: e.target.value })
-                  }
-                />
-              </div>
-              <div className="input-group">
-                <label>Purchase Date</label>
-                <input
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, purchaseDate: e.target.value })
-                  }
-                />
+            <div className="card-body">
+              <div className="info-grid">
+                <div className="input-field">
+                  <label>Purchase Prefix</label>
+                  <input
+                    type="text"
+                    value={formData.prefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, prefix: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="input-field">
+                  <label>Invoice Number</label>
+                  <input
+                    type="text"
+                    value={formData.purchaseNumber}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        purchaseNumber: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="input-field">
+                  <label>Purchase Date</label>
+                  <input
+                    type="date"
+                    value={formData.purchaseDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, purchaseDate: e.target.value })
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
-          <div className="section-right buyer-details">
-            <h3>BUYER DETAILS</h3>
-            <div className="buyer-info">
+
+          <div className="buyer-details-box">
+            <h4>
+              <MdPerson /> Buyer Details
+            </h4>
+            <p>
               <strong>{vendorData?.businessName || "My Company"}</strong>
-              <p>{vendorData?.address || "N/A"}</p>
-              <p>GST: {vendorData?.gst || "N/A"}</p>
+            </p>
+            <p>{vendorData?.address || "Address not set"}</p>
+            <div className="gst-tag">
+              GSTIN: {vendorData?.gst || "Not Available"}
             </div>
           </div>
         </div>
 
-        {/* Seller Details */}
-        <div className="np-card seller-section">
-          <div className="section-header">
-            <h3>SELLER DETAILS</h3>
-            <div className="header-actions">
+        <div className="form-card">
+          <div className="card-header">
+            <h3>
+              <MdPerson /> Seller Information
+            </h3>
+            <button
+              className="btn-add-item"
+              style={{ marginTop: 0 }}
+              onClick={() => navigate("/vendor/vendor")}
+            >
+              + Add New Seller
+            </button>
+          </div>
+          <div className="card-body">
+            <div className="input-field">
+              <label>Select Seller</label>
               <select
                 value={formData.sellerId}
                 onChange={(e) =>
                   setFormData({ ...formData, sellerId: e.target.value })
                 }
               >
-                <option value="">Select Seller</option>
+                <option value="">Search or choose a seller...</option>
                 {sellers.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.vendorName} ({s.businessName})
+                    {s.vendorName} {s.businessName ? `(${s.businessName})` : ""}
                   </option>
                 ))}
               </select>
-              <button
-                className="btn-secondary"
-                onClick={() => navigate("/vendor/vendor")}
-              >
-                Add New Seller
+            </div>
+          </div>
+        </div>
+
+        <div className="form-card">
+          <div className="card-header">
+            <h3>
+              <MdShoppingCart /> Product Items
+            </h3>
+          </div>
+          <div className="card-body" style={{ padding: 0 }}>
+            <table className="items-table">
+              <thead>
+                <tr>
+                  <th>Item Name & Description</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Price (₹)</th>
+                  <th>GST %</th>
+                  <th>Total (₹)</th>
+                  <th width="50"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <input
+                        list="product-list"
+                        value={item.itemName}
+                        onChange={(e) =>
+                          updateItem(index, "itemName", e.target.value)
+                        }
+                        placeholder="Type item name..."
+                      />
+                      <datalist id="product-list">
+                        {products.map((p) => (
+                          <option key={p.id} value={p.name} />
+                        ))}
+                      </datalist>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) =>
+                          updateItem(index, "qty", e.target.value)
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={item.unit}
+                        onChange={(e) =>
+                          updateItem(index, "unit", e.target.value)
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={item.price}
+                        onChange={(e) =>
+                          updateItem(index, "price", e.target.value)
+                        }
+                      />
+                    </td>
+                    <td>
+                      <select
+                        value={item.gstPercent}
+                        onChange={(e) =>
+                          updateItem(index, "gstPercent", e.target.value)
+                        }
+                      >
+                        {[0, 5, 12, 18, 28].map((g) => (
+                          <option key={g} value={g}>
+                            {g}%
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="item-total-cell">
+                      ₹
+                      {(
+                        toNum(item.qty) *
+                        toNum(item.price) *
+                        (1 + toNum(item.gstPercent) / 100)
+                      ).toFixed(2)}
+                    </td>
+                    <td>
+                      <button
+                        className="btn-delete"
+                        onClick={() => removeItem(index)}
+                      >
+                        <MdDelete />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ padding: "20px 30px" }}>
+              <button className="btn-add-item" onClick={addItem}>
+                <MdAdd /> Add Row
               </button>
             </div>
           </div>
         </div>
 
-        {/* Products Section */}
-        <div className="np-card products-section">
-          <h3>PRODUCTS</h3>
-          <table className="products-table">
-            <thead>
-              <tr>
-                <th>Item Name</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Price</th>
-                <th>GST %</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={index}>
-                  <td>
-                    <input
-                      list="product-list"
-                      value={item.itemName}
-                      onChange={(e) =>
-                        updateItem(index, "itemName", e.target.value)
-                      }
-                      placeholder="Select or enter item"
-                    />
-                    <datalist id="product-list">
-                      {products.map((p) => (
-                        <option key={p.id} value={p.name} />
-                      ))}
-                    </datalist>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.qty}
-                      onChange={(e) => updateItem(index, "qty", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      value={item.unit}
-                      onChange={(e) =>
-                        updateItem(index, "unit", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.price}
-                      onChange={(e) =>
-                        updateItem(index, "price", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={item.gstPercent}
-                      onChange={(e) =>
-                        updateItem(index, "gstPercent", e.target.value)
-                      }
-                    >
-                      <option value="0">0%</option>
-                      <option value="5">5%</option>
-                      <option value="12">12%</option>
-                      <option value="18">18%</option>
-                      <option value="28">28%</option>
-                    </select>
-                  </td>
-                  <td className="item-total">
-                    ₹
-                    {(
-                      toNum(item.qty) *
-                      toNum(item.price) *
-                      (1 + toNum(item.gstPercent) / 100)
-                    ).toFixed(2)}
-                  </td>
-                  <td>
-                    <button
-                      className="btn-delete"
-                      onClick={() => removeItem(index)}
-                    >
-                      <MdDelete />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button className="btn-add" onClick={addItem}>
-            <MdAdd /> Add Item
-          </button>
-        </div>
-
-        {/* Footer Section */}
-        <div className="np-footer-row">
-          <div className="np-card terms-section">
-            <h3>Terms & Conditions</h3>
-            <textarea
-              value={terms.join("\n")}
-              onChange={(e) => setTerms(e.target.value.split("\n"))}
-            />
-          </div>
-          <div className="np-card signature-section">
-            <h3>UPLOAD SIGNATURE (optional)</h3>
-            <div className="upload-box">
-              {signatureUrl ? (
-                <img
-                  src={signatureUrl}
-                  alt="Signature"
-                  className="sig-preview"
+        <div className="purchase-summary-section">
+          <div className="footer-inputs">
+            <div className="form-card">
+              <div className="card-header">
+                <h3>
+                  <MdDescription /> Notes & Terms
+                </h3>
+              </div>
+              <div className="card-body">
+                <textarea
+                  rows="4"
+                  style={{
+                    width: "100%",
+                    border: "none",
+                    background: "transparent",
+                    outline: "none",
+                  }}
+                  placeholder="Enter terms and conditions..."
+                  value={terms.join("\n")}
+                  onChange={(e) => setTerms(e.target.value.split("\n"))}
                 />
-              ) : (
-                <label className="upload-label">
-                  <MdCloudUpload size={32} />
-                  <span>
-                    {isUploading
-                      ? `Uploading... ${uploadProgress}%`
-                      : "Click to upload signature"}
-                  </span>
-                  <input type="file" hidden onChange={handleFileUpload} />
-                </label>
-              )}
+              </div>
+            </div>
+            <div className="form-card">
+              <div className="card-header">
+                <h3>
+                  <MdFingerprint /> Digital Signature
+                </h3>
+              </div>
+              <div className="card-body">
+                <div
+                  className="upload-signature-box"
+                  onClick={() => document.getElementById("sig-input").click()}
+                >
+                  {signatureUrl ? (
+                    <img
+                      src={signatureUrl}
+                      alt="Signature"
+                      className="sig-preview"
+                    />
+                  ) : (
+                    <div className="upload-prompt">
+                      <MdCloudUpload size={40} />
+                      <span>
+                        {isUploading
+                          ? `Uploading... ${uploadProgress}%`
+                          : "Click to upload authorized signature"}
+                      </span>
+                    </div>
+                  )}
+                  <input
+                    id="sig-input"
+                    type="file"
+                    hidden
+                    onChange={handleFileUpload}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          <div className="np-card summary-section">
-            <div className="summary-row">
-              <span>Subtotal:</span>
-              <span>₹{calculateSubtotal().toFixed(2)}</span>
+
+          <div className="summary-card-dark">
+            <div className="summary-line">
+              <label>Subtotal</label>
+              <span>
+                ₹{" "}
+                {calculateSubtotal().toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
             </div>
-            <div className="summary-row">
-              <span>GST Total:</span>
-              <span>₹{calculateGst().toFixed(2)}</span>
+            <div className="summary-line">
+              <label>GST Amount</label>
+              <span>
+                ₹{" "}
+                {calculateGst().toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
             </div>
-            <div className="summary-row total">
-              <span>Grand Total:</span>
-              <span>₹{(calculateSubtotal() + calculateGst()).toFixed(2)}</span>
+            <div className="summary-line grand-total">
+              <label>Net Payable</label>
+              <span>
+                ₹{" "}
+                {(calculateSubtotal() + calculateGst()).toLocaleString(
+                  "en-IN",
+                  { minimumFractionDigits: 2 },
+                )}
+              </span>
             </div>
             <button
-              className="btn-submit"
+              className={`btn-submit-main ${loading ? "loading" : ""}`}
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? "Creating..." : "SAVE PURCHASE"}
+              {loading ? "Processing..." : "Confirm & Save Purchase"}
             </button>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .btn-submit-main {
+          margin-top: 20px;
+          background: #dbd836;
+          color: #000;
+          border: none;
+          padding: 16px;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 0.2s;
+          &:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+          }
+          &.loading {
+            opacity: 0.7;
+            pointer-events: none;
+          }
+        }
+      `}</style>
     </div>
   );
 };

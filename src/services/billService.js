@@ -118,6 +118,15 @@ const billService = {
       throw error.response?.data || error;
     }
   },
+
+  uploadBill: async (billData) => {
+    try {
+      const response = await api.post("/api/bills/upload", billData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default billService;

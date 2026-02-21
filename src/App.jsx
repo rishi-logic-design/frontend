@@ -32,6 +32,7 @@ import PurchaseList from "./components/purchases/PurchaseList";
 import NewPurchase from "./components/purchases/NewPurchase";
 import PaymentsMade from "./components/purchases/PaymentsMade";
 import AddPaymentMade from "./components/purchases/AddPaymentMade";
+import UploadPurchase from "./components/purchases/UploadPurchase";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -220,6 +221,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <AddPaymentMade />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="upload-purchase"
+            element={
+              <ProtectedRoute>
+                <UploadPurchase />
               </ProtectedRoute>
             }
           />

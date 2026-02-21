@@ -112,6 +112,30 @@ const paymentService = {
       throw error.response?.data || error;
     }
   },
+
+  getSellerOutstanding: async (sellerId) => {
+    try {
+      const response = await api.get(
+        `/api/payments/seller/${sellerId}/outstanding`,
+      );
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error("Error fetching seller outstanding:", error);
+      throw error.response?.data || error;
+    }
+  },
+
+  getSellerPendingPurchases: async (sellerId) => {
+    try {
+      const response = await api.get(
+        `/api/payments/seller/${sellerId}/purchases`,
+      );
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error("Error fetching seller pending purchases:", error);
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default paymentService;
