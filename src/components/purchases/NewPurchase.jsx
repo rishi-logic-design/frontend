@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MdDelete,
   MdAdd,
   MdCloudUpload,
   MdArrowBack,
-  MdSave,
-  MdShoppingCart,
   MdPerson,
-  MdLayers,
   MdDescription,
-  MdFingerprint,
 } from "react-icons/md";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import purchaseService from "../../services/purchaseService";
@@ -18,9 +14,13 @@ import vendorVendorService from "../../services/vendorVendorService";
 import productService from "../../services/productService";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase";
+import { toast } from "react-toastify";
 import "./newPurchase.scss";
 
-const toNum = (v) => parseFloat(v || 0);
+const toNum = (v) => {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+};
 
 const EMPTY_ITEM = {
   itemName: "",
@@ -43,12 +43,35 @@ const NewPurchase = () => {
     message: "",
   });
 
+  const [sellerSearch, setSellerSearch] = useState("");
+  const [showSellerDropdown, setShowSellerDropdown] = useState(false);
+  const sellerDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sellerDropdownRef.current &&
+        !sellerDropdownRef.current.contains(event.target)
+      ) {
+        setShowSellerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const [formData, setFormData] = useState({
     purchaseType: "Tax Invoice",
     prefix: "PUR",
     purchaseNumber: "",
     purchaseDate: new Date().toISOString().split("T")[0],
     sellerId: "",
+    consigneeType: "same",
+    copies: {
+      original: false,
+      duplicate: false,
+      triplicate: false,
+    },
   });
 
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
@@ -69,18 +92,33 @@ const NewPurchase = () => {
   const fetchSellers = async () => {
     try {
       const res = await vendorVendorService.getVendors();
-      setSellers(res?.data?.rows || res?.rows || []);
+      // res is response.data
+      const data = res?.data || res;
+      setSellers(Array.isArray(data) ? data : data?.rows || []);
     } catch (error) {
       console.error("Error fetching sellers:", error);
+      toast.error("Failed to fetch sellers.");
     }
   };
 
   const fetchProducts = async () => {
     try {
       const res = await productService.getProducts();
-      setProducts(res?.products || []);
+
+      if (Array.isArray(res)) {
+        setProducts(res);
+      } else if (res?.products && Array.isArray(res.products)) {
+        setProducts(res.products);
+      } else if (res?.rows && Array.isArray(res.rows)) {
+        setProducts(res.rows);
+      } else if (res?.data && Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else {
+        setProducts([]);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
+      toast.error("Failed to fetch products.");
     }
   };
 
@@ -123,6 +161,7 @@ const NewPurchase = () => {
       },
       (error) => {
         console.error("Upload error:", error);
+        toast.error("Failed to upload signature. Please try again.");
         setIsUploading(false);
       },
       async () => {
@@ -149,42 +188,37 @@ const NewPurchase = () => {
 
   const handleSubmit = async () => {
     if (!formData.sellerId) {
-      setShowModal({
-        show: true,
-        success: false,
-        message: "Please select a seller",
-      });
+      toast.error("Please select a seller");
       return;
     }
     if (!formData.purchaseNumber) {
-      setShowModal({
-        show: true,
-        success: false,
-        message: "Please enter purchase number",
-      });
+      toast.error("Please enter purchase number");
       return;
     }
 
     try {
       setLoading(true);
 
-      // Validation: Check for duplicate invoice number for the same seller
-      const existingData = await purchaseService.getPurchases({ size: 1000 });
-      const allPurchases = existingData?.data?.rows || existingData?.rows || [];
-      const isDuplicate = allPurchases.some(
-        (p) =>
-          (p.sellerId === formData.sellerId ||
-            p.VendorId === formData.sellerId) &&
-          p.purchaseNumber === formData.purchaseNumber,
-      );
+      try {
+        const existingData = await purchaseService.getPurchases({ size: 50 });
+        const allPurchases =
+          existingData?.data?.rows || existingData?.rows || [];
+        const isDuplicate = allPurchases.some(
+          (p) =>
+            (p.sellerId === formData.sellerId ||
+              p.VendorId === formData.sellerId) &&
+            p.purchaseNumber === formData.purchaseNumber,
+        );
 
-      if (isDuplicate) {
-        setLoading(false);
-        return setShowModal({
-          show: true,
-          success: false,
-          message: `Invoice number "${formData.purchaseNumber}" already exists for this seller. Please use a unique number.`,
-        });
+        if (isDuplicate) {
+          setLoading(false);
+          toast.error(
+            `Invoice number "${formData.purchaseNumber}" already exists for this seller.`,
+          );
+          return;
+        }
+      } catch (checkError) {
+        console.warn("Duplicate check failed, proceeding anyway:", checkError);
       }
 
       const subtotal = calculateSubtotal();
@@ -192,14 +226,26 @@ const NewPurchase = () => {
       const totalAmount = subtotal + gstTotal;
 
       const payload = {
-        ...formData,
-        items: items.filter((i) => i.itemName),
-        termsAndConditions: terms.join("\n"),
-        signature: signatureUrl,
+        purchaseNumber: `${formData.prefix}-${formData.purchaseNumber}`,
+        purchaseDate: formData.purchaseDate,
+        totalAmount: parseFloat(totalAmount),
+        sellerId: parseInt(formData.sellerId),
+        billImage: signatureUrl || null,
+        note: terms.join("\n"),
         status: "unpaid",
-        totalAmount: totalAmount,
-        paidAmount: 0,
-        pendingAmount: totalAmount,
+        consigneeType: formData.consigneeType,
+        copies: formData.copies,
+        items: items.map((it) => ({
+          itemName: it.itemName,
+          qty: parseFloat(it.qty) || 0,
+          unit: it.unit,
+          price: parseFloat(it.price) || 0,
+          gstPercent: parseFloat(it.gstPercent) || 0,
+          total:
+            (parseFloat(it.qty) || 0) *
+            (parseFloat(it.price) || 0) *
+            (1 + (parseFloat(it.gstPercent) || 0) / 100),
+        })),
       };
 
       await purchaseService.createPurchase(payload);
@@ -210,11 +256,7 @@ const NewPurchase = () => {
       });
       setTimeout(() => navigate("/vendor/purchases"), 2000);
     } catch (error) {
-      setShowModal({
-        show: true,
-        success: false,
-        message: error.message || "Failed to create purchase",
-      });
+      toast.error(error.message || "Failed to create purchase");
     } finally {
       setLoading(false);
     }
@@ -246,155 +288,289 @@ const NewPurchase = () => {
         </div>
       )}
 
-      <div className="page-header-container">
-        <div className="header-info">
-          <button className="back-btn-pill" onClick={() => navigate(-1)}>
-            <MdArrowBack /> Back
+      {/* Top Navigation Header */}
+      <header className="page-top-nav">
+        <div className="left-side">
+          <button className="back-circle" onClick={() => navigate(-1)}>
+            <MdArrowBack />
           </button>
-          <h1>Create New Purchase</h1>
-          <p>Record a new purchase bill from your vendor</p>
+          <div className="title-v2">
+            <h1>Create Purchase</h1>
+            <span className="v2-badge">v2</span>
+          </div>
         </div>
-        <div className="header-actions">
-          <button className="btn-outline" onClick={() => navigate(-1)}>
-            Discard
+        <div className="right-side">
+          <div className="user-profile">
+            <div className="profile-icon">
+              <MdPerson />
+            </div>
+            <span>My Company</span>
+            <FaCheckCircle className="down-arrow" />
+          </div>
+        </div>
+      </header>
+
+      {/* Sub Header for Buttons */}
+      <div className="action-sub-header">
+        <div className="spacer"></div>
+        <div className="main-actions">
+          <button className="btn-cancel" onClick={() => navigate(-1)}>
+            Cancel
           </button>
           <button
-            className={`btn-dark ${loading ? "disabled" : ""}`}
+            className={`btn-submit ${loading ? "loading" : ""}`}
             onClick={handleSubmit}
             disabled={loading}
           >
-            <MdSave /> {loading ? "Saving..." : "Save Purchase"}
+            {loading ? "Processing..." : "Submit"}
           </button>
         </div>
       </div>
 
-      <div className="main-form-content">
-        <div className="info-grid">
-          <div className="form-card">
-            <div className="card-header">
-              <h3>
-                <MdLayers /> Bill Configuration
-              </h3>
-              <div className="type-radio-group">
-                <label>
-                  <input
-                    type="radio"
-                    checked={formData.purchaseType === "Tax Invoice"}
-                    onChange={() =>
-                      setFormData({ ...formData, purchaseType: "Tax Invoice" })
-                    }
-                  />{" "}
-                  Tax Invoice
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    checked={formData.purchaseType === "Bill of Supply"}
-                    onChange={() =>
-                      setFormData({
-                        ...formData,
-                        purchaseType: "Bill of Supply",
-                      })
-                    }
-                  />{" "}
-                  Bill of Supply
-                </label>
+      <div className="main-form-container">
+        {/* Row 1: Configurations and Buyer Details */}
+        <div className="form-row-split">
+          <div className="config-section">
+            <div className="type-toggle">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="purchaseType"
+                  checked={formData.purchaseType === "Tax Invoice"}
+                  onChange={() =>
+                    setFormData({ ...formData, purchaseType: "Tax Invoice" })
+                  }
+                />
+                <span className="radio-circle"></span>
+                Tax Invoice
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="purchaseType"
+                  checked={formData.purchaseType === "Bill of Supply"}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      purchaseType: "Bill of Supply",
+                    })
+                  }
+                />
+                <span className="radio-circle"></span>
+                Bill of Supply
+              </label>
+            </div>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label>Invoice Purchase Prefix</label>
+                <input
+                  type="text"
+                  value={formData.prefix}
+                  onChange={(e) =>
+                    setFormData({ ...formData, prefix: e.target.value })
+                  }
+                />
+              </div>
+              <div className="input-group">
+                <label>Invoice Purchase No.</label>
+                <input
+                  type="text"
+                  placeholder="1"
+                  value={formData.purchaseNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, purchaseNumber: e.target.value })
+                  }
+                />
               </div>
             </div>
-            <div className="card-body">
-              <div className="info-grid">
-                <div className="input-field">
-                  <label>Purchase Prefix</label>
-                  <input
-                    type="text"
-                    value={formData.prefix}
-                    onChange={(e) =>
-                      setFormData({ ...formData, prefix: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="input-field">
-                  <label>Invoice Number</label>
-                  <input
-                    type="text"
-                    value={formData.purchaseNumber}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        purchaseNumber: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="input-field">
-                  <label>Purchase Date</label>
-                  <input
-                    type="date"
-                    value={formData.purchaseDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, purchaseDate: e.target.value })
-                    }
-                  />
-                </div>
+
+            <div className="input-group full-width">
+              <label>Purchase Date</label>
+              <div className="date-input-wrapper">
+                <input
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, purchaseDate: e.target.value })
+                  }
+                />
               </div>
             </div>
           </div>
 
-          <div className="buyer-details-box">
-            <h4>
-              <MdPerson /> Buyer Details
-            </h4>
-            <p>
+          <div className="buyer-detail-card">
+            <div className="section-header-lite">
+              <h3>BUYER DETAILS</h3>
+              <button className="btn-edit-icon">
+                <MdDescription />
+              </button>
+            </div>
+            <div className="buyer-content">
               <strong>{vendorData?.businessName || "My Company"}</strong>
-            </p>
-            <p>{vendorData?.address || "Address not set"}</p>
-            <div className="gst-tag">
-              GSTIN: {vendorData?.gst || "Not Available"}
+              <p>{vendorData?.address || "No address provided"}</p>
+              <div className="gst-display">
+                GSTIN: {vendorData?.gst || "N/A"}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="form-card">
-          <div className="card-header">
-            <h3>
-              <MdPerson /> Seller Information
-            </h3>
-            <button
-              className="btn-add-item"
-              style={{ marginTop: 0 }}
-              onClick={() => navigate("/vendor/vendor")}
-            >
-              + Add New Seller
-            </button>
-          </div>
-          <div className="card-body">
-            <div className="input-field">
-              <label>Select Seller</label>
-              <select
-                value={formData.sellerId}
-                onChange={(e) =>
-                  setFormData({ ...formData, sellerId: e.target.value })
-                }
+        {/* Section: Seller Details */}
+        <div className="full-form-section">
+          <div className="section-header-bar">
+            <h3>SELLER DETAILS</h3>
+            <div className="header-actions">
+              <button className="btn-action-dark" onClick={fetchSellers}>
+                Select Seller
+              </button>
+              <button
+                className="btn-action-lite"
+                onClick={() => navigate("/vendor/vendor")}
               >
-                <option value="">Search or choose a seller...</option>
-                {sellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.vendorName} {s.businessName ? `(${s.businessName})` : ""}
-                  </option>
-                ))}
-              </select>
+                Add New Seller
+              </button>
+            </div>
+          </div>
+          <div className="section-body">
+            <div className="seller-selector-container" ref={sellerDropdownRef}>
+              {!formData.sellerId ? (
+                <div className="search-box-v2">
+                  <MdPerson className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by Seller Name or Business..."
+                    value={sellerSearch}
+                    onChange={(e) => {
+                      setSellerSearch(e.target.value);
+                      setShowSellerDropdown(true);
+                    }}
+                    onFocus={() => setShowSellerDropdown(true)}
+                  />
+                  {showSellerDropdown && (
+                    <div className="search-dropdown">
+                      {sellers
+                        .filter(
+                          (s) =>
+                            s.vendorName
+                              ?.toLowerCase()
+                              .includes(sellerSearch.toLowerCase()) ||
+                            s.businessName
+                              ?.toLowerCase()
+                              .includes(sellerSearch.toLowerCase()),
+                        )
+                        .map((s) => (
+                          <div
+                            key={s._id || s.id}
+                            className="dropdown-item"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                sellerId: s._id || s.id,
+                              });
+                              setShowSellerDropdown(false);
+                              setSellerSearch("");
+                            }}
+                          >
+                            <strong>{s.vendorName}</strong>
+                            {s.businessName && <span> ({s.businessName})</span>}
+                          </div>
+                        ))}
+                      {sellers.length === 0 && (
+                        <div className="dropdown-empty">No sellers found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="selected-seller-display">
+                  <div className="seller-info-left">
+                    <MdPerson className="avatar-icon" />
+                    <div>
+                      <h4>
+                        {
+                          sellers.find(
+                            (s) => (s._id || s.id) === formData.sellerId,
+                          )?.vendorName
+                        }
+                      </h4>
+                      <p>
+                        {
+                          sellers.find(
+                            (s) => (s._id || s.id) === formData.sellerId,
+                          )?.businessName
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    className="btn-change"
+                    onClick={() => setFormData({ ...formData, sellerId: "" })}
+                  >
+                    Change Seller
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="consignee-options">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="consignee"
+                  checked={formData.consigneeType === "same"}
+                  onChange={() =>
+                    setFormData({ ...formData, consigneeType: "same" })
+                  }
+                />
+                <span className="radio-circle"></span>
+                Show consignee (same as above)
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="consignee"
+                  checked={formData.consigneeType === "notRequired"}
+                  onChange={() =>
+                    setFormData({ ...formData, consigneeType: "notRequired" })
+                  }
+                />
+                <span className="radio-circle"></span>
+                Consignee not required
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="consignee"
+                  checked={formData.consigneeType === "different"}
+                  onChange={() =>
+                    setFormData({ ...formData, consigneeType: "different" })
+                  }
+                />
+                <span className="radio-circle"></span>
+                Add Consignee (if different from above)
+              </label>
             </div>
           </div>
         </div>
 
-        <div className="form-card">
-          <div className="card-header">
-            <h3>
-              <MdShoppingCart /> Product Items
-            </h3>
+        {/* Section: Products */}
+        <div className="full-form-section">
+          <div className="section-header-bar">
+            <h3>PRODUCTS</h3>
+            <div className="header-actions">
+              <button className="btn-action-dark" onClick={fetchProducts}>
+                Select Item
+              </button>
+              <button
+                className="btn-action-lite"
+                onClick={() => navigate("/vendor/inventory")}
+              >
+                Add New Item
+              </button>
+            </div>
           </div>
-          <div className="card-body" style={{ padding: 0 }}>
-            <table className="items-table">
+          <div className="section-body p-0">
+            <table className="v2-items-table">
               <thead>
                 <tr>
                   <th>Item Name & Description</th>
@@ -403,7 +579,7 @@ const NewPurchase = () => {
                   <th>Price (₹)</th>
                   <th>GST %</th>
                   <th>Total (₹)</th>
-                  <th width="50"></th>
+                  <th width="40"></th>
                 </tr>
               </thead>
               <tbody>
@@ -420,7 +596,7 @@ const NewPurchase = () => {
                       />
                       <datalist id="product-list">
                         {products.map((p) => (
-                          <option key={p.id} value={p.name} />
+                          <option key={p._id || p.id} value={p.name} />
                         ))}
                       </datalist>
                     </td>
@@ -475,7 +651,7 @@ const NewPurchase = () => {
                     </td>
                     <td>
                       <button
-                        className="btn-delete"
+                        className="btn-remove-row"
                         onClick={() => removeItem(index)}
                       >
                         <MdDelete />
@@ -485,137 +661,121 @@ const NewPurchase = () => {
                 ))}
               </tbody>
             </table>
-            <div style={{ padding: "20px 30px" }}>
-              <button className="btn-add-item" onClick={addItem}>
+            <div className="table-footer">
+              <button className="btn-add-row" onClick={addItem}>
                 <MdAdd /> Add Row
               </button>
             </div>
           </div>
         </div>
 
-        <div className="purchase-summary-section">
-          <div className="footer-inputs">
-            <div className="form-card">
-              <div className="card-header">
-                <h3>
-                  <MdDescription /> Notes & Terms
-                </h3>
-              </div>
-              <div className="card-body">
-                <textarea
-                  rows="4"
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    background: "transparent",
-                    outline: "none",
-                  }}
-                  placeholder="Enter terms and conditions..."
-                  value={terms.join("\n")}
-                  onChange={(e) => setTerms(e.target.value.split("\n"))}
-                />
-              </div>
+        {/* Row: Checkboxes for Copies */}
+        <div className="checkbox-section">
+          <label className="checkbox-group">
+            <input
+              type="checkbox"
+              checked={formData.copies.original}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  copies: { ...formData.copies, original: e.target.checked },
+                })
+              }
+            />
+            <span className="check-box"></span>
+            Original for Recipient
+          </label>
+          <label className="checkbox-group">
+            <input
+              type="checkbox"
+              checked={formData.copies.duplicate}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  copies: { ...formData.copies, duplicate: e.target.checked },
+                })
+              }
+            />
+            <span className="check-box"></span>
+            Duplicate for Transporter
+          </label>
+          <label className="checkbox-group">
+            <input
+              type="checkbox"
+              checked={formData.copies.triplicate}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  copies: { ...formData.copies, triplicate: e.target.checked },
+                })
+              }
+            />
+            <span className="check-box"></span>
+            Triplicate for Supplier
+          </label>
+        </div>
+
+        <div className="bottom-sections">
+          <div className="notes-section">
+            <div className="section-header-lite">
+              <h3>Terms & Conditions</h3>
             </div>
-            <div className="form-card">
-              <div className="card-header">
-                <h3>
-                  <MdFingerprint /> Digital Signature
-                </h3>
-              </div>
-              <div className="card-body">
-                <div
-                  className="upload-signature-box"
-                  onClick={() => document.getElementById("sig-input").click()}
-                >
-                  {signatureUrl ? (
-                    <img
-                      src={signatureUrl}
-                      alt="Signature"
-                      className="sig-preview"
-                    />
-                  ) : (
-                    <div className="upload-prompt">
-                      <MdCloudUpload size={40} />
-                      <span>
-                        {isUploading
-                          ? `Uploading... ${uploadProgress}%`
-                          : "Click to upload authorized signature"}
-                      </span>
-                    </div>
-                  )}
-                  <input
-                    id="sig-input"
-                    type="file"
-                    hidden
-                    onChange={handleFileUpload}
-                  />
-                </div>
-              </div>
+            <div className="section-body">
+              <textarea
+                rows="3"
+                placeholder="Enter terms and conditions..."
+                value={terms.join("\n")}
+                onChange={(e) => setTerms(e.target.value.split("\n"))}
+              ></textarea>
             </div>
           </div>
 
-          <div className="summary-card-dark">
-            <div className="summary-line">
+          <div className="summary-card-v2">
+            <div className="summary-row">
               <label>Subtotal</label>
-              <span>
-                ₹{" "}
-                {calculateSubtotal().toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
+              <span>₹ {calculateSubtotal().toFixed(2)}</span>
             </div>
-            <div className="summary-line">
+            <div className="summary-row">
               <label>GST Amount</label>
-              <span>
-                ₹{" "}
-                {calculateGst().toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
+              <span>₹ {calculateGst().toFixed(2)}</span>
             </div>
-            <div className="summary-line grand-total">
+            <div className="summary-row total">
               <label>Net Payable</label>
-              <span>
-                ₹{" "}
-                {(calculateSubtotal() + calculateGst()).toLocaleString(
-                  "en-IN",
-                  { minimumFractionDigits: 2 },
-                )}
+              <span className="amount">
+                ₹ {(calculateSubtotal() + calculateGst()).toFixed(2)}
               </span>
             </div>
-            <button
-              className={`btn-submit-main ${loading ? "loading" : ""}`}
-              onClick={handleSubmit}
-              disabled={loading}
+          </div>
+        </div>
+
+        {/* Signature Section */}
+        <div className="signature-section">
+          <div className="section-header-lite">
+            <h3>UPLOAD SIGNATURE (optional)</h3>
+          </div>
+          <div className="section-body">
+            <div
+              className="sig-dropzone"
+              onClick={() => document.getElementById("sig-v2").click()}
             >
-              {loading ? "Processing..." : "Confirm & Save Purchase"}
-            </button>
+              {isUploading ? (
+                <div className="sig-placeholder">
+                  <div className="upload-spinner"></div>
+                  <span>Uploading {uploadProgress}%</span>
+                </div>
+              ) : signatureUrl ? (
+                <img src={signatureUrl} alt="Signature" />
+              ) : (
+                <div className="sig-placeholder">
+                  <MdCloudUpload />
+                  <span>Click to upload authorized signature</span>
+                </div>
+              )}
+            </div>
+            <input id="sig-v2" type="file" hidden onChange={handleFileUpload} />
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .btn-submit-main {
-          margin-top: 20px;
-          background: #dbd836;
-          color: #000;
-          border: none;
-          padding: 16px;
-          border-radius: 12px;
-          font-size: 16px;
-          font-weight: 800;
-          cursor: pointer;
-          transition: all 0.2s;
-          &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-          }
-          &.loading {
-            opacity: 0.7;
-            pointer-events: none;
-          }
-        }
-      `}</style>
     </div>
   );
 };

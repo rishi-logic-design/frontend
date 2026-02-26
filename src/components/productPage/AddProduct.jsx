@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./addProduct.scss";
 import productService from "../../services/productService";
 import { FiChevronsLeft } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const AddProduct = () => {
       !formData.sizeId ||
       !formData.price
     ) {
-      alert("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -76,7 +77,7 @@ const AddProduct = () => {
       navigate("/vendor/product");
     } catch (error) {
       console.error("Create product error:", error);
-      alert("Failed to create product");
+      toast.error("Failed to create product");
     } finally {
       setLoading(false);
     }

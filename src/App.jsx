@@ -7,8 +7,10 @@ import Customer from "./pages/Customer";
 import NewBill from "./components/sales/NewBill";
 import NewChallan from "./components/sales/NewChallan";
 import AddPayment from "./components/sales/AddPayment";
-import ChallanDetails from "./components/sales/ChallanDetails";
+import ChallanDetails from "./components/sales/challanDetails";
 import BillDetails from "./components/sales/BillDetails";
+import BillsList from "./components/sales/BillsList";
+import ChallansList from "./components/sales/ChallansList";
 import AddProduct from "./components/productPage/AddProduct";
 import CustomerDetails from "./components/customerPage/CostomerDetails";
 import ExportLedger from "./components/customerPage/ExportLedger";
@@ -20,11 +22,9 @@ import GSTSlabs from "./components/accountPage/GstSlabs";
 import GSTNumber from "./components/accountPage/GstNumber";
 import FirmAddress from "./components/accountPage/FilmAddress";
 import BillingSettings from "./components/accountPage/BillingSettings";
-import PaymentPage from "./pages/PaymentPage";
-import NotificationToast from "./components/notificationPage/NotificationToast";
-import NotificationSidebar from "./components/notificationPage/NotificationSidebar";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import PaymentReceipts from "./components/sales/PaymentReceipts";
-import BillsList from "./components/sales/BillsList";
 import AddVendorPage from "./components/master/AddVendorPage";
 import EWayBill from "./pages/EWayBill";
 import EInvoice from "./components/sales/EInvoice";
@@ -33,6 +33,15 @@ import NewPurchase from "./components/purchases/NewPurchase";
 import PaymentsMade from "./components/purchases/PaymentsMade";
 import AddPaymentMade from "./components/purchases/AddPaymentMade";
 import UploadPurchase from "./components/purchases/UploadPurchase";
+import Inventory from "./pages/Inventory";
+import CreditNote from "./components/sales/CreditNote";
+import SalesDebit from "./components/sales/SalesDebit";
+import NewCreditNote from "./components/sales/NewCreditNote";
+import NewSalesDebit from "./components/sales/NewSalesDebit";
+import Report from "./pages/Report";
+import SalesDebitNoteDetails from "./components/sales/SalesDebitNoteDetails";
+import CreditNoteDetails from "./components/sales/CreditNoteDetails";
+import Ledger from "./pages/Ledger";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -57,8 +66,18 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
-      <NotificationToast />
-      <NotificationSidebar />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route
@@ -102,6 +121,14 @@ const App = () => {
             }
           />
           <Route
+            path="challans"
+            element={
+              <ProtectedRoute>
+                <ChallansList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="new-bill"
             element={
               <ProtectedRoute>
@@ -122,6 +149,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <BillsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventory"
+            element={
+              <ProtectedRoute>
+                <Inventory />
               </ProtectedRoute>
             }
           />
@@ -193,6 +228,89 @@ const App = () => {
             }
           />
           <Route
+            path="credit-notes"
+            element={
+              <ProtectedRoute>
+                <CreditNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="new-credit-note"
+            element={
+              <ProtectedRoute>
+                <NewCreditNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="edit-credit-note/:id"
+            element={
+              <ProtectedRoute>
+                <NewCreditNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="view-credit-note/:id"
+            element={
+              <ProtectedRoute>
+                <CreditNoteDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="new-sales-debit"
+            element={
+              <ProtectedRoute>
+                <NewSalesDebit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="edit-sales-debit/:id"
+            element={
+              <ProtectedRoute>
+                <NewSalesDebit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="view-sales-debit/:id"
+            element={
+              <ProtectedRoute>
+                <SalesDebitNoteDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="sales-debit-notes"
+            element={
+              <ProtectedRoute>
+                <SalesDebit />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute>
+                <Report />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ledger"
+            element={
+              <ProtectedRoute>
+                <Ledger />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="purchases"
             element={
               <ProtectedRoute>
@@ -232,6 +350,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+
           <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
         <Route

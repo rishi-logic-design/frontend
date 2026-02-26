@@ -4,7 +4,7 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import billService from "../../../services/billService";
 import customerService from "../../../services/customerService";
 import invoiceSettingsService from "../../../services/invoiceServiceSettings";
-import { useNotifications } from "../../../context/NotificationContext";
+import { toast } from "react-toastify";
 import TermsSection from "./TermsSection";
 import SignatureSection from "./SignatureSection";
 import "./ManualBill.scss";
@@ -31,7 +31,6 @@ const calcItemTotal = (item) => {
 };
 
 const ManualBill = () => {
-  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
@@ -145,12 +144,12 @@ const ManualBill = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.customer) return alert("Please select a customer");
+    if (!formData.customer) return toast.error("Please select a customer");
     const validItems = items.filter(
       (it) => it.itemName && it.qty > 0 && it.price > 0,
     );
     if (!validItems.length)
-      return alert("Add at least one item with name, qty and price");
+      return toast.error("Add at least one item with name, qty and price");
 
     try {
       setLoading(true);
@@ -178,11 +177,10 @@ const ManualBill = () => {
         payload.customInvoicePrefix = customPrefix.trim().toUpperCase();
 
       await billService.createBill(payload);
-      await fetchNotifications();
-      alert("Bill generated successfully!");
+      toast.success("Bill generated successfully!");
       navigate("/vendor/bills");
     } catch (e) {
-      alert(
+      toast.error(
         e.response?.data?.message || e.message || "Failed to generate bill",
       );
     } finally {

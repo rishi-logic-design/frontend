@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from "../firebase";
+import { toast } from "react-toastify";
 import "./login.scss";
 
 const API_URL =
@@ -12,18 +13,12 @@ const Login = () => {
   const [step, setStep] = useState("enterPhone");
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
   const [vendorData, setVendorData] = useState(null);
 
   const checkVendor = async () => {
-    setMessage({ text: "", type: "" });
-
     if (!/^[0-9]{10}$/.test(mobile)) {
-      setMessage({
-        text: "Please enter a valid 10-digit mobile number",
-        type: "error",
-      });
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
 
@@ -35,27 +30,19 @@ const Login = () => {
 
       if (data.success) {
         setVendorData(data.data.vendor);
-        setMessage({ text: data.message, type: "success" });
+        toast.success(data.message);
         setTimeout(() => sendOtp(), 800);
       }
     } catch (error) {
-      setMessage({
-        text: error.response?.data?.message || "Vendor not found",
-        type: "error",
-      });
+      toast.error(error.response?.data?.message || "Vendor not found");
     } finally {
       setLoading(false);
     }
   };
 
   const sendOtp = async () => {
-    setMessage({ text: "", type: "" });
-
     if (!/^[0-9]{10}$/.test(mobile)) {
-      setMessage({
-        text: "Please enter valid 10-digit mobile number",
-        type: "error",
-      });
+      toast.error("Please enter valid 10-digit mobile number");
       return;
     }
 
@@ -82,7 +69,7 @@ const Login = () => {
       );
       setConfirmationResult(result);
       setStep("enterOtp");
-      setMessage({ text: "OTP sent successfully", type: "success" });
+      toast.success("OTP sent successfully");
     } catch (error) {
       console.error("OTP send error:", error);
 
@@ -91,26 +78,20 @@ const Login = () => {
         window.recaptchaVerifier = null;
       }
 
-      setMessage({
-        text: error.message || "Failed to send OTP",
-        type: "error",
-      });
+      toast.error(error.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
   };
 
   const verifyOtp = async () => {
-    setMessage({ text: "", type: "" });
-    const otpValue = otp.join("");
-
     if (otpValue.length !== 6) {
-      setMessage({ text: "Please enter complete 6-digit OTP", type: "error" });
+      toast.error("Please enter complete 6-digit OTP");
       return;
     }
 
     if (!confirmationResult) {
-      setMessage({ text: "Please request OTP first", type: "error" });
+      toast.error("Please request OTP first");
       return;
     }
 
@@ -131,18 +112,14 @@ const Login = () => {
       if (data.success) {
         localStorage.setItem("vendorToken", data.data.token);
         localStorage.setItem("vendorData", JSON.stringify(data.data.vendor));
-        setMessage({ text: "Login successful!", type: "success" });
+        toast.success("Login successful!");
         setTimeout(() => (window.location.href = "/vendor/dashboard"), 500);
       }
     } catch (error) {
       console.error("OTP verification failed:", error);
-      setMessage({
-        text:
-          error.response?.data?.message ||
-          error.message ||
-          "Verification failed",
-        type: "error",
-      });
+      toast.error(
+        error.response?.data?.message || error.message || "Verification failed",
+      );
       setOtp(["", "", "", "", "", ""]);
     } finally {
       setLoading(false);
@@ -194,35 +171,12 @@ const Login = () => {
   const handleChangeNumber = () => {
     setStep("enterPhone");
     setOtp(["", "", "", "", "", ""]);
-    setMessage({ text: "", type: "" });
     setVendorData(null);
 
     if (window.recaptchaVerifier) {
       window.recaptchaVerifier.clear();
       window.recaptchaVerifier = null;
     }
-  };
-
-  const MessageIcon = ({ type }) => {
-    const icons = {
-      success: "M20 6L9 17l-5-5",
-      info: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
-      error:
-        "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
-    };
-
-    return (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d={icons[type] || icons.info} />
-      </svg>
-    );
   };
 
   return (
@@ -312,15 +266,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {message.text && (
-                <div className={`message ${message.type}`}>
-                  <div className="message-icon">
-                    <MessageIcon type={message.type} />
-                  </div>
-                  <span>{message.text}</span>
-                </div>
-              )}
-
               <button
                 className="btn-primary"
                 onClick={checkVendor}
@@ -358,15 +303,6 @@ const Login = () => {
                   ))}
                 </div>
               </div>
-
-              {message.text && (
-                <div className={`message ${message.type}`}>
-                  <div className="message-icon">
-                    <MessageIcon type={message.type} />
-                  </div>
-                  <span>{message.text}</span>
-                </div>
-              )}
 
               <button
                 className="btn-primary"

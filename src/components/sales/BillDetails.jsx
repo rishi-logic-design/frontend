@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import "./billDetails.scss";
 import billService from "../../services/billService";
+import { toast } from "react-toastify";
 
 const BillDetails = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const BillDetails = () => {
       setBillData(data);
     } catch (error) {
       console.error("❌ Failed to fetch bill details:", error);
+      toast.error("Failed to load bill details. Please try again.");
       setError("Failed to load bill details. Please try again.");
     } finally {
       setLoading(false);
@@ -58,10 +60,10 @@ const BillDetails = () => {
     setSending(true);
     try {
       await billService.sendWhatsAppReminder(id);
-      alert("Payment reminder sent successfully!");
+      toast.success("Payment reminder sent successfully!");
     } catch (error) {
       console.error("Failed to send reminder", error);
-      alert("Failed to send reminder. Please try again.");
+      toast.error("Failed to send reminder. Please try again.");
     } finally {
       setSending(false);
     }
@@ -78,7 +80,7 @@ const BillDetails = () => {
       }
     } catch (error) {
       console.error("Failed to download PDF", error);
-      alert("Failed to download PDF. Please try again.");
+      toast.error("Failed to download PDF. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -393,7 +395,7 @@ const BillDetails = () => {
               </ul>
             ) : null}
           </div>
-        )}  
+        )}
 
         {/* Signature/Stamp */}
         {bill?.showSignatureStamp && bill?.signatureStamp && (

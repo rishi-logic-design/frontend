@@ -45,6 +45,7 @@ const billService = {
       throw error.response?.data || error;
     }
   },
+  
   getBillHtml: async (id) => {
     try {
       const response = await api.get(`/api/bills/${id}/html`);

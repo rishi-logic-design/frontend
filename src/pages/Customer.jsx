@@ -14,6 +14,7 @@ import {
   FiChevronsLeft,
 } from "react-icons/fi";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { toast } from "react-toastify";
 
 const INDIAN_STATES = [
   "Andhra Pradesh",
@@ -198,7 +199,6 @@ const Customer = () => {
   const handleFormChange = (e, targetForm = "add", subKey = null) => {
     let { name, value } = e.target;
 
-    // Numeric restrictions
     if (
       ["mobileNumber", "priceValue", "aadharNumber"].includes(name) ||
       name === "pincode"
@@ -206,7 +206,6 @@ const Customer = () => {
       if (value !== "" && !/^\d+$/.test(value)) return;
     }
 
-    // Auto-uppercase GST
     if (name === "gstNumber") value = value.toUpperCase();
 
     const setter = targetForm === "add" ? setAddForm : setEditForm;
@@ -348,7 +347,7 @@ const Customer = () => {
       setShowDeleteModal(false);
       fetchCustomers();
     } catch (err) {
-      alert("Failed to deactivate customer.");
+      toast.error("Failed to deactivate customer.");
     } finally {
       setDeleteLoading(false);
     }

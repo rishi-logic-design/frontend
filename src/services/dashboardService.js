@@ -9,7 +9,7 @@ const getAuthHeaders = () => {
 };
 
 const dashboardService = {
-  // Vendors
+
   getVendors: async () => {
     try {
       const response = await fetch(`${API_URL}/vendors`, {
@@ -52,7 +52,6 @@ const dashboardService = {
     return await response.json();
   },
 
-  // Customers
   getCustomers: async () => {
     try {
       const response = await fetch(`${API_URL}/api/customers`, {
@@ -69,7 +68,6 @@ const dashboardService = {
     }
   },
 
-  // Subscriptions
   getSubscriptions: async () => {
     try {
       const response = await fetch(`${API_URL}/subscriptions`, {
@@ -86,7 +84,6 @@ const dashboardService = {
     }
   },
 
-  // Payments
   getPayments: async () => {
     try {
       const response = await fetch(`${API_URL}/api/payments`, {
@@ -103,7 +100,6 @@ const dashboardService = {
     }
   },
 
-  // Plans
   getPlans: async () => {
     try {
       const response = await fetch(`${API_URL}/subscriptions/plans`, {

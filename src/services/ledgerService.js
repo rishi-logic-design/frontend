@@ -1,12 +1,52 @@
 import api from "./api";
 
 const ledgerService = {
-  getLedgerSummary: async (customerId, params = {}) => {
+  getLedgerSummary: async (partyId, type = "customer", params = {}) => {
     try {
-      const response = await api.get("/api/ledger/summary", {
-        params: { customerId, ...params },
+      const response = await (type === "customer"
+        ? api.get(`/api/ledger/customers/${partyId}`, { params })
+        : api.get(`/api/ledger/vendors/${partyId}`, { params }));
+      return response.data.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getCustomerLedger: async (customerId, params = {}) => {
+    try {
+      const response = await api.get(`/api/ledger/customers/${customerId}`, {
+        params,
       });
       return response.data.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getVendorLedger: async (vendorId, params = {}) => {
+    try {
+      const response = await api.get(`/api/ledger/vendors/${vendorId}`, {
+        params,
+      });
+      return response.data.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getLedgerCustomers: async (params = {}) => {
+    try {
+      const response = await api.get("/api/ledger/customers", { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getLedgerVendors: async (params = {}) => {
+    try {
+      const response = await api.get("/api/ledger/vendors", { params });
+      return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }

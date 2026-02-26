@@ -1,0 +1,143 @@
+.account-modal {
+  background: #fff;
+  width: 100%;
+  max-width: 650px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  .modal-header {
+    background: #343a40;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #adb5bd;
+      cursor: pointer;
+      &:hover {
+        color: #fff;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 20px;
+
+    .type-selector {
+      margin-bottom: 25px;
+      select {
+        width: auto;
+        min-width: 150px;
+        padding: 8px 15px;
+        border: 1.5px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        outline: none;
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 15px;
+
+      .full-width {
+        grid-column: span 2;
+      }
+    }
+
+    .input-box {
+      position: relative;
+
+      label {
+        position: absolute;
+        top: -10px;
+        left: 10px;
+        background: #fff;
+        padding: 0 5px;
+        font-size: 12px;
+        color: #6c757d;
+        z-index: 1;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        outline: none;
+        background: transparent;
+        &:focus {
+          border-color: #2c3e50;
+        }
+      }
+
+      textarea {
+        height: 120px;
+        resize: none;
+      }
+    }
+
+    .other-options-divider {
+      grid-column: span 2;
+      background: #dee2e6;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      color: #495057;
+      margin: 10px 0;
+      border-radius: 2px;
+    }
+  }
+
+  .modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: none;
+
+    button {
+      padding: 8px 30px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.cancel-btn {
+        background: transparent;
+        color: #ff3e3e;
+        border: 1px solid #ff3e3e;
+        &:hover {
+          background: #fff5f5;
+        }
+      }
+
+      &.save-btn {
+        background: #343a40;
+        color: #fff;
+        border: 1px solid #343a40;
+        &:hover {
+          background: #23272b;
+        }
+      }
+    }
+  }
+}

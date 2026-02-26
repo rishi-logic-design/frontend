@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ledgerService from "../../services/ledgerService";
 import customerService from "../../services/customerService";
+import { toast } from "react-toastify";
 import "./exportLedger.scss";
 
 const ExportLedger = () => {
@@ -41,7 +42,7 @@ const ExportLedger = () => {
       setLedgerSummary(summaryData);
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert("Failed to load ledger data");
+      toast.error("Failed to load ledger data");
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ const ExportLedger = () => {
   const handleApplyDateRange = () => {
     if (selectedRange === "custom") {
       if (!customDates.fromDate || !customDates.toDate) {
-        alert("Please select both from and to dates");
+        toast.error("Please select both from and to dates");
         return;
       }
     }

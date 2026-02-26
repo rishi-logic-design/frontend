@@ -13,6 +13,7 @@ import {
   FiChevronsLeft,
 } from "react-icons/fi";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { toast } from "react-toastify";
 
 const ROWS_OPTIONS = [10, 25, 50, 100];
 
@@ -296,14 +297,16 @@ const AddVendorPage = () => {
       fetchVendors();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert(err?.response?.data?.message || "Failed to deactivate vendor.");
+      toast.error(
+        err?.response?.data?.message || "Failed to deactivate vendor.",
+      );
     } finally {
       setDeleteLoading(false);
     }
   };
 
   const handleExcelExport = () => {
-    if (vendors.length === 0) return alert("No vendors to export.");
+    if (vendors.length === 0) return toast.error("No vendors to export.");
     const headers = [
       "S.No",
       "Vendor Name",
@@ -343,7 +346,9 @@ const AddVendorPage = () => {
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    alert(`Bulk upload: "${file.name}" selected. Backend integration pending.`);
+    toast.info(
+      `Bulk upload: "${file.name}" selected. Backend integration pending.`,
+    );
     e.target.value = "";
   };
 

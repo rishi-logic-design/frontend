@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./paymentModal.scss";
 import customerService from "../../services/customerService";
+import { toast } from "react-toastify";
 
 const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -275,7 +276,7 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
       await onSave(submitData);
     } catch (error) {
       console.error("Error saving payment:", error);
-      alert(error.message || "Failed to save payment");
+      toast.error(error.message || "Failed to save payment");
     } finally {
       setLoading(false);
     }
@@ -395,7 +396,9 @@ const PaymentModal = ({ payment, type, method, onClose, onSave }) => {
             <div className="form-group">
               <label>Amount *</label>
               <div className="amount-input-wrapper">
-                <span style={{ left: "6px" }} className="currency-symbol">₹</span>
+                <span style={{ left: "6px" }} className="currency-symbol">
+                  ₹
+                </span>
                 <input
                   type="number"
                   name="amount"

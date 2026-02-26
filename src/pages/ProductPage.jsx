@@ -13,6 +13,7 @@ import {
   FiChevronsLeft,
 } from "react-icons/fi";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { toast } from "react-toastify";
 
 const ROWS_OPTIONS = [10, 20, 50, 100];
 
@@ -162,7 +163,7 @@ const ProductPage = () => {
       handleDrawerClose();
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to update product");
+      toast.error("Failed to update product");
     } finally {
       setLoading(false);
     }
@@ -178,7 +179,7 @@ const ProductPage = () => {
       fetchProducts();
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Failed to delete product");
+      toast.error("Failed to delete product");
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,85 @@
+.download-ledger-modal {
+  background: #fff;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 4px;
+  padding: 25px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+
+  .format-selector {
+    margin-bottom: 20px;
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #333;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 500;
+      outline: none;
+      appearance: none;
+      background: #fff;
+    }
+    position: relative;
+    &::after {
+      content: "▼";
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 12px;
+    }
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    label {
+      font-size: 15px;
+      color: #666;
+      cursor: pointer;
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 15px;
+
+    button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.cancel-btn {
+        background: #fff;
+        color: #333;
+        border: 1px solid #333;
+        &:hover {
+          background: #f8f9fa;
+        }
+      }
+
+      &.download-btn {
+        background: #343a40;
+        color: #fff;
+        border: 1px solid #343a40;
+        &:hover {
+          background: #23272b;
+        }
+      }
+    }
+  }
+}

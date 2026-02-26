@@ -5,6 +5,7 @@ import { getCustomerById } from "../services/customerService";
 import PaymentModal from "../components/paymentPage/PaymentModal";
 import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -130,7 +131,7 @@ const PaymentPage = () => {
 
   const handleSetOpeningBalance = async () => {
     if (!openingBalanceAmount || parseFloat(openingBalanceAmount) <= 0) {
-      alert("Please enter a valid amount");
+      toast.error("Please enter a valid amount");
       return;
     }
 
@@ -140,10 +141,10 @@ const PaymentPage = () => {
       setOpeningBalanceAmount("");
       fetchStats();
       fetchPayments();
-      alert("Opening balance set successfully!");
+      toast.success("Opening balance set successfully!");
     } catch (error) {
       console.error("Error setting opening balance:", error);
-      alert(error.message || "Failed to set opening balance");
+      toast.error(error.message || "Failed to set opening balance");
     }
   };
 
@@ -187,7 +188,7 @@ const PaymentPage = () => {
         }
       } catch (error) {
         console.error("Error deleting payment:", error);
-        alert("Failed to delete payment");
+        toast.error("Failed to delete payment");
       }
     }
   };

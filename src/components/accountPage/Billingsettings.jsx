@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./billingSettings.scss";
 import invoiceSettingsService from "../../services/invoiceServiceSettings";
+import { toast } from "react-toastify";
 
 const BillingSettings = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const BillingSettings = () => {
       });
     } catch (error) {
       console.error("Failed to load settings:", error);
-      alert("Failed to load billing settings");
+      toast.error("Failed to load billing settings");
     } finally {
       setLoading(false);
     }
@@ -91,7 +92,7 @@ const BillingSettings = () => {
       await loadSettings();
     } catch (error) {
       console.error("Failed to update settings:", error);
-      alert(
+      toast.error(
         error.response?.data?.message || "Failed to update billing settings",
       );
     } finally {

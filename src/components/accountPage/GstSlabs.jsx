@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import gstSlabService from "../../services/gstSlabService";
+import { toast } from "react-toastify";
 import "./gstSlabs.scss";
 
 const GstSlabs = () => {
@@ -44,7 +45,7 @@ const GstSlabs = () => {
 
   const handleSave = async () => {
     if (!formData.slabName || formData.rate === "") {
-      alert("Please fill all fields");
+      toast.error("Please fill all fields");
       return;
     }
     try {
@@ -63,7 +64,7 @@ const GstSlabs = () => {
       setShowModal(false);
       loadSlabs();
     } catch (err) {
-      alert(err?.response?.data?.message || "Something went wrong");
+      toast.error(err?.response?.data?.message || "Something went wrong");
     }
   };
 
@@ -78,7 +79,7 @@ const GstSlabs = () => {
       await gstSlabService.deleteSlab(id);
       loadSlabs();
     } catch (err) {
-      alert(err?.response?.data?.message || "Failed to delete GST slab");
+      toast.error(err?.response?.data?.message || "Failed to delete GST slab");
     }
   };
 

@@ -13,6 +13,11 @@ import {
   FaBolt,
   FaShoppingBasket,
   FaTruck,
+  FaBoxes,
+  FaChartBar,
+  FaUser,
+  FaStickyNote,
+  FaBuyNLarge,
 } from "react-icons/fa";
 import vendorProfileImageService from "../services/vendorProfileImageService";
 
@@ -67,12 +72,12 @@ const Sidebar = () => {
       icon: FaFileInvoice,
       section: "sales",
       items: [
-        { name: "New Challan", path: "/vendor/new-challan" },
+        { name: "Delivery Challans", path: "/vendor/challans" },
         { name: "Invoices", path: "/vendor/bills" },
         { name: "Payment Receipts", path: "/vendor/payment-receipts" },
-        { name: "Credit Note", path: "/vendor/payment-receipts" },
+        { name: "Credit Note", path: "/vendor/credit-notes" },
         { name: "E-Invoice", path: "/vendor/e-invoice" },
-        { name: "Sales Debit Note", path: "/vendor/payment-receipts" },
+        { name: "Sales Debit Note", path: "/vendor/sales-debit-notes" },
       ],
     },
     {
@@ -81,9 +86,8 @@ const Sidebar = () => {
       icon: FaShoppingBasket,
       section: "purchase",
       items: [
-        { name: "Purchase List", path: "/vendor/purchases" },
+        { name: "Purchase", path: "/vendor/purchases" },
         { name: "Payments Made", path: "/vendor/payments-made" },
-        { name: "New Purchase", path: "/vendor/new-purchase" },
       ],
     },
     {
@@ -93,9 +97,41 @@ const Sidebar = () => {
       path: "/vendor/ewaybill",
     },
     {
+      type: "single",
+      name: "Inventory",
+      icon: FaBoxes,
+      path: "/vendor/inventory",
+    },
+    {
+      type: "single",
+      name: "Reports",
+      icon: FaChartBar,
+      path: "/vendor/reports",
+    },
+    {
+      type: "single",
+      name: "Ledger",
+      icon: FaBuyNLarge,
+      path: "/vendor/ledger",
+    },
+    {
+      type: "dropdown",
+      name: "Accounting",
+      icon: FaUser,
+      section: "accounting",
+      items: [
+        { name: "Chart of Accounts", path: "/vendor/account" },
+        {
+          name: "Manual Journal Entry",
+          path: "/vendor/account/billing-settings",
+        },
+        { name: "GST Setting`s", path: "/vendor/account/gst-slabs" },
+      ],
+    },
+    {
       type: "dropdown",
       name: "master",
-      icon: FaFileInvoice,
+      icon: FaStickyNote,
       section: "master",
       items: [
         { name: "Customer", path: "/vendor/customer" },

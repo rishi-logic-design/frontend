@@ -5,10 +5,9 @@ import customerService from "../../services/customerService";
 import paymentService from "../../services/paymentService";
 import billService from "../../services/billService";
 import { uploadPaymentAttachment } from "../../utils/firebaseStorage";
-import { useNotifications } from "../../context/NotificationContext";
+import { toast } from "react-toastify";
 
 const AddPayment = () => {
-  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const prefillBillId = searchParams.get("billId");
@@ -244,7 +243,7 @@ const AddPayment = () => {
       setPendingInvoices(invoices);
     } catch (error) {
       console.error("Error fetching customer data:", error);
-      alert("Failed to fetch customer details. Please try again.");
+      toast.error("Failed to fetch customer details. Please try again.");
     } finally {
       setLoadingInvoices(false);
     }
@@ -293,7 +292,7 @@ const AddPayment = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("File size should not exceed 5MB");
+        toast.error("File size should not exceed 5MB");
         return;
       }
       setFormData((prev) => ({
@@ -357,7 +356,7 @@ const AddPayment = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      alert("Please fix the errors before submitting");
+      toast.error("Please fix the errors before submitting");
       return;
     }
 
@@ -388,7 +387,7 @@ const AddPayment = () => {
         amount: parseFloat(formData.amount),
         paymentDate: formData.paymentDate,
         method: formData.method,
-        paymentMode: formData.method, 
+        paymentMode: formData.method,
         reference: formData.reference || null,
         note: formData.note || null,
         attachments: attachmentUrl ? [attachmentUrl] : [],
@@ -426,7 +425,7 @@ const AddPayment = () => {
         }
       }
 
-      await fetchNotifications();
+      // await fetchNotifications();
       setShowSuccessModal(true);
 
       setTimeout(() => {
@@ -439,7 +438,7 @@ const AddPayment = () => {
         error.message ||
         error.response?.data?.message ||
         "Failed to create payment";
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -472,7 +471,6 @@ const AddPayment = () => {
 
   return (
     <div className="add-payment-page">
-      
       {showSuccessModal && (
         <div className="success-modal-overlay">
           <div className="success-modal">

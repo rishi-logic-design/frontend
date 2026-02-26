@@ -10,10 +10,11 @@ import {
   MdCheckCircle,
   MdError,
 } from "react-icons/md";
-import purchaseService from "../../services/purchaseService";
-import vendorVendorService from "../../services/vendorVendorService";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase";
+import purchaseService from "../../services/purchaseService";
+import vendorVendorService from "../../services/vendorVendorService";
+import { toast } from "react-toastify";
 import "./uploadPurchase.scss";
 
 const UploadPurchase = () => {
@@ -29,16 +30,16 @@ const UploadPurchase = () => {
   });
 
   const [formData, setFormData] = useState({
-    purchaseInvoiceNumber: "",
+    purchaseNumber: "",
     purchaseDate: new Date().toISOString().split("T")[0],
     totalAmount: "",
     sellerId: "",
-    billUrl: "",
+    note: "",
+    billImage: "",
   });
 
   useEffect(() => {
     fetchSellers();
-    // Auto-generate a dummy number if needed, but let user enter it too
   }, []);
 
   const fetchSellers = async () => {
@@ -47,6 +48,7 @@ const UploadPurchase = () => {
       setSellers(res?.data?.rows || res?.rows || []);
     } catch (error) {
       console.error("Error fetching sellers:", error);
+      toast.error("Failed to fetch sellers.");
     }
   };
 
@@ -54,10 +56,16 @@ const UploadPurchase = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Quick validation
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size exceeds 5MB limit");
+      return;
+    }
+
     setIsUploading(true);
     const storageRef = ref(
       storage,
-      `purchase-bills/${Date.now()}_${file.name}`,
+      `purchase_bills/${Date.now()}_${file.name}`,
     );
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -71,89 +79,52 @@ const UploadPurchase = () => {
       (error) => {
         console.error("Upload error:", error);
         setIsUploading(false);
-        setShowModal({
-          show: true,
-          success: false,
-          message: "Failed to upload file. Please try again.",
-        });
+        toast.error("Failed to upload file. Please try again.");
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        setFormData((prev) => ({ ...prev, billUrl: url }));
+        setFormData((prev) => ({
+          ...prev,
+          billImage: url,
+          fileName: file.name,
+        }));
         setIsUploading(false);
       },
     );
   };
 
   const handleSubmit = async () => {
-    if (!formData.sellerId)
-      return setShowModal({
-        show: true,
-        success: false,
-        message: "Please select a seller",
-      });
-    if (!formData.purchaseInvoiceNumber)
-      return setShowModal({
-        show: true,
-        success: false,
-        message: "Please enter invoice number",
-      });
+    if (!formData.sellerId) return toast.error("Please select a seller");
+    if (!formData.purchaseNumber)
+      return toast.error("Please enter invoice number");
     if (!formData.totalAmount || parseFloat(formData.totalAmount) <= 0)
-      return setShowModal({
-        show: true,
-        success: false,
-        message: "Please enter a valid bill amount",
-      });
+      return toast.error("Please enter a valid bill amount");
 
     try {
       setLoading(true);
 
-      // Validation: Check for duplicate invoice number for the same seller
-      const existingData = await purchaseService.getPurchases({ size: 1000 });
-      const allPurchases = existingData?.data?.rows || existingData?.rows || [];
-      const isDuplicate = allPurchases.some(
-        (p) =>
-          (p.sellerId === formData.sellerId ||
-            p.VendorId === formData.sellerId) &&
-          p.purchaseNumber === formData.purchaseInvoiceNumber,
-      );
-
-      if (isDuplicate) {
-        setLoading(false);
-        return setShowModal({
-          show: true,
-          success: false,
-          message: `Invoice number "${formData.purchaseInvoiceNumber}" already exists for this seller. Please use a unique number.`,
-        });
-      }
-
-      const amountValue = parseFloat(formData.totalAmount);
       const payload = {
-        purchaseNumber: formData.purchaseInvoiceNumber,
+        purchaseNumber: formData.purchaseNumber,
         purchaseDate: formData.purchaseDate,
-        totalAmount: amountValue,
-        sellerId: formData.sellerId,
-        billUrl: formData.billUrl,
-        isUploaded: true,
-        status: "unpaid",
-        paidAmount: 0,
-        pendingAmount: amountValue,
+        totalAmount: parseFloat(formData.totalAmount),
+        sellerId: parseInt(formData.sellerId),
+        billImage: formData.billImage || null,
+        note: formData.note || "",
+        items: [], // Uploaded bills might not have individual items broken down
       };
 
       await purchaseService.createPurchase(payload);
+
       setShowModal({
         show: true,
         success: true,
         message: "Purchase bill recorded successfully!",
       });
+
       setTimeout(() => navigate("/vendor/purchases"), 2000);
     } catch (error) {
       console.error("Submit error:", error);
-      setShowModal({
-        show: true,
-        success: false,
-        message: error.message || "Failed to save purchase",
-      });
+      toast.error(error.message || "Failed to save purchase bill");
     } finally {
       setLoading(false);
     }
@@ -226,11 +197,11 @@ const UploadPurchase = () => {
                   <input
                     type="text"
                     placeholder="Enter Invoice No."
-                    value={formData.purchaseInvoiceNumber}
+                    value={formData.purchaseNumber}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        purchaseInvoiceNumber: e.target.value,
+                        purchaseNumber: e.target.value,
                       })
                     }
                   />
@@ -282,7 +253,7 @@ const UploadPurchase = () => {
                 >
                   <option value="">Choose a seller...</option>
                   {sellers.map((s) => (
-                    <option key={s.id} value={s.id}>
+                    <option key={s._id || s.id} value={s._id || s.id}>
                       {s.vendorName}{" "}
                       {s.businessName ? `(${s.businessName})` : ""}
                     </option>
@@ -307,18 +278,23 @@ const UploadPurchase = () => {
                 document.getElementById("bill-upload-input").click()
               }
             >
-              {formData.billUrl ? (
+              {formData.billImage ? (
                 <div className="file-success">
                   <MdReceipt className="file-icon" />
                   <div className="file-details">
-                    <h4>Invoice Uploaded!</h4>
+                    <h4>{formData.fileName || "Invoice Selected!"}</h4>
                     <p>Click to replace the file</p>
                   </div>
                   <button
                     className="btn-remove"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setFormData({ ...formData, billUrl: "" });
+                      setFormData({
+                        ...formData,
+                        billImage: "",
+                        billFile: null,
+                        fileName: "",
+                      });
                     }}
                   >
                     <MdClose />

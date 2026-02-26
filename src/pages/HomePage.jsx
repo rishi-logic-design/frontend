@@ -5,13 +5,11 @@ import billService from "../services/billService";
 import challanService from "../services/challanService";
 import AnimatedAmount from "../utils/AnimatedAmount";
 import vendorService from "../services/vendorService";
-import { useNotifications } from "../context/NotificationContext";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [vendorData, setVendorData] = useState(null);
-  const { unreadCount, toggleSidebar } = useNotifications();
 
   const [collectionAmount, setCollectionAmount] = useState(0);
   const [loadingCollection, setLoadingCollection] = useState(false);
@@ -291,16 +289,6 @@ const HomePage = () => {
           >
             <span>☰</span>
           </button>
-          <button
-            className="icon-btn notification-btn"
-            title="Notifications"
-            onClick={toggleSidebar}
-          >
-            <span>🔔</span>
-            {unreadCount > 0 && (
-              <span className="notification-badge">{unreadCount}</span>
-            )}
-          </button>
         </div>
       </div>
 
@@ -402,17 +390,18 @@ const HomePage = () => {
                       <span className="transaction-date">
                         {formatDate(
                           item.createdAt ||
-                          item.date ||
-                          item.billDate ||
-                          item.challanDate,
+                            item.date ||
+                            item.billDate ||
+                            item.challanDate,
                         )}
                       </span>
                       <span className="transaction-amount">
                         ₹{getBillAmount(item).toLocaleString()}
                       </span>
                       <span
-                        className={`status-dot ${getStatus(item) === "paid" ? "completed" : "pending"
-                          }`}
+                        className={`status-dot ${
+                          getStatus(item) === "paid" ? "completed" : "pending"
+                        }`}
                       />
                     </div>
                   ))}

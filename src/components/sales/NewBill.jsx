@@ -5,7 +5,7 @@ import billService from "../../services/billService";
 import challanService from "../../services/challanService";
 import customerService from "../../services/customerService";
 import invoiceSettingsService from "../../services/invoiceServiceSettings";
-import { useNotifications } from "../../context/NotificationContext";
+import { toast } from "react-toastify";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase";
 import "./newBill.scss";
@@ -30,7 +30,6 @@ const DEFAULT_TERMS = [
 ];
 
 const NewBill = () => {
-  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -249,17 +248,17 @@ const NewBill = () => {
   const removeTerm = (i) => setTerms((p) => p.filter((_, idx) => idx !== i));
 
   const handleSubmit = async () => {
-    if (!formData.customer) return alert("Please select a customer");
+    if (!formData.customer) return toast.error("Please select a customer");
 
     if (useManualMode) {
       const valid = manualItems.filter(
         (it) => it.itemName && toNum(it.qty) > 0 && toNum(it.price) > 0,
       );
       if (!valid.length)
-        return alert("Add at least one item with name, qty and price");
+        return toast.error("Add at least one item with name, qty and price");
     } else {
       if (!selectedChallans.length)
-        return alert("Please select at least one challan");
+        return toast.error("Please select at least one challan");
     }
 
     try {
@@ -304,12 +303,11 @@ const NewBill = () => {
       }
 
       await billService.createBill(payload);
-      await fetchNotifications();
-      alert("Bill generated successfully!");
+      toast.success("Bill generated successfully!");
       navigate("/vendor/bills");
     } catch (e) {
       console.error(e);
-      alert(
+      toast.error(
         e.response?.data?.message || e.message || "Failed to generate bill",
       );
     } finally {

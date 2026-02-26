@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./addCustomer.scss";
 import customerService from "../../services/customerService";
+import { toast } from "react-toastify";
 
 const AddCustomer = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const AddCustomer = () => {
   };
 
   const handleSave = async () => {
-    if (!vendorId) return alert("Vendor not found");
+    if (!vendorId) return toast.error("Vendor not found");
     console.log("Form Data to be submitted:", formData);
     try {
       setLoading(true);
@@ -91,7 +92,7 @@ const AddCustomer = () => {
       navigate("/vendor/customer");
     } catch (error) {
       console.error(error);
-      alert("Failed to create customer");
+      toast.error("Failed to create customer");
     } finally {
       setLoading(false);
     }

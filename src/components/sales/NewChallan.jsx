@@ -4,11 +4,9 @@ import challanService from "../../services/challanService";
 import productService from "../../services/productService";
 import customerService from "../../services/customerService";
 import "./newChallan.scss";
-import { useNotifications } from "../../context/NotificationContext";
+import { toast } from "react-toastify";
 
 const NewChallan = () => {
-  const { fetchNotifications } = useNotifications();
-
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -165,7 +163,7 @@ const NewChallan = () => {
       console.log(selectedSize);
 
       if (!selectedSize) {
-        console.log("Size not found! Please select again.");
+        toast.error("Size not found! Please select again.");
         return;
       }
 
@@ -188,11 +186,10 @@ const NewChallan = () => {
       };
 
       console.log("Creating challan with payload:", payload);
-      await fetchNotifications();
 
       const challan = await challanService.createChallan(payload);
 
-      console.log("Challan created successfully!");
+      toast.success("Challan created successfully!");
       navigate(`/vendor/challan-details/${challan.id || challan._id}`);
     } catch (error) {
       console.error("Create challan error:", error);
@@ -204,7 +201,7 @@ const NewChallan = () => {
         errorMessage = error.data.message;
       }
 
-      console.log(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -217,7 +214,7 @@ const NewChallan = () => {
     <div className="new-challan-page">
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← 
+          ←
         </button>
         <h1 className="page-title">Add Challan</h1>
       </div>

@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import purchasePaymentService from "../../services/purchasePaymentService";
 import vendorVendorService from "../../services/vendorVendorService";
+import { toast } from "react-toastify";
 import "./addPaymentMade.scss";
 
 const AddPaymentMade = () => {
@@ -64,6 +65,7 @@ const AddPaymentMade = () => {
       setSellers(res?.data?.rows || res?.rows || res?.data || []);
     } catch (err) {
       console.error("Error fetching sellers:", err);
+      toast.error("Failed to fetch sellers.");
     }
   };
 
@@ -103,6 +105,7 @@ const AddPaymentMade = () => {
       setSellerOutstanding(outstandingData.outstanding || 0);
     } catch (err) {
       console.error("Error fetching seller details:", err);
+      toast.error("Failed to fetch seller details.");
     }
   };
 
@@ -136,19 +139,11 @@ const AddPaymentMade = () => {
     if (loading) return;
 
     if (!paymentData.sellerId) {
-      setShowModal({
-        show: true,
-        success: false,
-        message: "Please select a seller",
-      });
+      toast.error("Please select a seller");
       return;
     }
     if (paymentData.amount <= 0) {
-      setShowModal({
-        show: true,
-        success: false,
-        message: "Amount must be greater than 0",
-      });
+      toast.error("Amount must be greater than 0");
       return;
     }
 
@@ -158,7 +153,7 @@ const AddPaymentMade = () => {
       const adjustedPurchases = pendingPurchases
         .filter((p) => p.payAmount > 0)
         .map((p) => ({
-          purchaseId: parseInt(p.id),
+          purchaseId: p._id || p.id,
           payAmount: parseFloat(p.payAmount),
         }));
 
@@ -196,11 +191,7 @@ const AddPaymentMade = () => {
       }
     } catch (err) {
       console.error("Error submitting payment:", err);
-      setShowModal({
-        show: true,
-        success: false,
-        message: err.message || "Failed to record payment",
-      });
+      toast.error(err.message || "Failed to record payment");
     } finally {
       setLoading(false);
     }
@@ -434,7 +425,7 @@ const AddPaymentMade = () => {
                 {pendingPurchases.length > 0 ? (
                   pendingPurchases.map((p, idx) => (
                     <tr
-                      key={p.id}
+                      key={p._id || p.id}
                       className={p.payAmount > 0 ? "active-row" : ""}
                     >
                       <td>{idx + 1}</td>

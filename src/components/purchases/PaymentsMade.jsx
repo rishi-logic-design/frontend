@@ -53,8 +53,6 @@ const PaymentsMade = () => {
       const rows = data.rows || [];
       setPayments(rows);
       setTotalCount(data.total || rows.length || 0);
-
-      // Calculate simple stats from the fetched rows (or ideally from a separate API)
       const total = rows.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
       const advance = rows.reduce(
         (sum, p) => sum + parseFloat(p.advanceAmount || 0),
@@ -267,7 +265,7 @@ const PaymentsMade = () => {
                   </tr>
                 ) : payments.length > 0 ? (
                   payments.map((p) => (
-                    <tr key={p.id}>
+                    <tr key={p._id || p.id}>
                       <td>
                         <span className="receipt-tag">{p.receiptNumber}</span>
                       </td>
@@ -293,7 +291,7 @@ const PaymentsMade = () => {
                           <button
                             className="delete-btn"
                             title="Delete Payment"
-                            onClick={() => handleDelete(p.id)}
+                            onClick={() => handleDelete(p._id || p.id)}
                           >
                             <FaTrash />
                           </button>
