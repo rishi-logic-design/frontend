@@ -85,6 +85,7 @@ const Login = () => {
   };
 
   const verifyOtp = async () => {
+    const otpValue = otp.join("");
     if (otpValue.length !== 6) {
       toast.error("Please enter complete 6-digit OTP");
       return;

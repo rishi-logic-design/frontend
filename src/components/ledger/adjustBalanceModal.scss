@@ -1,3 +1,4 @@
+@use "sass:color";
 $primary: #ffcc29;
 $border: #e0e0e0;
 $text: #333;
@@ -218,7 +219,7 @@ $bg-light: #f5f5f5;
         background: $primary;
         color: #333;
         &:hover {
-          background: darken($primary, 5%);
+          background: color.adjust($primary, $lightness: -5%);
         }
       }
     }

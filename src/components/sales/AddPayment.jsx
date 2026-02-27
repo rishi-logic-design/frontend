@@ -7,6 +7,19 @@ import billService from "../../services/billService";
 import { uploadPaymentAttachment } from "../../utils/firebaseStorage";
 import { toast } from "react-toastify";
 
+const PAYMENT_METHODS = [
+  { value: "cash", label: "💵 Cash" },
+  { value: "bank", label: "🏦 Bank Transfer" },
+  { value: "upi", label: "📱 UPI" },
+  { value: "cheque", label: "📝 Cheque" },
+  { value: "card", label: "💳 Card" },
+  { value: "online", label: "🌐 Online" },
+  { value: "other", label: "💰 Other" },
+];
+
+const fmtAmt = (v) =>
+  `₹${parseFloat(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 const AddPayment = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -26,13 +39,6 @@ const AddPayment = () => {
     reference: "",
     note: "",
     attachmentFile: null,
-    bankName: "",
-    accountNumber: "",
-    ifscCode: "",
-    upiId: "",
-    chequeNumber: "",
-    chequeDate: "",
-    chequeBankName: "",
     adjustedInvoices: [],
   });
 
@@ -48,86 +54,9 @@ const AddPayment = () => {
 
   useEffect(() => {
     fetchCustomers().then(() => {
-      if (prefillBillId) {
-        prefillFromBill(prefillBillId);
-      }
+      if (prefillBillId) prefillFromBill(prefillBillId);
     });
   }, []);
-
-  const prefillFromBill = async (billId) => {
-    try {
-      setPrefillLoading(true);
-      const billData = await billService.getBillById(billId);
-      const bill = billData?.bill || billData;
-      setPrefillBill(bill);
-
-      const customerId =
-        bill.customerId || bill.customer?.id || bill.customer?._id;
-
-      const totalAmt = parseFloat(bill.totalWithGST || bill.totalAmount || 0);
-      const paidAmt = parseFloat(bill.paidAmount || 0);
-      const pendingAmount = totalAmt - paidAmt;
-
-      const fillAmount =
-        prefillAction === "paid" ? pendingAmount.toString() : "";
-
-      setFormData((prev) => ({
-        ...prev,
-        type: "credit",
-        subType: "customer",
-        customerId: customerId || "",
-        amount: fillAmount,
-        adjustedInvoices:
-          prefillAction === "paid" && pendingAmount > 0
-            ? [{ billId: bill._id || bill.id, payAmount: pendingAmount }]
-            : [],
-      }));
-
-      if (customerId) {
-        try {
-          setLoadingInvoices(true);
-
-          const customerData = bill.customer || {};
-          setSelectedCustomerData(customerData);
-
-          const address =
-            parseAddress(
-              customerData.officeAddress || customerData.homeAddress,
-            ) ||
-            customerData.address ||
-            "";
-          const gstNumber = customerData.gstNumber || "";
-
-          setFormData((prev) => ({
-            ...prev,
-            homeAddress: address,
-            gstNumber,
-            totalOutstanding: pendingAmount,
-          }));
-
-          // Show ONLY this specific bill in the invoices list
-          setPendingInvoices([
-            {
-              id: bill._id || bill.id,
-              billNumber: bill.billNumber,
-              billDate: bill.billDate || bill.createdAt,
-              totalAmount: totalAmt,
-              paidAmount: paidAmt,
-              pendingAmount: pendingAmount,
-            },
-          ]);
-        } catch (err) {
-          console.error("Error fetching customer data for prefill:", err);
-        } finally {
-          setLoadingInvoices(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error prefilling bill data:", error);
-    } finally {
-      setPrefillLoading(false);
-    }
-  };
 
   const parseAddress = (raw) => {
     if (!raw) return "";
@@ -136,12 +65,14 @@ const AddPayment = () => {
       return [
         obj.streetNo || obj.street || "",
         obj.houseNo || obj.house || "",
-        obj.residencyName || obj.building || obj.buildingNo || "",
+        obj.buildingNo || obj.residencyName || obj.building || "",
         obj.officeNo || obj.office || "",
         obj.area || obj.locality || "",
-        obj.city || "",
+        // API uses "areaCity" — fall back to "city"
+        obj.areaCity || obj.city || "",
         obj.state || "",
-        obj.pinCode || obj.pin || "",
+        // API uses "pincode" (lowercase c) — fall back to pinCode / pin
+        obj.pincode || obj.pinCode || obj.pin || "",
       ]
         .filter(Boolean)
         .join(", ");
@@ -150,237 +81,212 @@ const AddPayment = () => {
     }
   };
 
-  const fetchCustomers = async () => {
-    const vendorData = JSON.parse(localStorage.getItem("vendorData"));
-    const vendorId = vendorData?.id;
+  const prefillFromBill = async (billId) => {
     try {
-      const response = await customerService.getCustomers(vendorId);
-      let customerList = [];
-
-      if (response?.data?.rows && Array.isArray(response.data.rows)) {
-        customerList = response.data.rows;
-      } else if (response?.rows && Array.isArray(response.rows)) {
-        customerList = response.rows;
-      } else if (Array.isArray(response)) {
-        customerList = response;
+      setPrefillLoading(true);
+      const billData = await billService.getBillById(billId);
+      const bill = billData?.bill || billData;
+      setPrefillBill(bill);
+      const customerId =
+        bill.customerId || bill.customer?.id || bill.customer?._id;
+      const totalAmt = parseFloat(bill.totalWithGST || bill.totalAmount || 0);
+      const paidAmt = parseFloat(bill.paidAmount || 0);
+      const pending = totalAmt - paidAmt;
+      const fillAmt = prefillAction === "paid" ? pending.toString() : "";
+      setFormData((p) => ({
+        ...p,
+        type: "credit",
+        subType: "customer",
+        customerId: customerId || "",
+        amount: fillAmt,
+        adjustedInvoices:
+          prefillAction === "paid" && pending > 0
+            ? [{ billId: bill._id || bill.id, payAmount: pending }]
+            : [],
+      }));
+      if (customerId) {
+        setLoadingInvoices(true);
+        const cData = bill.customer || {};
+        setSelectedCustomerData(cData);
+        setFormData((p) => ({
+          ...p,
+          homeAddress:
+            parseAddress(cData.homeAddress) ||
+            parseAddress(cData.officeAddress) ||
+            cData.address ||
+            "",
+          gstNumber: cData.gstNumber || "",
+          totalOutstanding: pending,
+        }));
+        setPendingInvoices([
+          {
+            id: bill._id || bill.id,
+            billNumber: bill.billNumber,
+            billDate: bill.billDate || bill.createdAt,
+            totalAmount: totalAmt,
+            paidAmount: paidAmt,
+            pendingAmount: pending,
+          },
+        ]);
+        setLoadingInvoices(false);
       }
-      setCustomers(customerList);
-      return customerList;
-    } catch (error) {
-      console.error("Error fetching customers:", error);
+    } catch (e) {
+      console.error("Prefill error:", e);
+    } finally {
+      setPrefillLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    const vendorId = JSON.parse(localStorage.getItem("vendorData"))?.id;
+    try {
+      const res = await customerService.getCustomers(vendorId);
+      const list =
+        res?.data?.rows || res?.rows || (Array.isArray(res) ? res : []);
+      console.log(list);
+      setCustomers(list);
+      return list;
+    } catch {
       setCustomers([]);
       return [];
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInput = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((p) => ({
+      ...p,
       [name]: type === "checkbox" ? checked : value,
     }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    if (errors[name]) setErrors((p) => ({ ...p, [name]: "" }));
   };
 
   const handleCustomerChange = async (e) => {
-    const customerId = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      customerId,
-      adjustedInvoices: [],
-    }));
-
-    if (!customerId) {
+    const cid = e.target.value;
+    setFormData((p) => ({ ...p, customerId: cid, adjustedInvoices: [] }));
+    if (!cid) {
       setSelectedCustomerData(null);
       setPendingInvoices([]);
-      setFormData((prev) => ({
-        ...prev,
+      setFormData((p) => ({
+        ...p,
         homeAddress: "",
         gstNumber: "",
         totalOutstanding: 0,
       }));
       return;
     }
-
     try {
       setLoadingInvoices(true);
-
-      // Fetch customer details
-      const customerResponse =
-        await customerService.getCustomerById(customerId);
-      const customerData = customerResponse.data || customerResponse;
-
-      setSelectedCustomerData(customerData);
-
-      const address =
-        parseAddress(customerData.officeAddress || customerData.homeAddress) ||
-        customerData.address ||
-        "";
-      const gstNumber = customerData.gstNumber || "";
-
-      const [outstandingResponse, invoicesResponse] = await Promise.all([
-        paymentService.getCustomerOutstanding(customerId),
-        paymentService.getCustomerPendingInvoices(customerId),
+      const cRes = await customerService.getCustomerById(cid);
+      const cData = cRes.data || cRes;
+      setSelectedCustomerData(cData);
+      const [outRes, invRes] = await Promise.all([
+        paymentService.getCustomerOutstanding(cid),
+        paymentService.getCustomerPendingInvoices(cid),
       ]);
-
-      const outstanding = parseFloat(
-        outstandingResponse.outstanding ||
-          outstandingResponse.totalOutstanding ||
-          0,
-      );
-      const invoices = invoicesResponse.invoices || [];
-
-      setFormData((prev) => ({
-        ...prev,
-        homeAddress: address,
-        gstNumber,
-        totalOutstanding: outstanding,
+      console.log("Customer data full:", cData);
+      setFormData((p) => ({
+        ...p,
+        homeAddress:
+          parseAddress(cData.homeAddress) ||
+          parseAddress(cData.officeAddress) ||
+          cData.address ||
+          "",
+        gstNumber: cData.gstNumber || "",
+        totalOutstanding: parseFloat(
+          outRes.outstanding || outRes.totalOutstanding || 0,
+        ),
       }));
-
-      setPendingInvoices(invoices);
-    } catch (error) {
-      console.error("Error fetching customer data:", error);
-      toast.error("Failed to fetch customer details. Please try again.");
+      setPendingInvoices(invRes.invoices || []);
+    } catch {
+      toast.error("Failed to fetch customer details.");
     } finally {
       setLoadingInvoices(false);
     }
   };
 
-  const handleInvoiceAmountChange = (invoiceId, payAmount) => {
-    const amount = parseFloat(payAmount) || 0;
-
-    setFormData((prev) => {
-      const existingIndex = prev.adjustedInvoices.findIndex(
-        (inv) => inv.billId === invoiceId,
-      );
-
-      let newAdjustedInvoices;
-      if (amount === 0) {
-        newAdjustedInvoices = prev.adjustedInvoices.filter(
-          (inv) => inv.billId !== invoiceId,
-        );
-      } else if (existingIndex !== -1) {
-        newAdjustedInvoices = [...prev.adjustedInvoices];
-        newAdjustedInvoices[existingIndex] = {
-          billId: invoiceId,
-          payAmount: amount,
-        };
-      } else {
-        newAdjustedInvoices = [
-          ...prev.adjustedInvoices,
-          { billId: invoiceId, payAmount: amount },
-        ];
-      }
-
-      const totalAdjusted = newAdjustedInvoices.reduce(
-        (sum, inv) => sum + parseFloat(inv.payAmount || 0),
-        0,
-      );
-
+  const handleInvoiceAmt = (invId, val) => {
+    const amt = parseFloat(val) || 0;
+    setFormData((p) => {
+      const idx = p.adjustedInvoices.findIndex((i) => i.billId === invId);
+      let list;
+      if (amt === 0)
+        list = p.adjustedInvoices.filter((i) => i.billId !== invId);
+      else if (idx !== -1) {
+        list = [...p.adjustedInvoices];
+        list[idx] = { billId: invId, payAmount: amt };
+      } else list = [...p.adjustedInvoices, { billId: invId, payAmount: amt }];
+      const total = list.reduce((s, i) => s + parseFloat(i.payAmount || 0), 0);
       return {
-        ...prev,
-        adjustedInvoices: newAdjustedInvoices,
-        amount: totalAdjusted > 0 ? totalAdjusted.toString() : prev.amount,
+        ...p,
+        adjustedInvoices: list,
+        amount: total > 0 ? total.toString() : p.amount,
       };
     });
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size should not exceed 5MB");
-        return;
-      }
-      setFormData((prev) => ({
-        ...prev,
-        attachmentFile: file,
-      }));
+  const handleFile = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5 MB");
+      return;
     }
+    setFormData((p) => ({ ...p, attachmentFile: f }));
   };
 
-  const handleRemoveFile = () => {
-    setFormData((prev) => ({
-      ...prev,
-      attachmentFile: null,
-    }));
-    const fileInput = document.getElementById("attachment");
-    if (fileInput) fileInput.value = "";
+  const removeFile = () => {
+    setFormData((p) => ({ ...p, attachmentFile: null }));
+    const el = document.getElementById("ap-attachment");
+    if (el) el.value = "";
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const totalAdjusted = () =>
+    formData.adjustedInvoices.reduce(
+      (s, i) => s + parseFloat(i.payAmount || 0),
+      0,
+    );
 
-    if (!formData.type) {
-      newErrors.type = "Payment type (Credit/Debit) is required";
-    }
-    if (!formData.subType) {
-      newErrors.subType = "Sub-type is required";
-    }
-
-    if (formData.subType === "customer" && !formData.customerId) {
-      newErrors.customerId = "Customer is required";
-    }
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = "Valid amount is required";
-    }
-
-    if (!formData.paymentDate) {
-      newErrors.paymentDate = "Payment date is required";
-    }
-    if (!formData.method) {
-      newErrors.method = "Payment method is required";
-    }
-
+  const validate = () => {
+    const e = {};
+    if (!formData.type) e.type = "Payment type is required";
+    if (!formData.subType) e.subType = "Sub-type is required";
+    if (formData.subType === "customer" && !formData.customerId)
+      e.customerId = "Customer is required";
+    if (!formData.amount || parseFloat(formData.amount) <= 0)
+      e.amount = "Valid amount is required";
+    if (!formData.paymentDate) e.paymentDate = "Date is required";
+    if (!formData.method) e.method = "Payment method is required";
     if (formData.adjustedInvoices.length > 0) {
-      const totalAdjusted = formData.adjustedInvoices.reduce(
-        (sum, inv) => sum + parseFloat(inv.payAmount || 0),
-        0,
-      );
-      const paymentAmount = parseFloat(formData.amount);
-
-      if (Math.abs(totalAdjusted - paymentAmount) > 0.01) {
-        newErrors.adjustedInvoices =
-          "Total adjusted amount must equal payment amount";
-      }
+      if (Math.abs(totalAdjusted() - parseFloat(formData.amount)) > 0.01)
+        e.adjustedInvoices = "Total adjusted ≠ payment amount";
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Please fix the errors before submitting");
+    if (!validate()) {
+      toast.error("Please fix errors before submitting");
       return;
     }
-
     try {
       setLoading(true);
-
       let attachmentUrl = null;
       if (formData.attachmentFile) {
         try {
           attachmentUrl = await uploadPaymentAttachment(
             formData.attachmentFile,
           );
-        } catch (uploadError) {
-          console.error("Error uploading attachment:", uploadError);
-          if (
-            !window.confirm("Failed to upload attachment. Continue without it?")
-          ) {
+        } catch {
+          if (!window.confirm("Attachment failed. Continue?")) {
             setLoading(false);
             return;
           }
         }
       }
-
-      const paymentData = {
+      const payload = {
         customerId: formData.customerId || null,
         type: formData.type,
         subType: formData.subType,
@@ -392,559 +298,713 @@ const AddPayment = () => {
         note: formData.note || null,
         attachments: attachmentUrl ? [attachmentUrl] : [],
         status: "completed",
+        ...(formData.adjustedInvoices.length > 0 && {
+          adjustedInvoices: formData.adjustedInvoices,
+        }),
       };
-
-      if (formData.adjustedInvoices.length > 0) {
-        paymentData.adjustedInvoices = formData.adjustedInvoices;
-      }
-
-      const response = await paymentService.createPayment(paymentData);
-
+      await paymentService.createPayment(payload);
       if (prefillBillId) {
         try {
-          const totalAmt = parseFloat(
+          const total = parseFloat(
             prefillBill.totalWithGST || prefillBill.totalAmount || 0,
           );
-          const alreadyPaid = parseFloat(prefillBill.paidAmount || 0);
-          const currentPay = parseFloat(formData.amount || 0);
-          const newPaid = alreadyPaid + currentPay;
-
-          if (newPaid >= totalAmt) {
-            await billService.markBillPaid(prefillBillId);
-          } else {
+          const already = parseFloat(prefillBill.paidAmount || 0);
+          const newPaid = already + parseFloat(formData.amount || 0);
+          if (newPaid >= total) await billService.markBillPaid(prefillBillId);
+          else
             await billService.editBill(prefillBillId, {
               status: "partially_paid",
               paidAmount: newPaid.toFixed(2),
-              pendingAmount: (totalAmt - newPaid).toFixed(2),
+              pendingAmount: (total - newPaid).toFixed(2),
             });
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 800));
-        } catch (billErr) {
-          console.error("Could not update bill status:", billErr);
+          await new Promise((r) => setTimeout(r, 800));
+        } catch (err) {
+          console.error("Bill update error:", err);
         }
       }
-
-      // await fetchNotifications();
       setShowSuccessModal(true);
-
       setTimeout(() => {
         setShowSuccessModal(false);
         navigate("/vendor/bills", { state: { refresh: true } });
-      }, 2000);
-    } catch (error) {
-      console.error("Error creating payment:", error);
-      const errorMessage =
-        error.message ||
-        error.response?.data?.message ||
-        "Failed to create payment";
-      toast.error(errorMessage);
+      }, 2200);
+    } catch (err) {
+      toast.error(
+        err.message ||
+          err.response?.data?.message ||
+          "Failed to create payment",
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
-  const getTotalAdjustedAmount = () => {
-    return formData.adjustedInvoices.reduce(
-      (sum, inv) => sum + parseFloat(inv.payAmount || 0),
-      0,
-    );
   };
 
   if (prefillLoading) {
     return (
       <div className="ap-fullscreen-loader">
         <div className="ap-loader-ring">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
+          <div />
+          <div />
+          <div />
+          <div />
         </div>
-        <p>Loading bill details...</p>
+        <p>Loading bill details…</p>
       </div>
     );
   }
 
+  const typeLabel =
+    formData.type === "credit"
+      ? "Credit — Money Received"
+      : formData.type === "debit"
+        ? "Debit — Money Paid"
+        : "—";
+  const methodLabel =
+    PAYMENT_METHODS.find((m) => m.value === formData.method)?.label || "—";
+
   return (
     <div className="add-payment-page">
+      {/* ─── Success Modal ─── */}
       {showSuccessModal && (
         <div className="success-modal-overlay">
           <div className="success-modal">
             <div className="success-icon">
-              <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#f59e0b" />
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="32" fill="#eff6ff" />
+                <circle cx="32" cy="32" r="24" fill="#2563eb" />
                 <path
-                  d="M8 12l3 3 5-6"
+                  d="M20 32l9 9 15-15"
                   stroke="white"
-                  strokeWidth="2"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
             </div>
-            <h2>Payment Successful!</h2>
-            <p>Your payment has been recorded successfully</p>
+            <h2>Payment Recorded!</h2>
+            <p>Payment has been saved and applied successfully.</p>
           </div>
         </div>
       )}
 
+      {/* ─── Header ─── */}
       <div className="payment-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
+        <button
+          className="back-btn"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
           ←
         </button>
+        <div className="header-divider" />
         <div className="header-text">
           <h1>{prefillBillId ? "Record Payment" : "Add Payment"}</h1>
           {prefillBill && (
             <span className="header-sub">
-              {prefillBill.billNumber} &nbsp;·&nbsp;
+              {prefillBill.billNumber} ·{" "}
               {prefillBill.customerName || prefillBill.customer?.customerName}
             </span>
           )}
         </div>
+        <div className="header-actions">
+          <span className="header-badge">New Entry</span>
+        </div>
       </div>
 
-      <div className="payment-form-container">
-        <form onSubmit={handleSubmit} className="payment-form">
-          {/* Credit/Debit Type */}
-          <div className="form-group">
-            <label htmlFor="type">Payment Type *</label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              className={errors.type ? "error" : ""}
-              required
-            >
-              <option value="">Select Payment Type</option>
-              <option value="credit">Credit (Money Received)</option>
-              <option value="debit">Debit (Money Paid)</option>
-            </select>
-            {errors.type && (
-              <span className="error-message">{errors.type}</span>
-            )}
-          </div>
-
-          {/* Sub Type */}
-          <div className="form-group">
-            <label htmlFor="subType">Sub Type *</label>
-            <select
-              id="subType"
-              name="subType"
-              value={formData.subType}
-              onChange={handleInputChange}
-              className={errors.subType ? "error" : ""}
-              required
-            >
-              <option value="">Select Sub Type</option>
-              <option value="customer">Customer</option>
-              <option value="vendor">Vendor</option>
-              <option value="cash-deposit">Cash Deposit</option>
-              <option value="cash-withdrawal">Cash Withdrawal</option>
-              <option value="bank-charges">Bank Charges</option>
-              <option value="electricity-bill">Electricity Bill</option>
-              <option value="miscellaneous">Miscellaneous</option>
-            </select>
-            {errors.subType && (
-              <span className="error-message">{errors.subType}</span>
-            )}
-          </div>
-
-          {formData.subType === "customer" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="customerId">Customer *</label>
-                <select
-                  id="customerId"
-                  name="customerId"
-                  value={formData.customerId}
-                  onChange={handleCustomerChange}
-                  className={errors.customerId ? "error" : ""}
-                  required
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.customerName ||
-                        customer.businessName ||
-                        `Customer ${customer.id}`}
-                    </option>
-                  ))}
-                </select>
-                {errors.customerId && (
-                  <span className="error-message">{errors.customerId}</span>
-                )}
+      {/* ─── Two-panel body ─── */}
+      <div className="ap-body">
+        {/* ════ LEFT: Form ════ */}
+        <div className="ap-main">
+          <form onSubmit={handleSubmit}>
+            {/* ── Section 1: Category ── */}
+            <div className="ap-section-block">
+              <div className="ap-section-label">
+                <span className="asl-num">1</span>
+                <span className="asl-title">Payment Category</span>
+                <span className="asl-line" />
               </div>
 
-              {/* Auto-filled fields */}
-              {formData.customerId && (
-                <>
-                  <div className="form-group">
-                    <label htmlFor="address">Address</label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.homeAddress}
-                      readOnly
-                      placeholder="Auto-filled"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="gstNumber">GST Number</label>
-                    <input
-                      type="text"
-                      id="gstNumber"
-                      name="gstNumber"
-                      value={formData.gstNumber}
-                      readOnly
-                      placeholder="Auto-filled"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="totalOutstanding">
-                      {prefillBillId
-                        ? "Pending Amount (This Bill)"
-                        : "Total Outstanding"}
-                    </label>
-                    <input
-                      type="text"
-                      id="totalOutstanding"
-                      name="totalOutstanding"
-                      value={`₹${formData.totalOutstanding.toLocaleString()}`}
-                      readOnly
-                      className="outstanding-field"
-                    />
-                  </div>
-
-                  {/* Pending Invoices */}
-                  {loadingInvoices ? (
-                    <div className="loading-invoices">
-                      <div className="spinner"></div>
-                      <p>Loading pending invoices...</p>
-                    </div>
-                  ) : (
-                    pendingInvoices.length > 0 && (
-                      <div className="invoices-section">
-                        <h3>Adjust Against Invoices</h3>
-                        <p className="invoices-hint">
-                          Allocate payment amount to specific invoices
-                        </p>
-
-                        {pendingInvoices.map((invoice) => (
-                          <div key={invoice.id} className="invoice-item">
-                            <div className="invoice-header">
-                              <span className="invoice-number">
-                                {invoice.billNumber ||
-                                  invoice.challanNumber ||
-                                  `Invoice #${invoice.id}`}
-                              </span>
-                              <span className="invoice-date">
-                                {new Date(
-                                  invoice.billDate || invoice.invoiceDate,
-                                ).toLocaleDateString("en-IN")}
-                              </span>
-                            </div>
-                            <div className="invoice-details">
-                              <div className="detail-row">
-                                <span>
-                                  Total: ₹
-                                  {parseFloat(
-                                    invoice.totalAmount,
-                                  ).toLocaleString()}
-                                </span>
-                                <span>
-                                  Paid: ₹
-                                  {parseFloat(
-                                    invoice.paidAmount || 0,
-                                  ).toLocaleString()}
-                                </span>
-                                <span className="pending">
-                                  Pending: ₹
-                                  {parseFloat(
-                                    invoice.pendingAmount,
-                                  ).toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="pay-amount-input">
-                                <label>Pay Amount:</label>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: "8px",
-                                    alignItems: "center",
-                                  }}
-                                >
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="₹0"
-                                    value={
-                                      formData.adjustedInvoices.find(
-                                        (inv) => inv.billId === invoice.id,
-                                      )?.payAmount || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleInvoiceAmountChange(
-                                        invoice.id,
-                                        e.target.value,
-                                      )
-                                    }
-                                  />
-                                  <button
-                                    type="button"
-                                    className="pay-full-btn"
-                                    onClick={() =>
-                                      handleInvoiceAmountChange(
-                                        invoice.id,
-                                        parseFloat(
-                                          invoice.pendingAmount,
-                                        ).toFixed(2),
-                                      )
-                                    }
-                                  >
-                                    Pay Full
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        {formData.adjustedInvoices.length > 0 && (
-                          <div className="adjusted-summary">
-                            <strong>
-                              Total Adjusted: ₹
-                              {getTotalAdjustedAmount().toLocaleString()}
-                            </strong>
-                          </div>
-                        )}
-                      </div>
-                    )
+              <div className="ap-grid-2">
+                <div className="form-group">
+                  <label htmlFor="type">
+                    Payment Type <span className="fg-req">*</span>
+                  </label>
+                  <select
+                    id="type"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInput}
+                    className={errors.type ? "has-error" : ""}
+                  >
+                    <option value="">Select type…</option>
+                    <option value="credit">Credit — Money Received</option>
+                    <option value="debit">Debit — Money Paid</option>
+                  </select>
+                  {errors.type && (
+                    <span className="fg-error">{errors.type}</span>
                   )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="subType">
+                    Sub Type <span className="fg-req">*</span>
+                  </label>
+                  <select
+                    id="subType"
+                    name="subType"
+                    value={formData.subType}
+                    onChange={handleInput}
+                    className={errors.subType ? "has-error" : ""}
+                  >
+                    <option value="">Select sub type…</option>
+                    <option value="customer">Customer</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="cash-deposit">Cash Deposit</option>
+                    <option value="cash-withdrawal">Cash Withdrawal</option>
+                    <option value="bank-charges">Bank Charges</option>
+                    <option value="electricity-bill">Electricity Bill</option>
+                    <option value="miscellaneous">Miscellaneous</option>
+                  </select>
+                  {errors.subType && (
+                    <span className="fg-error">{errors.subType}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Customer picker */}
+              {formData.subType === "customer" && (
+                <>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label htmlFor="customerId">
+                      Customer <span className="fg-req">*</span>
+                    </label>
+                    <select
+                      id="customerId"
+                      name="customerId"
+                      value={formData.customerId}
+                      onChange={handleCustomerChange}
+                      className={errors.customerId ? "has-error" : ""}
+                    >
+                      <option value="">Select customer…</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.customerName ||
+                            c.businessName ||
+                            `Customer ${c.id}`}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.customerId && (
+                      <span className="fg-error">{errors.customerId}</span>
+                    )}
+                  </div>
+
+                  {/* Customer info strip */}
+                  {formData.customerId && (
+                    <div
+                      className="ap-customer-strip"
+                      style={{ marginTop: 12 }}
+                    >
+                      <div className="ap-cs-item">
+                        <div className="ap-cs-lbl">Address</div>
+                        <div className="ap-cs-val">
+                          {formData.homeAddress || "—"}
+                        </div>
+                      </div>
+                      <div className="ap-cs-item">
+                        <div className="ap-cs-lbl">GST Number</div>
+                        <div className="ap-cs-val">
+                          {formData.gstNumber || "—"}
+                        </div>
+                      </div>
+                      <div className="ap-cs-item">
+                        <div className="ap-cs-lbl">
+                          {prefillBillId
+                            ? "Pending Amount"
+                            : "Total Outstanding"}
+                        </div>
+                        <div className="ap-cs-val big">
+                          {fmtAmt(formData.totalOutstanding)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Invoices */}
+                  {formData.customerId &&
+                    (loadingInvoices ? (
+                      <div
+                        className="loading-invoices"
+                        style={{ marginTop: 16 }}
+                      >
+                        <div className="spinner" />
+                        <p>Loading pending invoices…</p>
+                      </div>
+                    ) : (
+                      pendingInvoices.length > 0 && (
+                        <div className="invoices-section">
+                          <div className="inv-section-header">
+                            <h3>Adjust Against Invoices</h3>
+                            <span className="inv-count">
+                              {pendingInvoices.length}
+                            </span>
+                          </div>
+                          {pendingInvoices.map((inv) => (
+                            <div key={inv.id} className="invoice-item">
+                              <div className="inv-top">
+                                <span className="inv-number">
+                                  {inv.billNumber ||
+                                    inv.challanNumber ||
+                                    `Invoice #${inv.id}`}
+                                </span>
+                                <span className="inv-date">
+                                  {new Date(
+                                    inv.billDate || inv.invoiceDate,
+                                  ).toLocaleDateString("en-IN")}
+                                </span>
+                              </div>
+                              <div className="inv-chips">
+                                <span className="chip total">
+                                  Total: {fmtAmt(inv.totalAmount)}
+                                </span>
+                                <span className="chip paid">
+                                  Paid: {fmtAmt(inv.paidAmount || 0)}
+                                </span>
+                                <span className="chip pend">
+                                  Pending: {fmtAmt(inv.pendingAmount)}
+                                </span>
+                              </div>
+                              <div className="inv-pay-row">
+                                <span className="ipr-label">Pay Amount:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={
+                                    formData.adjustedInvoices.find(
+                                      (i) => i.billId === inv.id,
+                                    )?.payAmount || ""
+                                  }
+                                  onChange={(e) =>
+                                    handleInvoiceAmt(inv.id, e.target.value)
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="pay-full-btn"
+                                  onClick={() =>
+                                    handleInvoiceAmt(
+                                      inv.id,
+                                      parseFloat(inv.pendingAmount).toFixed(2),
+                                    )
+                                  }
+                                >
+                                  Pay Full
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {formData.adjustedInvoices.length > 0 && (
+                            <div className="adjusted-summary">
+                              <span className="adj-lbl">Total Adjusted</span>
+                              <strong>{fmtAmt(totalAdjusted())}</strong>
+                            </div>
+                          )}
+                          {errors.adjustedInvoices && (
+                            <span
+                              className="fg-error"
+                              style={{ marginTop: 8, display: "flex" }}
+                            >
+                              {errors.adjustedInvoices}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    ))}
                 </>
               )}
-            </>
-          )}
-
-          {/* Payment Date */}
-          <div className="form-group">
-            <label htmlFor="paymentDate">Payment Date *</label>
-            <input
-              type="date"
-              id="paymentDate"
-              name="paymentDate"
-              value={formData.paymentDate}
-              onChange={handleInputChange}
-              className={errors.paymentDate ? "error" : ""}
-              required
-            />
-            {errors.paymentDate && (
-              <span className="error-message">{errors.paymentDate}</span>
-            )}
-          </div>
-
-          {/* Amount */}
-          <div className="form-group">
-            <label htmlFor="amount">Amount *</label>
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                placeholder="Enter Amount"
-                className={errors.amount ? "error" : ""}
-                style={{ flex: 1 }}
-                required
-                min="0"
-                step="0.01"
-              />
-              {prefillBillId && (
-                <button
-                  type="button"
-                  className="pay-full-btn-main"
-                  onClick={() => {
-                    const totalAmt = parseFloat(
-                      prefillBill.totalWithGST || prefillBill.totalAmount || 0,
-                    );
-                    const paidAmt = parseFloat(prefillBill.paidAmount || 0);
-                    const pending = (totalAmt - paidAmt).toFixed(2);
-
-                    setFormData((prev) => ({ ...prev, amount: pending }));
-
-                    // Also update adjusted invoices if only one
-                    if (pendingInvoices.length === 1) {
-                      handleInvoiceAmountChange(pendingInvoices[0].id, pending);
-                    }
-                  }}
-                >
-                  Full Paid
-                </button>
-              )}
             </div>
-            {errors.amount && (
-              <span className="error-message">{errors.amount}</span>
-            )}
-          </div>
 
-          {/* Payment Method */}
-          <div className="form-group">
-            <label htmlFor="method">Payment Method *</label>
-            <select
-              id="method"
-              name="method"
-              value={formData.method}
-              onChange={handleInputChange}
-              className={errors.method ? "error" : ""}
-              required
-            >
-              <option value="">Select Payment Method</option>
-              <option value="cash">💵 Cash</option>
-              <option value="bank">🏦 Bank Transfer</option>
-              <option value="upi">📱 UPI</option>
-              <option value="cheque">📝 Cheque</option>
-              <option value="card">💳 Card</option>
-              <option value="online">🌐 Online</option>
-              <option value="other">💰 Other</option>
-            </select>
-            {errors.method && (
-              <span className="error-message">{errors.method}</span>
-            )}
-          </div>
+            {/* ── Section 2: Payment Details ── */}
+            <div className="ap-section-block">
+              <div className="ap-section-label">
+                <span className="asl-num">2</span>
+                <span className="asl-title">Payment Details</span>
+                <span className="asl-line" />
+              </div>
 
-          {/* Remarks */}
-          <div className="form-group">
-            <label htmlFor="note">Remarks</label>
-            <textarea
-              id="note"
-              name="note"
-              value={formData.note}
-              onChange={handleInputChange}
-              placeholder="Enter Remark (Optional)"
-              rows="3"
-            />
-          </div>
+              <div className="ap-grid-3">
+                <div className="form-group">
+                  <label htmlFor="paymentDate">
+                    Payment Date <span className="fg-req">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="paymentDate"
+                    name="paymentDate"
+                    value={formData.paymentDate}
+                    onChange={handleInput}
+                    className={errors.paymentDate ? "has-error" : ""}
+                  />
+                  {errors.paymentDate && (
+                    <span className="fg-error">{errors.paymentDate}</span>
+                  )}
+                </div>
 
-          {/* Attachment */}
-          <div className="form-group">
-            <label htmlFor="attachment">Attachment</label>
-            <div className="file-upload">
-              <input
-                type="file"
-                id="attachment"
-                name="attachment"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-                accept="image/*,.pdf"
-              />
-
-              {!formData.attachmentFile ? (
-                <label htmlFor="attachment" className="file-upload-label">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      stroke="#ccc"
-                      strokeWidth="2"
+                <div className="form-group">
+                  <label htmlFor="amount">
+                    Amount (₹) <span className="fg-req">*</span>
+                  </label>
+                  <div className="ap-amount-row">
+                    <input
+                      type="number"
+                      id="amount"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleInput}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      className={errors.amount ? "has-error" : ""}
                     />
-                    <path
-                      d="M12 8V16M8 12H16"
-                      stroke="#ccc"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span>Click to Upload</span>
-                </label>
-              ) : (
-                <div className="file-selected">
-                  <div className="file-info">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
-                        stroke="#10b981"
-                        strokeWidth="2"
-                      />
-                      <polyline
-                        points="13 2 13 9 20 9"
-                        stroke="#10b981"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                    <div className="file-details">
-                      <span className="file-name">
-                        {formData.attachmentFile.name}
-                      </span>
-                      <span className="file-size">
-                        {(formData.attachmentFile.size / 1024).toFixed(2)} KB
-                      </span>
-                    </div>
+                    {prefillBillId && (
+                      <button
+                        type="button"
+                        className="pay-full-btn-main"
+                        onClick={() => {
+                          const tot = parseFloat(
+                            prefillBill.totalWithGST ||
+                              prefillBill.totalAmount ||
+                              0,
+                          );
+                          const pd = parseFloat(prefillBill.paidAmount || 0);
+                          const pend = (tot - pd).toFixed(2);
+                          setFormData((p) => ({ ...p, amount: pend }));
+                          if (pendingInvoices.length === 1)
+                            handleInvoiceAmt(pendingInvoices[0].id, pend);
+                        }}
+                      >
+                        Full Paid
+                      </button>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    className="remove-file-btn"
-                    onClick={handleRemoveFile}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  {errors.amount && (
+                    <span className="fg-error">{errors.amount}</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reference">Reference / UTR</label>
+                  <input
+                    type="text"
+                    id="reference"
+                    name="reference"
+                    value={formData.reference}
+                    onChange={handleInput}
+                    placeholder="e.g. UTR, cheque no."
+                  />
+                </div>
+              </div>
+
+              {/* Method Pills */}
+              <div className="form-group" style={{ marginTop: 18 }}>
+                <label>
+                  Payment Method <span className="fg-req">*</span>
+                </label>
+                <div className="ap-method-tabs">
+                  {PAYMENT_METHODS.map((m) => (
+                    <div className="ap-method-tab" key={m.value}>
+                      <input
+                        type="radio"
+                        id={`m-${m.value}`}
+                        name="method"
+                        value={m.value}
+                        checked={formData.method === m.value}
+                        onChange={handleInput}
+                      />
+                      <label htmlFor={`m-${m.value}`}>{m.label}</label>
+                    </div>
+                  ))}
+                </div>
+                {errors.method && (
+                  <span className="fg-error" style={{ marginTop: 6 }}>
+                    {errors.method}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* ── Section 3: Notes & Attachment ── */}
+            <div className="ap-section-block">
+              <div className="ap-section-label">
+                <span className="asl-num">3</span>
+                <span className="asl-title">Notes &amp; Attachment</span>
+                <span className="asl-line" />
+              </div>
+
+              <div className="ap-grid-2">
+                <div className="form-group">
+                  <label htmlFor="note">Remarks</label>
+                  <textarea
+                    id="note"
+                    name="note"
+                    value={formData.note}
+                    onChange={handleInput}
+                    placeholder="Optional remarks or notes…"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Attachment</label>
+                  <div className="file-upload">
+                    <input
+                      type="file"
+                      id="ap-attachment"
+                      name="ap-attachment"
+                      onChange={handleFile}
+                      style={{ display: "none" }}
+                      accept="image/*,.pdf"
+                    />
+                    {!formData.attachmentFile ? (
+                      <label
+                        htmlFor="ap-attachment"
+                        className="file-upload-label"
+                      >
+                        <div className="upl-icon">
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <rect
+                              x="3"
+                              y="3"
+                              width="18"
+                              height="18"
+                              rx="3"
+                              stroke="#2563eb"
+                              strokeWidth="2"
+                            />
+                            <path
+                              d="M12 8v8M8 12h8"
+                              stroke="#2563eb"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <span className="upl-main">Click to Upload</span>
+                        <span className="upl-hint">
+                          Images or PDF · max 5 MB
+                        </span>
+                      </label>
+                    ) : (
+                      <div className="file-selected">
+                        <div className="file-info">
+                          <div className="file-icon">
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                            >
+                              <path
+                                d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"
+                                stroke="#10b981"
+                                strokeWidth="2"
+                              />
+                              <polyline
+                                points="13 2 13 9 20 9"
+                                stroke="#10b981"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          </div>
+                          <div className="file-details">
+                            <span className="file-name">
+                              {formData.attachmentFile.name}
+                            </span>
+                            <span className="file-size">
+                              {(formData.attachmentFile.size / 1024).toFixed(1)}{" "}
+                              KB
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="remove-file-btn"
+                          onClick={removeFile}
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M18 6L6 18M6 6l12 12"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Errors */}
+            {Object.keys(errors).length > 0 && (
+              <div className="error-summary">
+                <p>Please fix the following:</p>
+                <ul>
+                  {Object.values(errors).map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => navigate(-1)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn-save" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner-small" /> Processing…
+                  </>
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                       <path
-                        d="M18 6L6 18M6 6l12 12"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                        d="M5 12l5 5L19 7"
+                        stroke="white"
+                        strokeWidth="2.5"
                         strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
                     </svg>
-                  </button>
+                    Save Payment
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* ════ RIGHT: Summary Panel ════ */}
+        <div className="ap-sidebar">
+          <div className="ap-summary-card">
+            <div className="asc-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 8v4l3 3"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Payment Summary
+            </div>
+            <div className="asc-row">
+              <span className="asc-key">Type</span>
+              <span className="asc-val">{typeLabel}</span>
+            </div>
+            <div className="asc-row">
+              <span className="asc-key">Sub Type</span>
+              <span className="asc-val" style={{ textTransform: "capitalize" }}>
+                {formData.subType || "—"}
+              </span>
+            </div>
+            <div className="asc-row">
+              <span className="asc-key">Date</span>
+              <span className="asc-val">
+                {formData.paymentDate
+                  ? new Date(formData.paymentDate).toLocaleDateString("en-IN")
+                  : "—"}
+              </span>
+            </div>
+            <div className="asc-row">
+              <span className="asc-key">Amount</span>
+              <span className="asc-val accent">
+                {formData.amount ? fmtAmt(formData.amount) : "—"}
+              </span>
+            </div>
+            <div className="asc-row">
+              <span className="asc-key">Method</span>
+              <span className="asc-val">{methodLabel}</span>
+            </div>
+            {formData.reference && (
+              <div className="asc-row">
+                <span className="asc-key">Reference</span>
+                <span className="asc-val">{formData.reference}</span>
+              </div>
+            )}
+            <div className="asc-row">
+              <span className="asc-key">Status</span>
+              <span className="ap-status-pill pending">Pending</span>
+            </div>
+          </div>
+
+          {/* Customer Outstanding box (if applicable) */}
+          {formData.subType === "customer" && formData.customerId && (
+            <div className="ap-summary-card">
+              <div className="asc-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="4"
+                    stroke="#2563eb"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                    stroke="#2563eb"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Customer Info
+              </div>
+              <div className="asc-row">
+                <span className="asc-key">
+                  {prefillBillId ? "Pending" : "Outstanding"}
+                </span>
+                <span className="asc-val accent">
+                  {fmtAmt(formData.totalOutstanding)}
+                </span>
+              </div>
+              {formData.adjustedInvoices.length > 0 && (
+                <div className="asc-row">
+                  <span className="asc-key">Adjusted</span>
+                  <span className="asc-val success">
+                    {fmtAmt(totalAdjusted())}
+                  </span>
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Error Summary */}
-          {Object.keys(errors).length > 0 && (
-            <div className="error-summary">
-              <p>Please fix the following errors:</p>
-              <ul>
-                {Object.values(errors).map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </div>
           )}
-
-          {/* Action Buttons */}
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn-save" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner-small"></span>
-                  Saving...
-                </>
-              ) : (
-                "Save Payment"
-              )}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

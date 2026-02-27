@@ -15,11 +15,11 @@ import {
   FaTruck,
   FaBoxes,
   FaChartBar,
-  FaUser,
-  FaStickyNote,
   FaBuyNLarge,
+  FaStickyNote,
 } from "react-icons/fa";
 import vendorProfileImageService from "../services/vendorProfileImageService";
+import CreateEntryModal from "../components/common/CreateEntryModal";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -27,8 +27,11 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [vendorData, setVendorData] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
-    sales: false,
+    sales: true,
+    purchase: false,
+    master: false,
   });
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const storedData = localStorage.getItem("vendorData");
@@ -45,6 +48,11 @@ const Sidebar = () => {
   };
 
   const toggleSection = (section) => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setExpandedSections((prev) => ({ ...prev, [section]: true }));
+      return;
+    }
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -61,99 +69,94 @@ const Sidebar = () => {
 
   const menuSections = [
     {
-      type: "single",
-      name: "Dashboard",
-      icon: FaHome,
-      path: "/vendor/dashboard",
-    },
-    {
-      type: "dropdown",
-      name: "Sales",
-      icon: FaFileInvoice,
-      section: "sales",
+      label: "GENERAL",
       items: [
-        { name: "Delivery Challans", path: "/vendor/challans" },
-        { name: "Invoices", path: "/vendor/bills" },
-        { name: "Payment Receipts", path: "/vendor/payment-receipts" },
-        { name: "Credit Note", path: "/vendor/credit-notes" },
-        { name: "E-Invoice", path: "/vendor/e-invoice" },
-        { name: "Sales Debit Note", path: "/vendor/sales-debit-notes" },
-      ],
-    },
-    {
-      type: "dropdown",
-      name: "Purchase",
-      icon: FaShoppingBasket,
-      section: "purchase",
-      items: [
-        { name: "Purchase", path: "/vendor/purchases" },
-        { name: "Payments Made", path: "/vendor/payments-made" },
-      ],
-    },
-    {
-      type: "single",
-      name: "e-Waybill",
-      icon: FaTruck,
-      path: "/vendor/ewaybill",
-    },
-    {
-      type: "single",
-      name: "Inventory",
-      icon: FaBoxes,
-      path: "/vendor/inventory",
-    },
-    {
-      type: "single",
-      name: "Reports",
-      icon: FaChartBar,
-      path: "/vendor/reports",
-    },
-    {
-      type: "single",
-      name: "Ledger",
-      icon: FaBuyNLarge,
-      path: "/vendor/ledger",
-    },
-    {
-      type: "dropdown",
-      name: "Accounting",
-      icon: FaUser,
-      section: "accounting",
-      items: [
-        { name: "Chart of Accounts", path: "/vendor/account" },
         {
-          name: "Manual Journal Entry",
-          path: "/vendor/account/billing-settings",
+          type: "single",
+          name: "Dashboard",
+          icon: FaHome,
+          path: "/vendor/dashboard",
         },
-        { name: "GST Setting`s", path: "/vendor/account/gst-slabs" },
       ],
     },
     {
-      type: "dropdown",
-      name: "master",
-      icon: FaStickyNote,
-      section: "master",
+      label: "ACCOUNTING",
       items: [
-        { name: "Customer", path: "/vendor/customer" },
-        { name: "vendor", path: "/vendor/vendor" },
-        { name: "product", path: "/vendor/product" },
+        {
+          type: "dropdown",
+          name: "Sales",
+          icon: FaFileInvoice,
+          section: "sales",
+          items: [
+            { name: "Challans", path: "/vendor/challans" },
+            { name: "Invoices", path: "/vendor/bills" },
+            { name: "Payment Receipts", path: "/vendor/payment-receipts" },
+            { name: "Credit Notes", path: "/vendor/credit-notes" },
+            { name: "E-Invoice", path: "/vendor/e-invoice" },
+            { name: "Sales Debit Notes", path: "/vendor/sales-debit-notes" },
+          ],
+        },
+        {
+          type: "dropdown",
+          name: "Purchases",
+          icon: FaShoppingBasket,
+          section: "purchase",
+          items: [
+            { name: "Purchase", path: "/vendor/purchases" },
+            { name: "Payment Made", path: "/vendor/payments-made" },
+          ],
+        },
       ],
     },
     {
-      type: "single",
-      name: "Account",
-      icon: FaCog,
-      path: "/vendor/account",
+      label: "LOGISTICS",
+      items: [
+        {
+          type: "single",
+          name: "e-Waybill",
+          icon: FaTruck,
+          path: "/vendor/ewaybill",
+        },
+        {
+          type: "single",
+          name: "Inventory",
+          icon: FaBoxes,
+          path: "/vendor/inventory",
+        },
+        {
+          type: "single",
+          name: "Ledgers",
+          icon: FaBuyNLarge,
+          path: "/vendor/ledger",
+        },
+        {
+          type: "single",
+          name: "Reports",
+          icon: FaChartBar,
+          path: "/vendor/reports",
+        },
+      ],
     },
     {
-      type: "dropdown",
-      name: "Settings",
-      icon: FaCog,
-      section: "settings",
+      label: "SYSTEM",
       items: [
-        { name: "Account Settings", path: "/vendor/account" },
-        { name: "Billing Settings", path: "/vendor/account/billing-settings" },
-        { name: "GST Settings", path: "/vendor/account/gst-slabs" },
+        {
+          type: "dropdown",
+          name: "Masters",
+          icon: FaStickyNote,
+          section: "master",
+          items: [
+            { name: "Customers", path: "/vendor/customer" },
+            { name: "Vendors", path: "/vendor/vendor" },
+            { name: "Products", path: "/vendor/product" },
+          ],
+        },
+        {
+          type: "single",
+          name: "Account Details",
+          icon: FaCog,
+          path: "/vendor/account",
+        },
       ],
     },
   ];
@@ -161,130 +164,109 @@ const Sidebar = () => {
   return (
     <>
       <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
-        {/* Brand Section */}
         <div className="sidebar-header">
-          <div className="brand-section">
+          <div
+            className="brand-section"
+            onClick={() => navigate("/vendor/dashboard")}
+          >
             <div className="brand-logo">
               <div className="logo-icon">
                 {profileImageUrl ? (
-                  <img
-                    src={profileImageUrl}
-                    alt="Logo"
-                    className="logo-img"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.style.display = "none";
-                    }}
-                  />
+                  <img src={profileImageUrl} alt="Logo" className="logo-img" />
                 ) : (
                   <FaCalculator />
                 )}
               </div>
             </div>
-            {isOpen && (
-              <div className="brand-info">
-                <h1 className="brand-name">
-                  {vendorData?.businessName || "GimBooks"}
-                </h1>
-                <p className="brand-subtitle">GST Invoice Manager</p>
-              </div>
-            )}
+            <div className="brand-info">
+              <h1 className="brand-name">
+                {vendorData?.businessName || "Auditra"}
+              </h1>
+              <p className="brand-subtitle">Smart Accounting</p>
+            </div>
           </div>
 
-          {isOpen && (
-            <button className="create-button">
-              <FaBolt className="create-icon" />
-              <span>Create</span>
-            </button>
-          )}
+          <button
+            className="create-button"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <FaBolt className="create-icon" />
+            <span className="create-text">Create Entry</span>
+          </button>
         </div>
 
-        {/* Menu Content */}
         <div className="sidebar-content">
           <div className="menu-items">
-            {menuSections.map((section, idx) => {
-              const Icon = section.icon;
-              const isActive =
-                section.path && location.pathname === section.path;
-              const isExpanded =
-                section.type === "dropdown" &&
-                expandedSections[section.section];
+            {menuSections.map((group, groupIdx) => (
+              <div key={groupIdx} className="group-wrapper">
+                <div className="menu-section-label">{group.label}</div>
+                {group.items.map((item, itemIdx) => {
+                  const Icon = item.icon;
+                  const isActive = item.path && location.pathname === item.path;
+                  const isSubActive =
+                    item.type === "dropdown" &&
+                    item.items.some((si) => location.pathname === si.path);
+                  const isExpanded =
+                    item.type === "dropdown" && expandedSections[item.section];
 
-              if (section.type === "single") {
-                return (
-                  <div key={idx} className="menu-item-wrapper">
-                    <div
-                      className={`menu-item ${isActive ? "active" : ""}`}
-                      onClick={() => handleMenuClick(section.path)}
-                    >
-                      <Icon className="menu-icon" />
-                      {isOpen && (
-                        <span className="menu-text">{section.name}</span>
+                  return (
+                    <div key={itemIdx} className="menu-item-wrapper">
+                      <div
+                        className={`menu-item ${isActive || isSubActive ? "active" : ""}`}
+                        onClick={() =>
+                          item.type === "single"
+                            ? handleMenuClick(item.path)
+                            : toggleSection(item.section)
+                        }
+                      >
+                        <Icon className="menu-icon" />
+                        <span className="menu-text">{item.name}</span>
+                        {item.type === "dropdown" && (
+                          <FaChevronDown
+                            className={`dropdown-arrow ${isExpanded ? "expanded" : ""}`}
+                          />
+                        )}
+                        {!isOpen && <div className="tooltip">{item.name}</div>}
+                      </div>
+
+                      {isExpanded && item.type === "dropdown" && (
+                        <div className="submenu">
+                          {item.items.map((sub, subIdx) => (
+                            <div
+                              key={subIdx}
+                              className={`submenu-item ${location.pathname === sub.path ? "active" : ""}`}
+                              onClick={() => handleMenuClick(sub.path)}
+                            >
+                              {sub.name}
+                            </div>
+                          ))}
+                        </div>
                       )}
-                      {!isOpen && <div className="tooltip">{section.name}</div>}
                     </div>
-                  </div>
-                );
-              }
-
-              // Dropdown type
-              return (
-                <div key={idx} className="menu-item-wrapper">
-                  <div
-                    className={`menu-item has-dropdown ${isExpanded ? "expanded" : ""}`}
-                    onClick={() => toggleSection(section.section)}
-                  >
-                    <Icon className="menu-icon" />
-                    {isOpen && (
-                      <span className="menu-text">{section.name}</span>
-                    )}
-                    {isOpen && (
-                      <FaChevronDown
-                        className={`dropdown-arrow ${isExpanded ? "expanded" : ""}`}
-                      />
-                    )}
-                    {!isOpen && <div className="tooltip">{section.name}</div>}
-                  </div>
-
-                  {isOpen && isExpanded && (
-                    <div className="submenu">
-                      {section.items.map((subItem, subIdx) => {
-                        const isSubActive = location.pathname === subItem.path;
-                        return (
-                          <div
-                            key={subIdx}
-                            className={`submenu-item ${isSubActive ? "active" : ""}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMenuClick(subItem.path);
-                            }}
-                          >
-                            {subItem.name}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="sidebar-footer">
-          <div className="footer-item logout" onClick={handleLogout}>
+          <div className="footer-item" onClick={handleLogout}>
             <FaSignOutAlt className="menu-icon" />
-            {isOpen && <span className="menu-text">Logout</span>}
+            {isOpen && <span className="footer-text">Logout</span>}
             {!isOpen && <div className="tooltip">Logout</div>}
           </div>
         </div>
       </div>
 
-      {/* Toggle Button */}
       <button className="sidebar-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? <FaChevronLeft size={14} /> : <FaChevronRight size={14} />}
+        {isOpen ? <FaChevronLeft size={12} /> : <FaChevronRight size={12} />}
       </button>
+
+      <CreateEntryModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </>
   );
 };

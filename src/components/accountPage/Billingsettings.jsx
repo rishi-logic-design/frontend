@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./billingSettings.scss";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiArrowLeft,
+  FiSettings,
+  FiFileText,
+  FiHash,
+  FiLayout,
+  FiCheck,
+  FiX,
+  FiInfo,
+  FiAlertTriangle,
+  FiLoader,
+  FiEye,
+} from "react-icons/fi";
 import invoiceSettingsService from "../../services/invoiceServiceSettings";
 import { toast } from "react-toastify";
+import "./billingSettings.scss";
 
 const BillingSettings = () => {
   const navigate = useNavigate();
@@ -52,25 +66,21 @@ const BillingSettings = () => {
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.prefix.trim()) {
       newErrors.prefix = "Prefix is required";
     } else if (formData.prefix.length > 10) {
       newErrors.prefix = "Prefix must be 10 characters or less";
     }
-
     const count = parseInt(formData.startCount);
     if (!formData.startCount || isNaN(count) || count < 1) {
       newErrors.startCount = "Start count must be at least 1";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
+    if (e) e.preventDefault();
     if (!validateForm()) return;
 
     if (parseInt(formData.startCount) !== settings.startCount) {
@@ -89,12 +99,11 @@ const BillingSettings = () => {
       };
 
       await invoiceSettingsService.updateInvoiceSettings(payload);
+      toast.success("Billing settings updated!");
       await loadSettings();
     } catch (error) {
       console.error("Failed to update settings:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to update billing settings",
-      );
+      toast.error(error.response?.data?.message || "Failed to update settings");
     } finally {
       setSaving(false);
     }
@@ -105,13 +114,21 @@ const BillingSettings = () => {
     setShowTemplateModal(false);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
+
   if (loading) {
     return (
-      <div className="billing-settings-page">
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Loading billing settings...</p>
-        </div>
+      <div className="billing-settings-v2-loading">
+        <FiLoader className="spin" />
+        <p>Initializing Billing Systems...</p>
       </div>
     );
   }
@@ -121,23 +138,36 @@ const BillingSettings = () => {
   );
 
   return (
-    <div className="billing-settings-page">
-      <div className="page-header">
+    <motion.div
+      className="billing-settings-v2"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* Header */}
+      <div className="header-bar">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ←
+          <FiArrowLeft /> <span>Settings</span>
         </button>
-        <h1 className="page-title">Billing Settings</h1>
+        <h1 className="title">Billing Configuration</h1>
       </div>
 
-      <div className="page-content">
-        <form className="settings-form" onSubmit={handleSubmit}>
-          {/* Current Invoice Info */}
-          <div className="info-card">
-            <h3 className="card-title">Current Invoice Status</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Next Invoice Number</span>
-                <span className="info-value">
+      <div className="billing-layout">
+        {/* Left Column - Current Status */}
+        <aside className="status-panel">
+          <motion.div className="status-hero" variants={itemVariants}>
+            <div className="icon-box">
+              <FiFileText />
+            </div>
+            <h3>Invoice Pulse</h3>
+            <p>
+              Monitor your next invoice sequence and total transaction count.
+            </p>
+
+            <div className="pulse-stats">
+              <div className="stat-card">
+                <span className="label">Next Sequence</span>
+                <span className="value">
                   {settings?.prefix}
                   {String(settings?.currentCount).padStart(
                     String(settings?.startCount).length,
@@ -145,171 +175,183 @@ const BillingSettings = () => {
                   )}
                 </span>
               </div>
-              <div className="info-item">
-                <span className="info-label">Total Invoices Created</span>
-                <span className="info-value">
+              <div className="stat-card">
+                <span className="label">Total Generated</span>
+                <span className="value">
                   {settings?.usedNumbers?.length || 0}
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Prefix Settings */}
-          <div className="form-section">
-            <label className="form-label">
-              Invoice Prefix
-              <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              className={`form-input ${errors.prefix ? "error" : ""}`}
-              value={formData.prefix}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  prefix: e.target.value.toUpperCase(),
-                })
-              }
-              placeholder="INV"
-              maxLength={10}
-            />
-            {errors.prefix && (
-              <span className="error-text">{errors.prefix}</span>
-            )}
-            <p className="form-hint">
-              Prefix appears before invoice number (e.g., INV, BILL, etc.)
-            </p>
-          </div>
-
-          {/* Start Count Settings */}
-          <div className="form-section">
-            <label className="form-label">
-              Starting Count Number
-              <span className="required">*</span>
-            </label>
-            <input
-              type="number"
-              className={`form-input ${errors.startCount ? "error" : ""}`}
-              value={formData.startCount}
-              onChange={(e) =>
-                setFormData({ ...formData, startCount: e.target.value })
-              }
-              min="1"
-            />
-            {errors.startCount && (
-              <span className="error-text">{errors.startCount}</span>
-            )}
-            <p className="form-hint warning">
-              ⚠️ Changing this will reset all invoice numbers. Use with caution!
-            </p>
-          </div>
-
-          {/* Template Selection */}
-          <div className="form-section">
-            <label className="form-label">Invoice Template</label>
-            <div className="template-selector">
-              <div className="selected-template">
-                <div className="template-info">
-                  <h4>{selectedTemplate?.name || "Select Template"}</h4>
-                  <p>{selectedTemplate?.description || ""}</p>
-                </div>
-                <button
-                  type="button"
-                  className="change-template-btn"
-                  onClick={() => setShowTemplateModal(true)}
-                >
-                  Change Template
-                </button>
-              </div>
+          {/* Quick Preview Card */}
+          <motion.div className="preview-mini-card" variants={itemVariants}>
+            <div className="preview-header">
+              <FiEye /> <span>Real-time Preview</span>
             </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="form-actions">
-            <button type="submit" className="save-btn" disabled={saving}>
-              {saving ? "Saving..." : "Save Settings"}
-            </button>
-          </div>
-        </form>
-
-        {/* Preview Section */}
-        <div className="preview-section">
-          <h3 className="preview-title">Invoice Number Preview</h3>
-          <div className="preview-card">
-            <div className="preview-number">
-              {formData.prefix}
+            <div className="invoice-badge">
+              {formData.prefix || "INV"}
               {String(parseInt(formData.startCount) || 1001).padStart(
                 String(formData.startCount).length || 4,
                 "0",
               )}
             </div>
-            <p className="preview-label">Next invoice will use this number</p>
-          </div>
-        </div>
-      </div>
+            <p>Your next invoice will look like this.</p>
+          </motion.div>
+        </aside>
 
-      {/* Template Selection Modal */}
-      {showTemplateModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowTemplateModal(false)}
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Choose Invoice Template</h2>
+        {/* Right Column - Configurations */}
+        <main className="config-main">
+          <motion.div className="config-card" variants={itemVariants}>
+            <div className="card-header">
+              <FiSettings /> <span>Sequencing Settings</span>
+            </div>
+
+            <div className="form-body">
+              <div className="input-group">
+                <label>
+                  <FiHash /> Invoice Prefix
+                </label>
+                <div className="input-with-hint">
+                  <input
+                    type="text"
+                    value={formData.prefix}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        prefix: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="e.g. INV"
+                    maxLength={10}
+                  />
+                  <p className="hint">
+                    Prefix displayed before the sequence (e.g., TAX-)
+                  </p>
+                </div>
+                {errors.prefix && (
+                  <span className="error-msg">{errors.prefix}</span>
+                )}
+              </div>
+
+              <div className="input-group">
+                <label>
+                  <FiLayout /> Starting Count
+                </label>
+                <div className="input-with-hint">
+                  <input
+                    type="number"
+                    value={formData.startCount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startCount: e.target.value })
+                    }
+                    min="1"
+                  />
+                  <p className="hint warning">
+                    <FiAlertTriangle /> Changing this resets the numbering
+                    logic.
+                  </p>
+                </div>
+                {errors.startCount && (
+                  <span className="error-msg">{errors.startCount}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="template-section">
+              <div className="section-title">
+                <FiLayout /> Document Template
+              </div>
+              <div className="template-picker-card">
+                <div className="template-info">
+                  <h4>{selectedTemplate?.name || "Standard Template"}</h4>
+                  <p>
+                    {selectedTemplate?.description ||
+                      "Optimized for professional invoicing."}
+                  </p>
+                </div>
+                <button
+                  className="change-btn"
+                  onClick={() => setShowTemplateModal(true)}
+                >
+                  Switch Design{" "}
+                  <FiArrowLeft style={{ transform: "rotate(180deg)" }} />
+                </button>
+              </div>
+            </div>
+
+            <div className="actions-footer">
+              <button className="cancel-btn" onClick={() => navigate(-1)}>
+                <FiX /> Cancel
+              </button>
               <button
-                className="close-btn"
-                onClick={() => setShowTemplateModal(false)}
+                className={`save-btn ${saving ? "loading" : ""}`}
+                onClick={handleSubmit}
+                disabled={saving}
               >
-                ✕
+                {saving ? (
+                  <FiLoader className="spin" />
+                ) : (
+                  <>
+                    <FiCheck /> Update Configuration
+                  </>
+                )}
               </button>
             </div>
-            <div className="modal-body">
+          </motion.div>
+        </main>
+      </div>
+
+      {/* Template Modal */}
+      <AnimatePresence>
+        {showTemplateModal && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowTemplateModal(false)}
+          >
+            <motion.div
+              className="modal-container"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="modal-header">
+                <h2>Choose Document Style</h2>
+                <button
+                  className="close-x"
+                  onClick={() => setShowTemplateModal(false)}
+                >
+                  <FiX />
+                </button>
+              </div>
               <div className="templates-grid">
                 {templatePreview?.templates?.map((template) => (
                   <div
                     key={template.id}
-                    className={`template-card ${
-                      formData.invoiceTemplate === template.id ? "selected" : ""
-                    }`}
+                    className={`template-item ${formData.invoiceTemplate === template.id ? "active" : ""}`}
                     onClick={() => handleTemplateSelect(template.id)}
                   >
-                    <div className="template-preview">
-                      <img
-                        src={template.preview}
-                        alt={template.name}
-                        onError={(e) => {
-                          e.target.src =
-                            "data:image/svg+xml;utf8," +
-                            encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="200" height="280">
-                <rect width="200" height="280" fill="#f0f0f0"/>
-                <text x="50%" y="50%" font-size="14" fill="#999"
-                  text-anchor="middle" dominant-baseline="middle">
-                  ${template.name}
-                </text>
-              </svg>
-            `);
-                        }}
-                      />
+                    <div className="img-box">
+                      <img src={template.preview} alt={template.name} />
+                      {formData.invoiceTemplate === template.id && (
+                        <div className="active-overlay">
+                          <FiCheck /> Selected
+                        </div>
+                      )}
                     </div>
-
-                    <div className="template-details">
-                      <h3>{template.name}</h3>
+                    <div className="text-box">
+                      <h4>{template.name}</h4>
                       <p>{template.description}</p>
                     </div>
-
-                    {formData.invoiceTemplate === template.id && (
-                      <div className="selected-badge">✓ Selected</div>
-                    )}
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

@@ -53,14 +53,19 @@ const ChallansList = () => {
   };
 
   const calculateStats = (list) => {
-    const s = { total: 0, unpaidCount: 0, unpaidAmount: 0 };
+    const s = { total: 0, unpaidCount: 0, unpaidAmount: 0, paidAmount: 0 };
     list.forEach((c) => {
       const total = parseFloat(
         c.totalWithGST || c.totalWithoutGST || c.total || 0,
       );
       s.total += total;
-      s.unpaidCount++;
-      s.unpaidAmount += total;
+      const status = c.status || c.paymentStatus || "unpaid";
+      if (status !== "paid") {
+        s.unpaidCount++;
+        s.unpaidAmount += total;
+      } else {
+        s.paidAmount += total;
+      }
     });
     setStats(s);
   };
@@ -192,6 +197,7 @@ const ChallansList = () => {
                   <th>Date</th>
                   <th>Buyer Name</th>
                   <th>Amount</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -214,7 +220,27 @@ const ChallansList = () => {
                       <td className="amount">
                         ₹{(c.totalWithGST || c.total || 0).toLocaleString()}
                       </td>
+                      <td>
+                        <span
+                          className={`status-badge ${(c.status || c.paymentStatus || "unpaid").toLowerCase()}`}
+                        >
+                          {c.status || c.paymentStatus || "Unpaid"}
+                        </span>
+                      </td>
                       <td className="actions">
+                        {(c.status || c.paymentStatus || "unpaid") !==
+                          "paid" && (
+                          <button
+                            className="record-payment-btn-list"
+                            onClick={() =>
+                              navigate(
+                                `/vendor/record-payment?challanId=${c._id || c.id}&action=paid`,
+                              )
+                            }
+                          >
+                            Record Payment
+                          </button>
+                        )}
                         <button
                           className="action-icon"
                           onClick={() =>

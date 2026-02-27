@@ -1,4 +1,4 @@
-@import "../homePage/bill/bill-vars.scss";
+@use "../homePage/bill/bill-vars.scss" as *;
 
 .purchase-intelligence-view {
   padding: 2.5rem;

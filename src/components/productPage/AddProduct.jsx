@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./addProduct.scss";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiArrowLeft,
+  FiPackage,
+  FiCheck,
+  FiX,
+  FiTag,
+  FiMaximize2,
+  FiDollarSign,
+  FiLoader,
+  FiInfo,
+  FiBriefcase,
+  FiGrid,
+} from "react-icons/fi";
 import productService from "../../services/productService";
-import { FiChevronsLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
+import "./addProduct.scss";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -74,116 +87,202 @@ const AddProduct = () => {
       };
 
       await productService.createProduct(payload);
+      toast.success("New product registered successfully!");
       navigate("/vendor/product");
     } catch (error) {
       console.error("Create product error:", error);
-      toast.error("Failed to create product");
+      toast.error("Failed to register new product");
     } finally {
       setLoading(false);
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
+
   return (
-    <div className="add-product-page">
-      <div className="add-product-header">
-        <h1>
-          Add Product <span className="version-badge">v2</span>
-        </h1>
+    <motion.div
+      className="add-product-v2"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* Header Bar */}
+      <div className="header-bar">
+        <button
+          className="back-btn"
+          onClick={() => navigate("/vendor/product")}
+        >
+          <FiArrowLeft /> <span>Inventory</span>
+        </button>
+        <div className="title-group">
+          <h1 className="title">Register New Stock</h1>
+          <p className="subtitle">
+            Onboard a new item into your digital warehouse.
+          </p>
+        </div>
       </div>
 
-      <div className="add-product-card">
-        <form onSubmit={handleSave}>
-          <span className="form-section-title">Product details</span>
+      <div className="onboarding-layout">
+        {/* Left Aspect - Summary/Preview */}
+        <aside className="onboarding-aside">
+          <motion.div className="preview-hero" variants={itemVariants}>
+            <div className="icon-box">
+              <FiPackage />
+            </div>
+            <h3>Item Identification</h3>
+            <p>
+              Registering products accurately ensures seamless billing and
+              inventory tracking.
+            </p>
 
-          <div className="add-form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="productName">
-                Product Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="productName"
-                name="productName"
-                value={formData.productName}
-                onChange={handleInputChange}
-                placeholder="Enter Product Name"
-                required
-              />
+            <div className="live-preview-card">
+              <div className="preview-header">LIVE PREVIEW</div>
+              <div className="p-card">
+                <div className="p-badge">NEW ITEM</div>
+                <strong>{formData.productName || "Unnamed Product"}</strong>
+                <div className="p-details">
+                  <span>
+                    Cat:{" "}
+                    {categories.find((c) => c.id == formData.categoryId)
+                      ?.name || "N/A"}
+                  </span>
+                  <span>
+                    Size:{" "}
+                    {sizes.find((s) => s.id == formData.sizeId)?.inches || "0"}"
+                  </span>
+                </div>
+                <div className="p-price">₹{formData.price || "0.00"}</div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div className="onboarding-tip" variants={itemVariants}>
+            <FiInfo />
+            <div className="text">
+              <strong>Catalog Note</strong>
+              <span>
+                Prices can be adjusted later within the product repository
+                section.
+              </span>
+            </div>
+          </motion.div>
+        </aside>
+
+        {/* Right Aspect - Registration Form */}
+        <main className="onboarding-main">
+          <motion.div className="config-card" variants={itemVariants}>
+            <div className="card-header">
+              <FiBriefcase /> <span>Product Specifications</span>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="categoryId">
-                Category <span className="required">*</span>
-              </label>
-              <select
-                id="categoryId"
-                name="categoryId"
-                value={formData.categoryId}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <form onSubmit={handleSave} className="registration-form">
+              <div className="form-body">
+                <div className="input-group full">
+                  <label>
+                    <FiTag /> Product Name
+                  </label>
+                  <input
+                    type="text"
+                    name="productName"
+                    value={formData.productName}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Premium Silk Texture V2"
+                    required
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="sizeId">
-                Size (Inch) <span className="required">*</span>
-              </label>
-              <select
-                id="sizeId"
-                name="sizeId"
-                value={formData.sizeId}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Size</option>
-                {sizes.map((size) => (
-                  <option key={size.id} value={size.id}>
-                    {size.inches} inch
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="form-grid">
+                  <div className="input-group">
+                    <label>
+                      <FiGrid /> Collection / Category
+                    </label>
+                    <select
+                      name="categoryId"
+                      value={formData.categoryId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="price">
-                Base Price <span className="required">*</span>
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="0.00"
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
+                  <div className="input-group">
+                    <label>
+                      <FiMaximize2 /> Dimension (Inches)
+                    </label>
+                    <select
+                      name="sizeId"
+                      value={formData.sizeId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Size</option>
+                      {sizes.map((size) => (
+                        <option key={size.id} value={size.id}>
+                          {size.inches} Inch
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={() => navigate(-1)}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="save-btn" disabled={loading}>
-              {loading ? "Saving..." : "Save Product"}
-            </button>
-          </div>
-        </form>
+                  <div className="input-group">
+                    <label>
+                      <FiDollarSign /> Base Unit Price
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      required
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="actions-footer">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => navigate("/vendor/product")}
+                >
+                  <FiX /> Discard
+                </button>
+                <button
+                  type="submit"
+                  className={`primary-btn ${loading ? "btn-loading" : ""}`}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <FiLoader className="spin" />
+                  ) : (
+                    <>
+                      <FiCheck /> Complete Registration
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </main>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

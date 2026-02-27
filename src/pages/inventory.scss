@@ -1,4 +1,4 @@
-@import "../components/homePage/bill/bill-vars.scss";
+@use "../components/homePage/bill/bill-vars.scss" as *;
 
 .inventory-page {
   padding: 30px;

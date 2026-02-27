@@ -1,1233 +1,891 @@
-@use "../homePage/bill/bill-vars" as *;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-@mixin flex($a: center, $j: flex-start, $gap: 0) {
-  display: flex;
-  align-items: $a;
-  justify-content: $j;
-  @if $gap != 0 {
-    gap: $gap;
-  }
-}
+$blue: #2563eb;
+$blue-dark: #1d4ed8;
+$blue-deep: #1e40af;
+$blue-light: #eff6ff;
+$blue-mid: #bfdbfe;
+$blue-soft: #dbeafe;
+$blue-pale: #f0f7ff;
 
-@mixin inp {
-  padding: 12px 16px;
-  border: 2px solid $border;
-  border-radius: $radius-sm;
-  font-size: 14px;
-  color: $text;
-  background: #fff;
-  width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  outline: none;
-  font-family: $font;
+$white: #ffffff;
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
 
-  &:hover {
-    border-color: #cbd5e1;
-  }
+$danger: #ef4444;
+$danger-soft: #fef2f2;
+$success: #10b981;
+$warn: #f59e0b;
 
-  &:focus {
-    border-color: $primary-solid;
-    box-shadow: 0 0 0 4px rgba($primary-solid, 0.1);
-    transform: translateY(-1px);
-  }
+$r-sm: 8px;
+$r-md: 12px;
+$r-lg: 16px;
+$r-xl: 24px;
 
-  &::placeholder {
-    color: #cbd5e1;
-  }
-}
+$sh-sm:
+  0 1px 3px rgba(0, 0, 0, 0.07),
+  0 1px 2px rgba(0, 0, 0, 0.04);
+$sh-md:
+  0 4px 16px rgba(37, 99, 235, 0.08),
+  0 1px 4px rgba(0, 0, 0, 0.05);
+$sh-lg:
+  0 12px 40px rgba(37, 99, 235, 0.13),
+  0 4px 12px rgba(0, 0, 0, 0.06);
+$sh-blue: 0 6px 22px rgba(37, 99, 235, 0.25);
 
-@mixin btn($bg, $c: #fff) {
-  @include flex(center, center);
-  gap: 8px;
-  padding: 12px 24px;
-  background: $bg;
-  color: $c;
-  border: none;
-  border-radius: $radius-sm;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: $font;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.6s,
-      height 0.6s;
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: $shadow-hover;
-
-    &::before {
-      width: 300px;
-      height: 300px;
-    }
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
+$trans: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 .new-bill-page {
   min-height: 100vh;
-  background: $bg;
-  font-family: $font;
-  color: $text;
-  animation: fadeIn 0.4s ease;
+  background: $gray-50;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: $gray-800;
+  animation: nb-fadeIn 0.3s ease;
+}
 
-  .nb-header {
-    @include flex(center, space-between, 16px);
-    padding: 20px 40px;
-    background: $card;
-    border-bottom: 2px solid $border-light;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    animation: slideDown 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+.nb-header {
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  padding: 0 32px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 300;
+  box-shadow: $sh-sm;
 
-    .back-btn {
-      @include flex(center, center, 8px);
-      padding: 10px 18px;
-      background: $bg;
-      border: 2px solid $border;
-      border-radius: $radius-sm;
-      font-size: 14px;
-      font-weight: 600;
-      color: $text;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-      &:hover {
-        border-color: $primary-solid;
-        background: rgba($primary-solid, 0.05);
-        transform: translateX(-3px);
-      }
-    }
-
-    &__text {
-      flex: 1;
-      h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 800;
-        background: $primary-gradient;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -0.5px;
-      }
-      p {
-        margin: 4px 0 0;
-        font-size: 13px;
-        color: $text-muted;
-      }
-    }
-    &__mode {
-      @include flex(center, flex-end, 10px);
-      .mode-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: $text-muted;
-        transition: color 0.2s;
-        &.active {
-          color: $primary;
-        }
-      }
-    }
-  }
-
-  .nb-body {
-    @include flex(flex-start, center, 24px);
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 32px 40px;
-    align-items: flex-start;
-  }
-
-  .nb-main {
-    flex: 1;
-    min-width: 0;
-    animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .nb-card {
-    background: $card;
-    border-radius: $radius;
-    border: 2px solid $border-light;
-    box-shadow: $shadow;
-    padding: 28px;
-    margin-bottom: 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeIn 0.5s ease;
-
-    &:hover {
-      box-shadow: $shadow-lg;
-    }
-
-    &__title {
-      font-size: 16px;
-      font-weight: 800;
-      color: $text;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 2px solid $border-light;
-      letter-spacing: -0.3px;
-    }
-
-    &__sub {
-      font-size: 12px;
-      font-weight: 700;
-      color: $text-muted;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    &__title-row {
-      @include flex(center, space-between);
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 2px solid $border-light;
-
-      .nb-card__title {
-        margin: 0;
-        padding: 0;
-        border: none;
-      }
-    }
-  }
-
-  .nb-invoice-mode-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 2px solid $border-light;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(
-        circle,
-        rgba($primary-solid, 0.03) 0%,
-        transparent 70%
-      );
-      animation: pulse 4s ease-in-out infinite;
-    }
-  }
-
-  .mode-toggle-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .mode-option {
+  .back-btn {
+    width: 38px;
+    height: 38px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    background: $white;
+    color: $gray-600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    position: relative;
-
-    input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
+    transition: $trans;
+    &:hover {
+      border-color: $blue;
+      color: $blue;
+      background: $blue-light;
+      transform: translateX(-2px);
     }
+  }
 
-    &__content {
-      @include flex(center, flex-start, 14px);
-      padding: 18px 20px;
-      background: $bg;
-      border: 2px solid $border;
-      border-radius: $radius-sm;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: $primary-gradient;
-        transform: scaleY(0);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-    }
-
-    .mode-icon {
-      font-size: 28px;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .mode-text {
-      @include flex(flex-start, flex-start);
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .mode-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: $text;
-      transition: color 0.3s;
-    }
-
-    .mode-desc {
-      font-size: 12px;
-      color: $text-muted;
-      transition: color 0.3s;
-    }
-
-    &:hover &__content {
-      border-color: $primary-solid;
-      background: rgba($primary-solid, 0.03);
-      transform: translateY(-2px);
-      box-shadow: $shadow-hover;
-    }
-
-    &:hover .mode-icon {
-      transform: scale(1.1) rotate(5deg);
-    }
-
-    &[data-active="true"] &__content {
-      background: rgba($primary-solid, 0.1);
-      border-color: $primary-solid;
-      box-shadow: $shadow-hover;
-
-      &::before {
-        transform: scaleY(1);
-      }
-    }
-
-    &[data-active="true"] .mode-title {
-      color: $primary-solid;
+  &__text {
+    flex: 1;
+    h1 {
+      font-size: 17px;
       font-weight: 800;
+      color: $gray-900;
+      margin: 0;
     }
-
-    &[data-active="true"] .mode-desc {
-      color: $primary-dark;
+    p {
+      font-size: 12px;
+      color: $gray-500;
+      font-weight: 500;
+      margin: 1px 0 0;
     }
+  }
+}
 
-    &[data-active="true"] .mode-icon {
-      transform: scale(1.15);
-      filter: drop-shadow(0 2px 8px rgba($primary-solid, 0.3));
+// ── Main Page Layout ────────────────────────────────────────────────────────
+.nb-body {
+  max-width: 1300px;
+  margin: 32px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: flex-start;
+
+  @media (max-width: 1080px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ── Cards ───────────────────────────────────────────────────────────────────
+.nb-card {
+  background: $white;
+  border: 1.5px solid $gray-200;
+  border-radius: $r-lg;
+  padding: 24px;
+  box-shadow: $sh-sm;
+  transition: $trans;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: $gray-800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $gray-100;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $gray-100;
+    .nb-card__title {
+      border: none;
+      margin: 0;
+      padding: 0;
     }
   }
 
-  .nb-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+  &--empty {
+    border-style: dashed;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    padding: 40px;
   }
-  .nb-group {
-    @include flex(flex-start, flex-start);
+
+  &__sub {
+    font-size: 12px;
+    font-weight: 700;
+    color: $blue;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+}
+
+.nb-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: $gray-400;
+  text-align: center;
+  svg {
+    font-size: 32px;
+    opacity: 0.5;
+  }
+  p {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.nb-customer-preview {
+  margin-top: 20px;
+  padding: 16px;
+  background: $blue-light;
+  border: 1px solid rgba($blue, 0.1);
+  border-radius: $r-md;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+
+  .cp-row {
+    display: flex;
     flex-direction: column;
-    gap: 6px;
-    position: relative;
-    z-index: 2;
-    label {
-      font-size: 13px;
+    gap: 4px;
+    strong {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: $blue;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+    }
+    span {
+      font-size: 13.5px;
       font-weight: 600;
-      color: $text;
-    }
-    input,
-    select,
-    textarea {
-      @include inp;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 56px;
-    }
-    &.full {
-      grid-column: 1 / -1;
-    }
-    &.mt8 {
-      margin-top: 8px;
+      color: $gray-800;
     }
   }
-  .req {
-    color: $danger;
+}
+
+// ── Form Controls ───────────────────────────────────────────────────────────
+.nb-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.nb-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  label {
+    font-size: 12px;
+    font-weight: 700;
+    color: $gray-600;
+    .req {
+      color: $danger;
+      margin-left: 2px;
+    }
+  }
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    font-size: 14px;
+    color: $gray-800;
+    background: $white;
+    transition: $trans;
+    font-family: inherit;
+    &:focus {
+      border-color: $blue;
+      box-shadow: 0 0 0 3px $blue-soft;
+      outline: none;
+    }
+    &:hover:not(:focus) {
+      border-color: $gray-300;
+    }
   }
   .nb-hint {
     font-size: 11px;
-    color: $text-muted;
+    color: $gray-400;
     margin-top: 2px;
   }
-  .nb-check-row {
-    @include flex(center, flex-start, 8px);
-    cursor: pointer;
-    font-size: 13px;
-    color: $text;
-    margin-top: 8px;
-    user-select: none;
-    position: relative;
-    z-index: 1;
+}
 
-    input[type="checkbox"] {
+.nb-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: $gray-700;
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: $blue;
+    cursor: pointer;
+  }
+}
+
+// ── Mode Switcher ───────────────────────────────────────────────────────────
+.mode-toggle-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.mode-option {
+  cursor: pointer;
+  position: relative;
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: $gray-50;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-md;
+    transition: $trans;
+  }
+
+  .mode-icon {
+    font-size: 22px;
+    transition: $trans;
+  }
+  .mode-text {
+    display: flex;
+    flex-direction: column;
+    .mode-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: $gray-700;
+    }
+    .mode-desc {
+      font-size: 11px;
+      color: $gray-400;
+    }
+  }
+
+  &:hover &__content {
+    border-color: $blue-mid;
+    background: white;
+    transform: translateY(-1px);
+  }
+
+  &[data-active="true"] &__content {
+    background: $blue-light;
+    border-color: $blue;
+    border-width: 1.5px;
+    box-shadow: $sh-md;
+    .mode-icon {
+      transform: scale(1.1);
+    }
+    .mode-title {
+      color: $blue-dark;
+    }
+    .mode-desc {
+      color: $blue;
+    }
+  }
+}
+
+// ── Next Invoice Preview Banner ─────────────────────────────────────────────
+.nb-inv-preview {
+  background: linear-gradient(135deg, $blue 0%, $blue-dark 100%);
+  border-radius: $r-md;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: $sh-blue;
+  margin-bottom: 16px;
+
+  &__label {
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba($white, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  &__num {
+    font-size: 24px;
+    font-weight: 900;
+    color: $white;
+    font-family: "JetBrains Mono", monospace;
+  }
+}
+
+// ── Challan Selection UI ───────────────────────────────────────────────────
+.nb-challans {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.nb-challan-card {
+  padding: 16px;
+  background: $white;
+  border: 1.5px solid $gray-200;
+  border-radius: $r-md;
+  cursor: pointer;
+  transition: $trans;
+  &:hover {
+    border-color: $blue-mid;
+    transform: translateY(-2px);
+    box-shadow: $sh-md;
+  }
+
+  &.sel {
+    background: $blue-light;
+    border-color: $blue;
+    box-shadow: $sh-sm;
+  }
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    .ch-num {
+      font-size: 14px;
+      font-weight: 800;
+      color: $gray-900;
+    }
+    input {
       width: 18px;
       height: 18px;
-      accent-color: $primary-solid;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    span {
-      cursor: pointer;
+      accent-color: $blue;
     }
   }
-
-  .nb-inv-preview {
-    @include flex(center, space-between);
-    background: $primary-gradient;
-    border: none;
-    border-radius: $radius-sm;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-    box-shadow: $shadow-hover;
-    position: relative;
-    overflow: hidden;
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 100%;
-      height: 200%;
-      background: linear-gradient(
-        45deg,
-        transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent
-      );
-      animation: shimmer 3s infinite;
-      z-index: 0;
-      pointer-events: none;
+  .ch-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+    span:first-child {
+      color: $gray-500;
+      font-weight: 500;
     }
-
-    &__label {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.9);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      position: relative;
-      z-index: 1;
-    }
-
-    &__num {
-      font-size: 28px;
-      font-weight: 900;
-      color: #ffffff;
-      font-family: "Courier New", monospace;
-      letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      position: relative;
-      z-index: 1;
-    }
-  }
-
-  .toggle-switch {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    input {
-      display: none;
-    }
-    .toggle-slider {
-      display: block;
-      width: 46px;
-      height: 26px;
-      background: $border;
-      border-radius: 13px;
-      transition: background 0.25s;
-      &::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 20px;
-        height: 20px;
-        background: #fff;
-        border-radius: 50%;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-        transition: transform 0.25s;
-      }
-    }
-    input:checked + .toggle-slider {
-      background: $primary;
-    }
-    input:checked + .toggle-slider::after {
-      transform: translateX(20px);
-    }
-  }
-
-  .nb-challans {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .nb-challan-card {
-    border: 2px solid $border-light;
-    border-radius: $radius-sm;
-    padding: 16px;
-    background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: $primary;
-      transform: scaleY(0);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    &:hover {
-      border-color: $primary-solid;
-      box-shadow: $shadow-hover;
-      transform: translateY(-3px);
-
-      &::before {
-        transform: scaleY(1);
-      }
-    }
-
-    &.sel {
-      border-color: $primary-solid;
-      background: $primary-gradient;
-      box-shadow: $shadow-hover;
-
-      &::before {
-        transform: scaleY(1);
-      }
-
-      .ch-num,
-      .ch-row span {
-        color: #ffffff;
-      }
-
-      .ch-row {
-        color: rgba(255, 255, 255, 0.9);
-      }
-    }
-    &__head {
-      @include flex(center, space-between);
-      margin-bottom: 10px;
-      .ch-num {
-        font-size: 14px;
-        font-weight: 700;
-      }
-      input[type="checkbox"] {
-        accent-color: $primary;
-        width: 16px;
-        height: 16px;
-      }
-    }
-    .ch-row {
-      @include flex(center, space-between);
-      font-size: 12px;
-      color: $text-muted;
-      margin-bottom: 4px;
-      span:last-child {
-        font-weight: 600;
-        color: $text;
-      }
-    }
-    .ch-badge {
-      margin-top: 8px;
-      font-size: 11px;
+    span:last-child {
+      color: $gray-800;
       font-weight: 700;
-      color: $primary;
-      background: rgba($primary, 0.1);
-      border-radius: 20px;
-      padding: 2px 8px;
-      display: inline-block;
     }
   }
-  .nb-empty {
-    @include flex(center, center);
-    padding: 28px;
-    color: $text-muted;
-    font-size: 13px;
-    background: $bg;
-    border-radius: $radius-sm;
-    border: 1.5px dashed $border;
+  .ch-badge {
+    margin-top: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    background: $blue-soft;
+    color: $blue;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+}
+
+// ── Manual Entry Table ──────────────────────────────────────────────────────
+.nb-items-scroll {
+  margin: 0 -24px;
+  padding: 0 24px;
+  overflow-x: auto;
+}
+
+.nb-items-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 900px;
+
+  thead th {
+    background: $gray-50;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 800;
+    color: $gray-500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid $gray-200;
   }
 
-  .nb-items-preview {
-    margin-top: 12px;
-    padding-top: 14px;
-    border-top: 1px dashed $border;
-  }
-  .tbl-wrap,
-  .nb-items-scroll {
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    th {
-      background: $bg;
-      padding: 9px 10px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: $text-muted;
+  tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid $gray-100;
+    vertical-align: middle;
+    &.idx {
+      color: $gray-300;
       font-weight: 700;
-      border-bottom: 2px solid $border;
-      text-align: left;
-    }
-    td {
-      padding: 9px 10px;
-      border-bottom: 1px solid $border;
-      vertical-align: middle;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    .badge {
-      background: $primary-light;
-      color: $primary;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-    }
-    .amt {
-      font-weight: 700;
-      color: $success;
-    }
-  }
-
-  .nb-items-table {
-    min-width: 860px;
-    tr.filled td {
-      background: rgba($primary, 0.015);
-    }
-    .idx {
-      color: $text-muted;
       font-size: 12px;
       text-align: center;
-      width: 30px;
     }
-    .total-cell {
-      font-weight: 700;
-      color: $success;
-      white-space: nowrap;
+    &.total-cell {
+      font-weight: 800;
+      color: $blue-deep;
+      text-align: right;
+      font-family: monospace;
     }
-    .inp {
-      @include inp;
+  }
+
+  .inp {
+    padding: 8px 12px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    font-size: 13px;
+    transition: $trans;
+    width: 100%;
+    &:focus {
+      border-color: $blue;
+      outline: none;
+      background: white;
     }
-    .inp-name {
-      min-width: 130px;
-    }
-    .inp-sm {
-      width: 100px;
-      text-align: left;
-    }
-    .sel-gst {
-      @include inp;
-      width: 82px;
-      padding: 12px 4px;
-      font-size: 12px;
-    }
-    .btn-del {
-      background: none;
-      border: none;
+  }
+
+  .sel-gst {
+    @extend .inp;
+    border-radius: $r-sm;
+    padding-right: 4px;
+    padding-left: 8px;
+  }
+
+  .btn-del {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: $gray-300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: $trans;
+    &:hover:not(:disabled) {
+      background: $danger-soft;
       color: $danger;
-      cursor: pointer;
-      font-size: 18px;
-      padding: 3px;
-      opacity: 0.65;
-      transition: opacity 0.2s;
+    }
+    &:disabled {
+      opacity: 0.1;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.btn-add-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 1.5px solid $blue;
+  color: $blue;
+  border-radius: $r-sm;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: $trans;
+  &:hover {
+    background: $blue-light;
+    transform: translateY(-1px);
+  }
+}
+
+// ── Terms & Signature ────────────────────────────────────────────────────────
+.nb-terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nb-term-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $r-md;
+  .ti-num {
+    width: 22px;
+    height: 22px;
+    background: $blue-soft;
+    color: $blue;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .ti-txt {
+    flex: 1;
+    font-size: 13.5px;
+    color: $gray-700;
+    font-weight: 500;
+  }
+  .ti-del {
+    background: none;
+    border: none;
+    color: $gray-400;
+    font-size: 14px;
+    cursor: pointer;
+    &:hover {
+      color: $danger;
+    }
+  }
+}
+
+.nb-term-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  .sug-chip {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid $gray-200;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: $gray-500;
+    cursor: pointer;
+    transition: $trans;
+    &:hover {
+      border-color: $blue;
+      color: $blue;
+      background: $blue-light;
+    }
+  }
+}
+
+.nb-btn-dashed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: white;
+  border: 1.5px dashed $blue;
+  color: $blue;
+  border-radius: $r-sm;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: $trans;
+  &:hover {
+    background: $blue-light;
+    transform: translateY(-1px);
+  }
+}
+
+.nb-btn-outline-sm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: $white;
+  border: 1.5px solid $gray-200;
+  color: $gray-600;
+  border-radius: $r-sm;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: $trans;
+  &:hover {
+    border-color: $blue;
+    color: $blue;
+    background: $blue-light;
+  }
+}
+
+.nb-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 100px;
+}
+
+.nb-summary {
+  background: $white;
+  border: 1.5px solid $blue;
+  border-radius: $r-lg;
+  padding: 24px;
+  box-shadow: $sh-lg;
+
+  &__title {
+    font-size: 14px;
+    font-weight: 800;
+    color: $gray-900;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed $gray-100;
+    span:first-child {
+      font-size: 13px;
+      color: $gray-500;
+      font-weight: 500;
+    }
+    span:last-child {
+      font-size: 14px;
+      font-weight: 700;
+      color: $gray-800;
+    }
+
+    &.sub {
+      background: transparent;
+      padding-top: 0;
+      border: none;
+      margin-top: -8px;
+      span:first-child {
+        font-size: 11px;
+        color: $blue;
+        padding-left: 8px;
+      }
+      span:last-child {
+        font-size: 12px;
+        color: $blue;
+        font-weight: 700;
+      }
+    }
+
+    &.total {
+      margin-top: 12px;
+      border-top: 2px solid $blue-mid;
+      padding-top: 16px;
+      border-bottom: none;
+      span:first-child {
+        font-size: 14px;
+        font-weight: 800;
+        color: $gray-900;
+      }
+      span:last-child {
+        font-size: 20px;
+        font-weight: 900;
+        color: $blue;
+        letter-spacing: -0.5px;
+      }
+    }
+  }
+
+  .nb-inline-inp {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    input {
+      width: 50px;
+      padding: 4px 6px;
+      border: 1px solid $blue-mid;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: 700;
+    }
+    span {
+      color: $blue;
+      font-weight: 700;
+    }
+  }
+
+  select {
+    padding: 6px 8px;
+    border: 1px solid $blue-mid;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: $blue-dark;
+  }
+}
+
+.nb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  .nb-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: $r-md;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: $trans;
+    border: none;
+
+    &--cancel {
+      background: $gray-100;
+      color: $gray-600;
+      &:hover {
+        background: $gray-200;
+      }
+    }
+    &--generate {
+      background: $blue;
+      color: white;
+      box-shadow: $sh-blue;
       &:hover:not(:disabled) {
-        opacity: 1;
+        background: $blue-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba($blue, 0.3);
       }
       &:disabled {
-        opacity: 0.2;
+        opacity: 0.5;
         cursor: not-allowed;
       }
     }
   }
-  .btn-add-item {
-    @include btn($primary-solid);
-    font-size: 14px;
-    padding: 10px 20px;
-    font-weight: 700;
-    box-shadow: $shadow-hover;
+}
 
-    svg {
-      font-size: 18px;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+// ── Modals & Overlays ───────────────────────────────────────────────────────
+.nb-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba($gray-900, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: nb-fade 0.2s ease;
+}
 
-    &:hover:not(:disabled) svg {
-      transform: rotate(90deg) scale(1.2);
-    }
-  }
-
-  .nb-terms-list {
-    @include flex(flex-start, flex-start);
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .nb-term-item {
-    @include flex(flex-start, flex-start, 12px);
-    width: 100%;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 2px solid $border-light;
-    border-radius: $radius-sm;
-    padding: 14px 16px;
-    font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-      border-color: $primary-solid;
-      background: rgba($primary-solid, 0.02);
-      box-shadow: $shadow;
-    }
-
-    .ti-num {
-      background: $primary-gradient;
-      color: #ffffff;
+.nb-modal {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: $r-lg;
+  box-shadow: $sh-lg;
+  overflow: hidden;
+  &__head {
+    padding: 20px 24px;
+    border-bottom: 1px solid $gray-100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    span {
       font-weight: 800;
-      min-width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      @include flex(center, center);
-      font-size: 12px;
-      box-shadow: 0 2px 8px rgba($primary-solid, 0.3);
+      color: $gray-900;
     }
-
-    .ti-txt {
-      flex: 1;
-      line-height: 1.6;
-      color: $text;
-    }
-
-    .ti-del {
+    button {
       background: none;
       border: none;
-      color: $text-muted;
-      cursor: pointer;
       font-size: 18px;
-      opacity: 0;
-      transition: all 0.3s;
-      padding: 4px;
-      border-radius: 50%;
-
-      &:hover {
-        opacity: 1;
-        color: $danger;
-        background: rgba($danger, 0.1);
-      }
-    }
-
-    &:hover .ti-del {
-      opacity: 0.6;
-    }
-  }
-  .nb-empty-txt {
-    color: $text-muted;
-    font-size: 13px;
-    padding: 12px 0;
-  }
-  .nb-term-suggestions {
-    @include flex(center, flex-start, 8px);
-    flex-wrap: wrap;
-    padding-top: 14px;
-    border-top: 2px dashed $border-light;
-
-    .sug-chip {
-      font-size: 12px;
-      padding: 6px 14px;
-      background: linear-gradient(
-        135deg,
-        rgba($accent-solid, 0.1) 0%,
-        rgba($primary-solid, 0.1) 100%
-      );
-      color: $primary-solid;
-      font-weight: 700;
-      border: 2px solid transparent;
-      border-radius: 20px;
+      color: $gray-400;
       cursor: pointer;
-      max-width: 240px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-      &:hover {
-        background: $primary-gradient;
-        color: #ffffff;
-        transform: translateY(-2px);
-        box-shadow: $shadow-hover;
-      }
     }
   }
-  .terms-actions {
-    @include flex(center, flex-end, 8px);
-    flex-wrap: wrap;
-  }
-
-  .btn-sm {
-    font-size: 13px;
-    padding: 8px 16px;
-    border-radius: $radius-sm;
-    font-weight: 700;
-    cursor: pointer;
+  textarea {
+    width: 100%;
+    padding: 20px;
     border: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: 0.3px;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: $shadow;
-    }
-
-    &.btn-primary {
-      background: $primary-gradient;
-      color: #fff;
-      box-shadow: $shadow-hover;
-
-      &:hover {
-        box-shadow: 0 8px 25px rgba($primary-solid, 0.3);
-      }
-    }
-
-    &.btn-outline {
-      background: transparent;
-      color: $primary-solid;
-      border: 2px solid $primary-solid;
-
-      &:hover {
-        background: rgba($primary-solid, 0.05);
-      }
-    }
-
-    &.btn-ghost {
-      background: transparent;
-      color: $text-muted;
-      border: 2px solid $border;
-
-      &:hover {
-        background: $bg;
-        border-color: $text-muted;
-      }
-    }
-  }
-
-  .nb-stamp-body {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1.5px solid $border;
-    animation: fadeUp 0.2s ease;
-  }
-  .stamp-cert {
-    font-size: 13px;
-    color: $text;
-    margin-bottom: 16px;
-    strong {
-      display: block;
-      margin-top: 4px;
-      font-size: 14px;
-    }
-  }
-
-  .stamp-dropzone {
-    @include flex(center, center);
-    flex-direction: column;
-    gap: 8px;
-    border: 2px dashed $border;
-    border-radius: $radius;
-    padding: 32px 20px;
-    cursor: pointer;
-    max-width: 300px;
-    text-align: center;
-    transition:
-      border-color 0.2s,
-      background 0.2s;
-    &:hover {
-      border-color: $primary;
-      background: $primary-light;
-    }
-    .dropzone-icon {
-      font-size: 40px;
-      color: $primary;
-    }
-    p {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: $text;
-    }
-    span {
-      font-size: 11px;
-      color: $text-muted;
-    }
-  }
-
-  .stamp-preview-wrap {
-    @include flex(flex-start, flex-start, 12px);
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-    .stamp-img {
-      max-width: 160px;
-      max-height: 120px;
-      object-fit: contain;
-      border: 1.5px solid $border;
-      border-radius: $radius-sm;
-      display: block;
-    }
-  }
-  .stamp-progress {
-    @include flex(center, flex-start, 10px);
-    .stamp-progress__bar {
-      height: 6px;
-      background: $primary;
-      border-radius: 3px;
-      transition: width 0.2s;
-    }
-    span {
-      font-size: 12px;
-      font-weight: 700;
-      color: $primary;
-    }
-  }
-  .stamp-uploaded {
-    font-size: 13px;
-    font-weight: 700;
-    color: $success;
-    background: rgba($success, 0.1);
-    padding: 4px 10px;
-    border-radius: 20px;
-  }
-  .auth-sig {
-    font-size: 12px;
-    color: $text-muted;
-    font-style: italic;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed $border;
-  }
-
-  .nb-aside {
-    width: $aside-w;
-    flex-shrink: 0;
-    animation: slideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .nb-summary {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: $radius-lg;
-    border: 2px solid $border-light;
-    box-shadow: $shadow-lg;
-    padding: 28px;
-    position: sticky;
-    top: 90px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-      box-shadow: 0 12px 50px rgba(0, 0, 0, 0.15);
-      transform: translateY(-3px);
-    }
-
-    &__title {
-      font-size: 18px;
-      font-weight: 900;
-      background: $primary-gradient;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid $border-light;
-      letter-spacing: -0.5px;
-    }
-    &__row {
-      @include flex(center, space-between, 8px);
-      font-size: 13px;
-      color: $text;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-      &.sub {
-        color: $text-muted;
-        font-size: 12px;
-      }
-      &.total {
-        font-size: 16px;
-        font-weight: 800;
-        color: $primary;
-        span:last-child {
-          font-size: 20px;
-        }
-      }
-      select {
-        @include inp;
-        width: auto;
-        font-size: 13px;
-      }
-    }
-    &__divider {
-      height: 1px;
-      background: $border;
-      margin: 12px 0;
-    }
-  }
-  .nb-inline-inp {
-    @include flex(center, flex-end, 4px);
-    input {
-      @include inp;
-      width: 70px;
-      text-align: right;
-      padding: 6px 8px;
-    }
-    span {
-      font-size: 13px;
-      color: $text-muted;
-      font-weight: 600;
-    }
-  }
-
-  .nb-actions {
-    @include flex(center, stretch, 12px);
-    margin-top: 24px;
-  }
-
-  .nb-btn {
-    @include btn($primary-solid);
-    flex: 1;
-    justify-content: center;
     font-size: 15px;
-    padding: 14px 24px;
-    border-radius: $radius-sm;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-
-    &--cancel {
-      background: $bg;
-      color: $text;
-      border: 2px solid $border;
-
-      &:hover:not(:disabled) {
-        background: $border-light;
-        border-color: $text-muted;
-        box-shadow: none;
-      }
-    }
-
-    &--generate {
-      background: $primary-gradient;
-      flex: 2;
-      font-size: 16px;
-      padding: 16px;
-      box-shadow: $shadow-hover;
-
-      &:hover:not(:disabled) {
-        box-shadow: 0 10px 40px rgba($primary-solid, 0.3);
-      }
+    resize: none;
+    &:focus {
+      outline: none;
     }
   }
-
-  .nb-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    z-index: 200;
-    @include flex(center, center);
-    animation: fadeIn 0.3s ease;
+  &__foot {
+    padding: 16px 24px;
+    background: $gray-50;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
   }
+}
 
-  .nb-modal {
-    background: $card;
-    border-radius: $radius-lg;
-    padding: 32px;
-    width: 540px;
-    max-width: 95vw;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
-    animation: fadeIn 0.3s ease;
-    border: 2px solid $border-light;
-
-    textarea {
-      @include inp;
-      height: 130px;
-      resize: vertical;
-      font-size: 15px;
-      margin: 20px 0;
-      display: block;
-      line-height: 1.6;
-      font-family: $font;
-    }
-
-    &__head {
-      @include flex(center, space-between);
-      font-size: 18px;
-      font-weight: 800;
-      background: $primary-gradient;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.3px;
-
-      button {
-        background: $bg;
-        border: none;
-        font-size: 24px;
-        color: $text-muted;
-        cursor: pointer;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        @include flex(center, center);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-        &:hover {
-          background: rgba($danger, 0.1);
-          color: $danger;
-          transform: rotate(90deg);
-        }
-      }
-    }
-
-    &__foot {
-      @include flex(center, flex-end, 12px);
-    }
+@keyframes nb-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-
-  @media (max-width: 960px) {
-    .nb-body {
-      flex-direction: column;
-      padding: 16px;
-    }
-    .nb-aside {
-      width: 100%;
-    }
-    .nb-summary {
-      position: static;
-    }
-    .nb-header {
-      padding: 14px 16px;
-    }
-    .nb-row {
-      grid-template-columns: 1fr;
-    }
+}
+@keyframes nb-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

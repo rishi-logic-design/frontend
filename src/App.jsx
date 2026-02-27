@@ -56,6 +56,7 @@ import ChallanDetailsReport from "./components/reports/ChallanDetailsReport";
 import AuditTrail from "./components/reports/AuditTrail";
 import BulkExport from "./components/reports/BulkExport";
 import BulkImport from "./components/reports/BulkImport";
+import AboutPage from "./pages/AboutPage";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -125,6 +126,7 @@ const App = () => {
             path="account/billing-settings"
             element={<BillingSettings />}
           />
+          <Route path="account/about" element={<AboutPage />} />
 
           <Route
             path="new-challan"

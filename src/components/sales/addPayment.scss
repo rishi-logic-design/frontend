@@ -1,108 +1,144 @@
-// ─── Tokens ─────
-$y: #f59e0b; // amber primary
-$y-dark: #d97706;
-$y-light: #fef3c7;
-$y-pale: #fffbeb;
-$text: #1c1917;
-$text-md: #57534e;
-$text-sm: #a8a29e;
-$border: #e7e5e4;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+// ── Tokens ──────────────────────────────────────────────────────────────────
+$blue: #2563eb;
+$blue-dark: #1d4ed8;
+$blue-deep: #1e40af;
+$blue-light: #eff6ff;
+$blue-pale: #f0f7ff;
+$blue-soft: #dbeafe;
+$blue-mid: #bfdbfe;
+
 $white: #ffffff;
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
+
 $danger: #ef4444;
+$danger-soft: #fef2f2;
 $success: #10b981;
-$radius: 14px;
-$radius-sm: 10px;
-$shadow: 0 4px 24px rgba(245, 158, 11, 0.1);
-$shadow-lg: 0 12px 40px rgba(245, 158, 11, 0.18);
-$trans: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+$success-soft: #ecfdf5;
+$warn: #f59e0b;
 
-// ─── Full-screen Loader ───
-.ap-fullscreen-loader {
-  position: fixed;
-  inset: 0;
-  background: $y-pale;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  z-index: 9999;
+$r-sm: 8px;
+$r-md: 12px;
+$r-lg: 16px;
+$r-xl: 20px;
 
-  p {
-    font-size: 16px;
-    font-weight: 600;
-    color: $y-dark;
-    letter-spacing: 0.3px;
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-}
+$sh-sm:
+  0 1px 3px rgba(0, 0, 0, 0.07),
+  0 1px 2px rgba(0, 0, 0, 0.04);
+$sh-md:
+  0 4px 16px rgba(37, 99, 235, 0.08),
+  0 1px 4px rgba(0, 0, 0, 0.05);
+$sh-lg:
+  0 12px 40px rgba(37, 99, 235, 0.13),
+  0 4px 12px rgba(0, 0, 0, 0.06);
+$sh-blue: 0 6px 20px rgba(37, 99, 235, 0.28);
 
-.ap-loader-ring {
-  position: relative;
-  width: 64px;
-  height: 64px;
+$trans: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  div {
-    box-sizing: border-box;
-    display: block;
-    position: absolute;
-    width: 56px;
-    height: 56px;
-    margin: 4px;
-    border: 5px solid transparent;
-    border-top-color: $y;
-    border-radius: 50%;
-    animation: ring-spin 1.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-
-    &:nth-child(1) {
-      animation-delay: -0.45s;
-    }
-    &:nth-child(2) {
-      animation-delay: -0.3s;
-      border-top-color: $y-dark;
-    }
-    &:nth-child(3) {
-      animation-delay: -0.15s;
-      border-top-color: rgba($y, 0.5);
-    }
-  }
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-* {
+// ── Reset ────────────────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+// ── Page Shell ───────────────────────────────────────────────────────────────
 .add-payment-page {
   min-height: 100vh;
-  background: $y-pale;
-  padding-bottom: 48px;
-  font-family: "Inter", system-ui, sans-serif;
-  animation: fadeIn 0.3s ease;
+  background: $gray-50;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  animation: ap-fade 0.3s ease;
+  color: $gray-800;
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
+// ── Fullscreen Loader ────────────────────────────────────────────────────────
+.ap-fullscreen-loader {
+  position: fixed;
+  inset: 0;
+  background: $white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 9999;
+
+  p {
+    font-size: 15px;
+    font-weight: 600;
+    color: $blue;
+    animation: ap-pulse 1.5s ease-in-out infinite;
+  }
+}
+
+.ap-loader-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+
+  div {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    margin: 4px;
+    border: 4px solid transparent;
+    border-top-color: $blue;
+    border-radius: 50%;
+    animation: ap-spin 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    &:nth-child(1) {
+      animation-delay: -0.45s;
+    }
+    &:nth-child(2) {
+      animation-delay: -0.3s;
+      border-top-color: $blue-dark;
+    }
+    &:nth-child(3) {
+      animation-delay: -0.15s;
+      border-top-color: rgba($blue, 0.35);
+    }
+  }
+}
+
+// ── Top Header Bar ───────────────────────────────────────────────────────────
 .payment-header {
-  background: linear-gradient(135deg, $y 0%, $y-dark 100%);
-  padding: 18px 28px;
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  padding: 0 32px;
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 4px 20px rgba($y, 0.35);
+  z-index: 200;
+  box-shadow: $sh-sm;
 
   .back-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    color: white;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    font-size: 22px;
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    background: $white;
+    color: $gray-600;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -111,374 +147,646 @@ $trans: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.32);
-      transform: translateX(-3px);
+      border-color: $blue;
+      background: $blue-light;
+      color: $blue;
+      transform: translateX(-2px);
     }
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 20px;
+    background: $gray-200;
   }
 
   .header-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
+    flex: 1;
 
     h1 {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 800;
-      color: white;
-      margin: 0;
+      color: $gray-900;
       letter-spacing: -0.3px;
     }
 
     .header-sub {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.85);
+      font-size: 12px;
+      color: $gray-500;
       font-weight: 500;
     }
   }
-}
 
-// ─── Form Container ───────────────────────────────────────────────────────────
-.payment-form-container {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 28px 20px;
-}
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-.payment-form {
-  background: $white;
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: $shadow;
-  border: 1.5px solid $y-light;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, $y 0%, $y-dark 100%);
+  .header-badge {
+    padding: 4px 12px;
+    background: $blue-light;
+    color: $blue-dark;
+    border: 1px solid $blue-mid;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 }
 
-// ─── Form Groups ──────────────────────────────────────────────────────────────
-.form-group {
-  margin-bottom: 22px;
-  animation: slideIn 0.35s ease both;
+// ── Full-width Body Layout ───────────────────────────────────────────────────
+.ap-body {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  min-height: calc(100vh - 60px);
 
-  label {
-    display: block;
-    font-size: 11px;
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Left: Main Form ──────────────────────────────────────────────────────────
+.ap-main {
+  padding: 28px 32px;
+  border-right: 1px solid $gray-200;
+  background: $white;
+
+  @media (max-width: 960px) {
+    border-right: none;
+    padding: 20px 16px;
+  }
+}
+
+// ── Right: Summary Panel ─────────────────────────────────────────────────────
+.ap-sidebar {
+  padding: 28px 24px;
+  background: $gray-50;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @media (max-width: 960px) {
+    padding: 20px 16px;
+    background: $white;
+  }
+}
+
+// ── Section Label ────────────────────────────────────────────────────────────
+.ap-section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+
+  .asl-num {
+    width: 26px;
+    height: 26px;
+    background: $blue;
+    color: $white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .asl-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: $gray-800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+
+  .asl-line {
+    flex: 1;
+    height: 1px;
+    background: $gray-200;
+  }
+}
+
+// ── Form Section Block ───────────────────────────────────────────────────────
+.ap-section-block {
+  margin-bottom: 36px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ── Form Groups & Fields ─────────────────────────────────────────────────────
+.ap-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  @media (max-width: 620px) {
+    grid-template-columns: 1fr;
+  }
+}
+.ap-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+.ap-col-full {
+  grid-column: 1 / -1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label,
+  .fg-label {
+    font-size: 12px;
     font-weight: 700;
-    color: $text-md;
-    margin-bottom: 8px;
+    color: $gray-600;
     text-transform: uppercase;
     letter-spacing: 0.6px;
+
+    .fg-req {
+      color: $danger;
+      margin-left: 2px;
+    }
   }
 
   input,
   select,
   textarea {
     width: 100%;
-    padding: 13px 16px;
-    border: 2px solid $border;
-    border-radius: $radius-sm;
-    font-size: 15px;
-    font-family: inherit;
-    transition: $trans;
-    background: $white;
-    color: $text;
+    padding: 10px 13px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    font-size: 14px;
     font-weight: 500;
+    color: $gray-800;
+    background: $white;
+    font-family: "Inter", sans-serif;
+    transition: $trans;
+    outline: none;
 
-    &:hover {
-      border-color: #d6d3d1;
+    &::placeholder {
+      color: $gray-400;
+      font-weight: 400;
+    }
+
+    &:hover:not(:read-only):not(:disabled) {
+      border-color: rgba($blue, 0.5);
     }
 
     &:focus {
-      outline: none;
-      border-color: $y;
-      box-shadow: 0 0 0 4px rgba($y, 0.12);
-      transform: translateY(-1px);
+      border-color: $blue;
+      box-shadow: 0 0 0 3px rgba($blue, 0.12);
     }
 
-    &.error {
+    &.has-error {
       border-color: $danger;
-      background: #fff5f5;
-      animation: shake 0.4s ease;
+      background: $danger-soft;
+      animation: ap-shake 0.35s ease;
     }
 
     &:read-only {
-      background: $y-pale;
-      color: $text-md;
-      border-color: $y-light;
-    }
-
-    &::placeholder {
-      color: $text-sm;
+      background: $gray-100;
+      color: $gray-600;
+      border-color: $gray-200;
+      cursor: default;
     }
   }
 
   textarea {
     resize: vertical;
-    min-height: 96px;
+    min-height: 88px;
     line-height: 1.6;
   }
 
   select {
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23f59e0b' d='M5 7l5 5 5-5H5z'/%3E%3C/svg%3E");
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2394a3b8' d='M4 6l4 4 4-4H4z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 14px center;
-    background-size: 20px;
-    padding-right: 44px;
+    background-position: right 11px center;
+    padding-right: 36px;
   }
 
-  .error-message {
-    display: block;
+  .fg-error {
+    font-size: 11.5px;
     color: $danger;
-    font-size: 12px;
-    margin-top: 6px;
     font-weight: 600;
-    animation: fadeIn 0.3s ease;
-  }
-
-  .outstanding-field {
-    font-weight: 800;
-    color: $y-dark;
-    font-size: 17px;
-    background: $y-light;
-    border-color: rgba($y, 0.4);
-  }
-}
-
-// ─── Loading Invoices ─────────────────────────────────────────────────────────
-.loading-invoices {
-  text-align: center;
-  padding: 40px 20px;
-  background: $y-pale;
-  border-radius: $radius;
-  margin: 20px 0;
-  border: 2px dashed rgba($y, 0.3);
-
-  .spinner {
-    width: 44px;
-    height: 44px;
-    border: 4px solid $y-light;
-    border-top-color: $y;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
-  }
-
-  p {
-    color: $text-md;
-    font-size: 14px;
-    font-weight: 600;
-  }
-}
-
-// ─── Invoices Section ─────────────────────────────────────────────────────────
-.invoices-section {
-  background: linear-gradient(135deg, $y-pale 0%, $y-light 100%);
-  border-radius: $radius;
-  padding: 22px;
-  margin: 20px 0;
-  border: 2px solid rgba($y, 0.3);
-  box-shadow: 0 4px 16px rgba($y, 0.08);
-
-  h3 {
-    font-size: 16px;
-    font-weight: 800;
-    color: $y-dark;
-    margin: 0 0 6px;
     display: flex;
     align-items: center;
-    gap: 8px;
-
+    gap: 4px;
     &::before {
-      content: "📋";
-      font-size: 18px;
+      content: "⚠ ";
+      font-style: normal;
     }
   }
 
-  .invoices-hint {
+  .ap-outstanding-val {
+    padding: 10px 14px;
+    background: $blue-light;
+    border: 1.5px solid $blue-mid;
+    border-radius: $r-sm;
+    font-size: 16px;
+    font-weight: 800;
+    color: $blue-dark;
+    letter-spacing: -0.3px;
+  }
+}
+
+// ── Customer Info Strip ───────────────────────────────────────────────────────
+.ap-customer-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: $blue-pale;
+  border: 1.5px solid $blue-mid;
+  border-radius: $r-md;
+  overflow: hidden;
+  margin-top: 4px;
+
+  .ap-cs-item {
+    flex: 1;
+    min-width: 160px;
+    padding: 12px 16px;
+    border-right: 1px solid $blue-mid;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    .ap-cs-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: $blue-dark;
+      margin-bottom: 4px;
+    }
+
+    .ap-cs-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: $gray-800;
+      &.big {
+        font-size: 16px;
+        font-weight: 800;
+        color: $blue-dark;
+        letter-spacing: -0.3px;
+      }
+    }
+  }
+}
+
+// ── Invoices ─────────────────────────────────────────────────────────────────
+.loading-invoices {
+  text-align: center;
+  padding: 28px;
+  background: $gray-50;
+  border-radius: $r-md;
+  border: 1.5px dashed $gray-200;
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid $gray-200;
+    border-top-color: $blue;
+    border-radius: 50%;
+    animation: ap-spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  p {
+    color: $gray-500;
     font-size: 13px;
-    color: $text-md;
-    margin-bottom: 18px;
-    font-weight: 500;
+    font-weight: 600;
+  }
+}
+
+.invoices-section {
+  margin-top: 20px;
+
+  .inv-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    h3 {
+      font-size: 13px;
+      font-weight: 800;
+      color: $gray-700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .inv-count {
+      background: $blue;
+      color: $white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
   }
 }
 
 .invoice-item {
   background: $white;
-  border: 2px solid $y-light;
-  border-radius: $radius-sm;
-  padding: 16px;
-  margin-bottom: 14px;
-  transition: $trans;
-  position: relative;
+  border: 1.5px solid $gray-200;
+  border-radius: $r-md;
+  margin-bottom: 10px;
   overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, $y 0%, $y-dark 100%);
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
+  transition: $trans;
 
   &:hover {
-    border-color: rgba($y, 0.5);
-    box-shadow: 0 6px 20px rgba($y, 0.12);
-    transform: translateY(-2px);
-
-    &::before {
-      opacity: 1;
-    }
+    border-color: rgba($blue, 0.5);
+    box-shadow: $sh-md;
   }
 
-  .invoice-header {
+  .inv-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    justify-content: space-between;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid $gray-100;
 
-    .invoice-number {
+    .inv-number {
+      font-size: 13px;
       font-weight: 700;
-      color: $text;
-      font-size: 15px;
+      color: $gray-800;
     }
-
-    .invoice-date {
-      font-size: 12px;
-      color: $text-md;
-      background: $y-pale;
-      padding: 3px 10px;
-      border-radius: 6px;
+    .inv-date {
+      font-size: 11px;
+      color: $gray-500;
       font-weight: 600;
+      background: $gray-100;
+      padding: 2px 8px;
+      border-radius: 20px;
     }
   }
 
-  .invoice-details {
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+  .inv-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid $gray-100;
+
+    .chip {
+      font-size: 11.5px;
       font-weight: 600;
-
-      span {
-        white-space: nowrap;
-        padding: 5px 10px;
-        background: $y-pale;
-        border-radius: 6px;
-        color: $text-md;
+      padding: 3px 10px;
+      border-radius: 4px;
+      &.total {
+        background: $gray-100;
+        color: $gray-600;
       }
+      &.paid {
+        background: $success-soft;
+        color: darken($success, 8%);
+      }
+      &.pend {
+        background: $blue;
+        color: $white;
+        box-shadow: 0 2px 8px rgba($blue, 0.3);
+      }
+    }
+  }
 
-      .pending {
-        color: white;
-        background: linear-gradient(135deg, $y 0%, $y-dark 100%);
-        font-weight: 700;
-        box-shadow: 0 2px 8px rgba($y, 0.3);
+  .inv-pay-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: $blue-pale;
+
+    .ipr-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: $blue-dark;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    input {
+      flex: 1;
+      padding: 8px 11px;
+      border: 1.5px solid $blue-mid;
+      border-radius: $r-sm;
+      font-size: 13px;
+      font-weight: 700;
+      color: $gray-800;
+      background: $white;
+      font-family: "Inter", sans-serif;
+      outline: none;
+      transition: $trans;
+      &:focus {
+        border-color: $blue;
+        box-shadow: 0 0 0 3px rgba($blue, 0.12);
       }
     }
 
-    .pay-amount-input {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 2px dashed rgba($y, 0.3);
+    .pay-full-btn {
+      padding: 8px 14px;
+      background: $blue;
+      color: $white;
+      border: none;
+      border-radius: $r-sm;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: $trans;
+      font-family: "Inter", sans-serif;
+      white-space: nowrap;
 
-      label {
-        font-size: 11px;
-        font-weight: 700;
-        color: $y-dark;
-        margin: 0;
-        white-space: nowrap;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      input {
-        flex: 1;
-        padding: 10px 14px;
-        border: 2px solid rgba($y, 0.3);
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 700;
-        color: $text;
-
-        &:focus {
-          outline: none;
-          border-color: $y;
-          box-shadow: 0 0 0 4px rgba($y, 0.12);
-        }
+      &:hover {
+        background: $blue-dark;
+        box-shadow: $sh-blue;
+        transform: translateY(-1px);
       }
     }
   }
 }
 
 .adjusted-summary {
-  background: linear-gradient(135deg, $y-light 0%, rgba($y, 0.2) 100%);
-  border: 2px solid rgba($y, 0.4);
-  border-radius: $radius-sm;
-  padding: 14px 18px;
-  margin-top: 16px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba($y, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $blue-light;
+  border: 1.5px solid $blue-mid;
+  border-radius: $r-md;
+  padding: 12px 16px;
+  margin-top: 12px;
 
+  .adj-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: $blue-dark;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
   strong {
-    color: $y-dark;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 800;
+    color: $blue-deep;
+    letter-spacing: -0.3px;
   }
 }
 
-// ─── File Upload ──────────────────────────────────────────────────────────────
-.file-upload {
-  border: 3px dashed rgba($y, 0.4);
-  border-radius: $radius;
-  padding: 28px 20px;
-  text-align: center;
+// ── Amount Row ───────────────────────────────────────────────────────────────
+.ap-amount-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  input {
+    flex: 1;
+  }
+}
+
+.pay-full-btn-main {
+  padding: 0 16px;
+  background: $blue;
+  color: $white;
+  border: none;
+  border-radius: $r-sm;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
   transition: $trans;
-  background: $y-pale;
+  font-family: "Inter", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  box-shadow: $sh-blue;
 
   &:hover {
-    border-color: $y;
-    background: $y-light;
-    transform: scale(1.01);
+    background: $blue-dark;
+    box-shadow: 0 8px 24px rgba($blue, 0.4);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// ── Payment Method Tabs ───────────────────────────────────────────────────────
+.ap-method-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ap-method-tab {
+  position: relative;
+
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    font-size: 13px;
+    font-weight: 600;
+    color: $gray-600;
+    cursor: pointer;
+    background: $white;
+    transition: $trans;
+    text-transform: none;
+    letter-spacing: 0;
+
+    &:hover {
+      border-color: rgba($blue, 0.5);
+      background: $blue-light;
+      color: $blue;
+    }
+  }
+
+  input[type="radio"]:checked + label {
+    border-color: $blue;
+    background: $blue;
+    color: $white;
+    box-shadow: 0 2px 10px rgba($blue, 0.3);
+  }
+}
+
+// ── File Upload ──────────────────────────────────────────────────────────────
+.file-upload {
+  border: 2px dashed $gray-300;
+  border-radius: $r-md;
+  padding: 28px 20px;
+  text-align: center;
+  background: $gray-50;
+  transition: $trans;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $blue;
+    background: $blue-light;
   }
 
   .file-upload-label {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
 
-    svg {
+    .upl-icon {
+      width: 48px;
+      height: 48px;
+      background: $blue-light;
+      border: 1.5px solid $blue-mid;
+      border-radius: $r-md;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: $trans;
     }
-    &:hover svg {
-      transform: scale(1.1);
+
+    &:hover .upl-icon {
+      background: $blue;
+      svg path,
+      svg rect {
+        stroke: white !important;
+      }
     }
 
-    span {
-      font-size: 14px;
-      color: $text-md;
-      font-weight: 600;
+    .upl-main {
+      font-size: 13px;
+      font-weight: 700;
+      color: $blue;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .upl-hint {
+      font-size: 11.5px;
+      color: $gray-400;
+      font-weight: 500;
     }
   }
 
@@ -486,300 +794,357 @@ $trans: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: 12px;
     background: $white;
-    padding: 14px;
-    border-radius: $radius-sm;
-    border: 2px solid rgba($y, 0.4);
+    padding: 12px 14px;
+    border-radius: $r-sm;
+    border: 1.5px solid $gray-200;
 
     .file-info {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
       flex: 1;
-
-      .file-details {
+      .file-icon {
+        width: 36px;
+        height: 36px;
+        background: $success-soft;
+        border-radius: $r-sm;
         display: flex;
-        flex-direction: column;
-        gap: 3px;
-
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .file-details {
         .file-name {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 700;
-          color: $text;
+          color: $gray-800;
           word-break: break-all;
         }
-
         .file-size {
-          font-size: 12px;
-          color: $text-sm;
+          font-size: 11px;
+          color: $gray-400;
           font-weight: 600;
         }
       }
     }
 
     .remove-file-btn {
-      background: #fee2e2;
-      border: 2px solid #fca5a5;
-      color: #dc2626;
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
+      background: $danger-soft;
+      border: 1.5px solid #fca5a5;
+      color: $danger;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: $trans;
       flex-shrink: 0;
-
       &:hover {
-        background: #dc2626;
-        color: white;
+        background: $danger;
+        color: $white;
+        border-color: $danger;
         transform: scale(1.1) rotate(90deg);
       }
     }
   }
 }
 
-// ─── Error Summary ────────────────────────────────────────────────────────────
+// ── Error Summary ────────────────────────────────────────────────────────────
 .error-summary {
-  background: #fff5f5;
-  border: 2px solid #fca5a5;
-  border-radius: $radius;
-  padding: 18px;
-  margin: 20px 0;
-  animation: shake 0.5s ease;
+  background: $danger-soft;
+  border: 1.5px solid #fca5a5;
+  border-radius: $r-md;
+  padding: 14px 16px;
+  margin-top: 8px;
+  animation: ap-shake 0.35s ease;
 
   p {
     font-weight: 700;
     color: $danger;
-    margin: 0 0 10px;
-    font-size: 15px;
-
-    &::before {
-      content: "⚠️ ";
-    }
+    font-size: 13px;
+    margin-bottom: 6px;
   }
-
   ul {
     list-style: none;
-    padding: 0;
-    margin: 0;
-
     li {
+      font-size: 12.5px;
       color: #dc2626;
-      font-size: 13px;
-      padding: 6px 0 6px 24px;
-      position: relative;
       font-weight: 600;
-
+      padding: 3px 0 3px 18px;
+      position: relative;
       &::before {
-        content: "✕";
+        content: "×";
         position: absolute;
-        left: 6px;
+        left: 4px;
         color: #fca5a5;
-        font-weight: 700;
+        font-weight: 900;
       }
     }
   }
 }
 
-// ─── Form Actions ─────────────────────────────────────────────────────────────
+// ── Right Panel: Summary Card ─────────────────────────────────────────────────
+.ap-summary-card {
+  background: $white;
+  border: 1.5px solid $gray-200;
+  border-radius: $r-lg;
+  padding: 20px;
+  box-shadow: $sh-sm;
+
+  .asc-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: $gray-700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $gray-100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .asc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid $gray-100;
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .asc-key {
+      font-size: 12.5px;
+      color: $gray-500;
+      font-weight: 500;
+    }
+    .asc-val {
+      font-size: 13px;
+      color: $gray-800;
+      font-weight: 700;
+    }
+    .asc-val.accent {
+      color: $blue;
+      font-size: 15px;
+    }
+    .asc-val.success {
+      color: $success;
+    }
+  }
+}
+
+// ── Status Pills ─────────────────────────────────────────────────────────────
+.ap-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.pending {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+  }
+  &.complete {
+    background: $success-soft;
+    color: darken($success, 8%);
+    border: 1px solid #a7f3d0;
+  }
+  &.error {
+    background: $danger-soft;
+    color: $danger;
+    border: 1px solid #fca5a5;
+  }
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+
+// ── Form Actions ─────────────────────────────────────────────────────────────
 .form-actions {
   display: flex;
-  gap: 14px;
-  margin-top: 36px;
-  padding-top: 22px;
-  border-top: 2px solid $y-light;
+  gap: 10px;
+  align-items: center;
+  padding-top: 24px;
+  margin-top: 8px;
+  border-top: 1px solid $gray-200;
 
-  button {
-    flex: 1;
-    padding: 15px 28px;
-    border: none;
-    border-radius: $radius;
-    font-size: 15px;
+  .btn-cancel {
+    padding: 10px 22px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    background: $white;
+    color: $gray-600;
+    font-size: 13px;
     font-weight: 700;
+    cursor: pointer;
+    transition: $trans;
+    font-family: "Inter", sans-serif;
+
+    &:hover:not(:disabled) {
+      background: $gray-100;
+      color: $gray-800;
+      border-color: $gray-300;
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn-save {
+    flex: 1;
+    padding: 11px 24px;
+    border: none;
+    border-radius: $r-sm;
+    font-size: 14px;
+    font-weight: 800;
+    color: $white;
+    background: linear-gradient(135deg, $blue 0%, $blue-dark 100%);
     cursor: pointer;
     transition: $trans;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    box-shadow: $sh-blue;
+    font-family: "Inter", sans-serif;
 
-    &:active {
-      transform: scale(0.97);
+    &:hover:not(:disabled) {
+      box-shadow: 0 10px 30px rgba($blue, 0.45);
+      transform: translateY(-1px);
+    }
+    &:active:not(:disabled) {
+      transform: scale(0.98);
     }
     &:disabled {
       opacity: 0.55;
       cursor: not-allowed;
       transform: none;
-    }
-  }
-
-  .btn-cancel {
-    background: #f5f5f4;
-    color: $text-md;
-    border: 2px solid $border;
-
-    &:hover:not(:disabled) {
-      background: #e7e5e4;
-      color: $text;
-      transform: translateY(-2px);
-    }
-  }
-
-  .btn-save {
-    background: linear-gradient(135deg, $y 0%, $y-dark 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba($y, 0.35);
-
-    &:hover:not(:disabled) {
-      box-shadow: 0 8px 24px rgba($y, 0.5);
-      transform: translateY(-2px);
+      box-shadow: none;
     }
 
     .spinner-small {
-      width: 18px;
-      height: 18px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba($white, 0.35);
+      border-top-color: $white;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: ap-spin 0.7s linear infinite;
     }
   }
 }
 
-// ─── Success Modal ────────────────────────────────────────────────────────────
+// ── Success Modal ─────────────────────────────────────────────────────────────
 .success-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba($gray-900, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-  backdrop-filter: blur(6px);
+  z-index: 9999;
+  animation: ap-fade 0.25s ease;
 }
 
 .success-modal {
   background: $white;
-  border-radius: 24px;
-  padding: 48px 40px;
-  max-width: 420px;
+  border-radius: $r-xl;
+  padding: 52px 44px;
+  max-width: 400px;
   width: 90%;
   text-align: center;
-  box-shadow: $shadow-lg;
-  animation: slideUp 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  border: 3px solid $y-light;
+  box-shadow: $sh-lg;
+  animation: ap-popup 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid $blue-soft;
 
   .success-icon {
     margin: 0 auto 24px;
-    animation: scaleIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    svg {
-      filter: drop-shadow(0 6px 20px rgba($y, 0.4));
-    }
+    animation: ap-scalein 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-
   h2 {
-    font-size: 26px;
-    font-weight: 800;
-    background: linear-gradient(135deg, $y 0%, $y-dark 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 12px;
+    font-size: 22px;
+    font-weight: 900;
+    color: $blue-deep;
+    margin: 0 0 10px;
+    letter-spacing: -0.4px;
   }
-
   p {
-    font-size: 15px;
-    color: $text-md;
+    font-size: 14px;
+    color: $gray-500;
     margin: 0;
     font-weight: 500;
   }
 }
 
-// ─── Animations ───────────────────────────────────────────────────────────────
-@keyframes ring-spin {
+// ── Animations ────────────────────────────────────────────────────────────────
+@keyframes ap-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ap-popup {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes ap-scalein {
   0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0) rotate(-180deg);
+    transform: scale(0) rotate(-90deg);
   }
   70% {
-    transform: scale(1.2) rotate(10deg);
+    transform: scale(1.1) rotate(5deg);
   }
   100% {
     transform: scale(1) rotate(0);
   }
 }
-
-@keyframes spin {
+@keyframes ap-spin {
   to {
     transform: rotate(360deg);
   }
 }
-
-@keyframes shake {
+@keyframes ap-shake {
   0%,
   100% {
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-8px);
+    transform: translateX(-6px);
   }
   75% {
-    transform: translateX(8px);
+    transform: translateX(6px);
   }
 }
-
-@keyframes pulse {
+@keyframes ap-pulse {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }

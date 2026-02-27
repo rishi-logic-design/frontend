@@ -1,19 +1,25 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import productService from "../services/productService";
-import "./productPage.scss";
-import { CiEdit, CiTrash } from "react-icons/ci";
-import { IoClose } from "react-icons/io5";
 import {
   FiSearch,
-  FiUpload,
   FiPlus,
+  FiDownload,
+  FiUpload,
   FiChevronLeft,
   FiChevronRight,
-  FiChevronsLeft,
+  FiEdit2,
+  FiTrash2,
+  FiX,
+  FiFilter,
+  FiLoader,
+  FiGrid,
+  FiPackage,
 } from "react-icons/fi";
 import { RiFileExcel2Line } from "react-icons/ri";
 import { toast } from "react-toastify";
+import "./productPage.scss";
 
 const ROWS_OPTIONS = [10, 20, 50, 100];
 
@@ -37,8 +43,6 @@ const ProductPage = () => {
     sizeId: "",
     price: "",
   });
-
-  const searchTimer = useRef(null);
 
   useEffect(() => {
     fetchProducts();
@@ -119,7 +123,7 @@ const ProductPage = () => {
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   const handleEditClick = (product, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setEditingProduct(product);
     setFormData({
       name: product.name || "",
@@ -135,34 +139,22 @@ const ProductPage = () => {
     setEditingProduct(null);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       const vendorData = JSON.parse(localStorage.getItem("vendorData"));
-
       const updateData = {
         name: formData.name,
         categoryId: formData.categoryId,
         vendorId: vendorData?.id,
-        sizes: [
-          {
-            sizeId: formData.sizeId,
-            price: parseFloat(formData.price),
-          },
-        ],
+        sizes: [{ sizeId: formData.sizeId, price: parseFloat(formData.price) }],
       };
-
       await productService.updateProduct(editingProduct.id, updateData);
+      toast.success("Product updated successfully");
       fetchProducts();
       handleDrawerClose();
     } catch (error) {
-      console.error("Update failed:", error);
       toast.error("Failed to update product");
     } finally {
       setLoading(false);
@@ -170,118 +162,154 @@ const ProductPage = () => {
   };
 
   const handleDeleteProduct = async (productId, e) => {
-    e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this product?"))
+    if (e) e.stopPropagation();
+    if (
+      !window.confirm(
+        "Permanent Action: Are you sure you want to delete this product?",
+      )
+    )
       return;
     try {
       setLoading(true);
       await productService.deleteProduct(productId);
+      toast.success("Product deleted");
       fetchProducts();
     } catch (error) {
-      console.error("Delete failed:", error);
       toast.error("Failed to delete product");
     } finally {
       setLoading(false);
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
+
   return (
-    <div className="product-page">
-      <div className="product-header">
-        <h1>
-          Products <span className="version-badge">v2</span>
-        </h1>
+    <motion.div
+      className="product-page-v2"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <div className="header-bar">
+        <div className="title-area">
+          <h1>
+            Inventory Repository{" "}
+            <span className="count-badge">{totalItems} Products</span>
+          </h1>
+          <p>Manage your product catalog, pricing, and stock variants.</p>
+        </div>
+        <div className="toolbar-actions">
+          <button className="btn import-btn">
+            <FiUpload /> Bulk Import
+          </button>
+          <button className="btn export-btn">
+            <RiFileExcel2Line /> Export
+          </button>
+          <button
+            className="btn create-btn"
+            onClick={() => navigate("/vendor/add-product")}
+          >
+            <FiPlus /> New Product
+          </button>
+        </div>
       </div>
 
-      <div className="product-toolbar">
-        <div className="search-box">
-          <FiSearch className="search-icon" />
+      <div className="search-container">
+        <div className="search-wrapper">
+          <FiSearch />
           <input
             type="text"
-            placeholder="Search products..."
-            className="search-input"
+            placeholder="Search by name, category, or SKU..."
             value={searchQuery}
             onChange={handleSearch}
           />
         </div>
-        <div className="toolbar-actions">
-          <button className="action-btn upload-btn" onClick={() => {}}>
-            <FiUpload /> <span>Bulk Import</span>
-          </button>
-          <button className="action-btn excel-btn" onClick={() => {}}>
-            <RiFileExcel2Line /> <span>Export (xslx)</span>
-          </button>
-          <button
-            className="action-btn add-btn"
-            onClick={() => navigate("/vendor/add-product")}
-          >
-            <FiPlus /> <span>Create Product</span>
-          </button>
-        </div>
+        <button className="filter-btn">
+          <FiFilter />
+        </button>
       </div>
 
-      <div className="product-table-wrapper">
+      <div className="table-card">
         <table className="product-table">
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Category</th>
-              <th>Size (Inch)</th>
-              <th>Price</th>
-              <th>Actions</th>
+              <th>Product Identification</th>
+              <th>Collection / Category</th>
+              <th>Dimension (Inch)</th>
+              <th>Market Price</th>
+              <th style={{ textAlign: "right" }}>Management</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {loading && products.length === 0 ? (
               <tr>
-                <td
-                  colSpan="5"
-                  style={{ textAlign: "center", padding: "40px" }}
-                >
-                  Loading products...
+                <td colSpan="5">
+                  <div style={{ padding: "60px", textAlign: "center" }}>
+                    <FiLoader className="spin" /> Cataloging Products...
+                  </div>
                 </td>
               </tr>
             ) : currentProducts.length > 0 ? (
-              currentProducts.map((product) => (
-                <tr key={product.id}>
-                  <td className="name-cell">{product.name}</td>
-                  <td className="category-cell">
-                    {product.category?.name || "—"}
-                  </td>
-                  <td>{getProductSize(product)}</td>
-                  <td className="price-cell">₹{getProductPrice(product)}</td>
-                  <td className="action-cell">
-                    <button
-                      className="icon-btn edit-icon-btn"
-                      onClick={(e) => handleEditClick(product, e)}
-                    >
-                      <CiEdit />
-                    </button>
-                    <button
-                      className="icon-btn delete-icon-btn"
-                      onClick={(e) => handleDeleteProduct(product.id, e)}
-                    >
-                      <CiTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              <AnimatePresence>
+                {currentProducts.map((product) => (
+                  <motion.tr
+                    key={product.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <td className="name-cell">
+                      <span className="p-name">{product.name}</span>
+                      <span className="p-id">
+                        ID: {String(product.id).slice(-6).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="category-cell">
+                      <span className="cat-badge">
+                        {product.category?.name || "Uncategorized"}
+                      </span>
+                    </td>
+                    <td>{getProductSize(product)}'</td>
+                    <td className="price-cell">₹{getProductPrice(product)}</td>
+                    <td className="action-cell">
+                      <div className="action-btns"> 
+                        <button
+                          className="edit"
+                          onClick={(e) => handleEditClick(product, e)}
+                          title="Edit"
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          className="delete"
+                          onClick={(e) => handleDeleteProduct(product.id, e)}
+                          title="Delete"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             ) : (
               <tr>
-                <td
-                  colSpan="5"
-                  style={{ textAlign: "center", padding: "40px" }}
-                >
-                  No products found
+                <td colSpan="5">
+                  <div style={{ padding: "60px", textAlign: "center" }}>
+                    No products match your criteria.
+                  </div>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
 
-        <div className="product-pagination">
-          <div className="rows-per-page">
-            <span>Rows per page:</span>
+        <div className="pagination-footer">
+          <div className="page-left">
+            <span>Display rows</span>
             <select
               value={rowsPerPage}
               onChange={(e) => {
@@ -295,123 +323,131 @@ const ProductPage = () => {
                 </option>
               ))}
             </select>
-            <span className="page-info">
+            <span>
               {totalItems > 0
                 ? `${startIndex + 1}-${endIndex} of ${totalItems}`
-                : "0-0 of 0"}
+                : "0 items"}
             </span>
           </div>
-          <div className="pagination-controls">
-            <div className="nav-btns">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              >
-                <FiChevronLeft />
-              </button>
-              <button className="active">{currentPage}</button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-              >
-                <FiChevronRight />
-              </button>
-            </div>
+          <div className="page-right">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              <FiChevronLeft />
+            </button>
+            <button className="active">{currentPage}</button>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              <FiChevronRight />
+            </button>
           </div>
         </div>
       </div>
 
-      {showEditDrawer && (
-        <div className="drawer-overlay" onClick={handleDrawerClose}>
-          <div className="drawer-content" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-header">
-              <h2>Edit Product</h2>
-              <button className="close-btn" onClick={handleDrawerClose}>
-                <IoClose />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateProduct} className="drawer-form">
-              <div className="form-group">
-                <label>
-                  Product Name <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>
-                  Category <span className="required">*</span>
-                </label>
-                <select
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>
-                  Size <span className="required">*</span>
-                </label>
-                <select
-                  name="sizeId"
-                  value={formData.sizeId}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Size</option>
-                  {sizes.map((size) => (
-                    <option key={size.id} value={size.id}>
-                      {size.inches} inch
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>
-                  Price <span className="required">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <div className="drawer-actions">
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={handleDrawerClose}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="save-btn" disabled={loading}>
-                  {loading ? "Updating..." : "Update Product"}
+      {/* Edit Drawer */}
+      <AnimatePresence>
+        {showEditDrawer && (
+          <div className="drawer-overlay" onClick={handleDrawerClose}>
+            <motion.div
+              className="drawer-content"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            >
+              <div className="drawer-header">
+                <h2>Product Details</h2>
+                <button className="close-btn" onClick={handleDrawerClose}>
+                  <FiX />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleUpdateProduct} className="drawer-form">
+                <div className="form-group">
+                  <label>Display Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Category Assignment</label>
+                  <select
+                    name="categoryId"
+                    value={formData.categoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryId: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Choose Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Base Size (Dimension)</label>
+                  <select
+                    name="sizeId"
+                    value={formData.sizeId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sizeId: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Choose Size</option>
+                    {sizes.map((size) => (
+                      <option key={size.id} value={size.id}>
+                        {size.inches} Inch
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Unit Selling Price (₹)</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="drawer-actions">
+                  <button
+                    type="button"
+                    className="cancel-btn"
+                    onClick={handleDrawerClose}
+                  >
+                    Discard
+                  </button>
+                  <button type="submit" className="save-btn" disabled={loading}>
+                    {loading ? <FiLoader className="spin" /> : "Update Product"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

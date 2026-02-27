@@ -1,757 +1,608 @@
-@use "../homePage/bill/bill-vars" as *;
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
+// ── Tokens (Consistent with AddPayment) ───────────────────────────────────
+$blue: #2563eb;
+$blue-dark: #1d4ed8;
+$blue-deep: #1e40af;
+$blue-light: #eff6ff;
+$blue-mid: #bfdbfe;
+$blue-soft: #dbeafe;
+$blue-pale: #f0f7ff;
+
+$white: #ffffff;
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
+
+$danger: #ef4444;
+$danger-soft: #fef2f2;
+$success: #10b981;
+$success-soft: #ecfdf5;
+$warn: #f59e0b;
+$warn-soft: #fffbeb;
+
+$r-sm: 8px;
+$r-md: 12px;
+$r-lg: 16px;
+$r-xl: 24px;
+
+$sh-sm:
+  0 1px 3px rgba(0, 0, 0, 0.07),
+  0 1px 2px rgba(0, 0, 0, 0.04);
+$sh-md:
+  0 4px 16px rgba(37, 99, 235, 0.08),
+  0 1px 4px rgba(0, 0, 0, 0.05);
+$sh-lg:
+  0 12px 40px rgba(37, 99, 235, 0.13),
+  0 4px 12px rgba(0, 0, 0, 0.06);
+$sh-blue: 0 6px 20px rgba(37, 99, 235, 0.28);
+
+$trans: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ── Reset & Base ─────────────────────────────────────────────────────────────
 .bill-details-page {
   min-height: 100vh;
-  background: $bg;
-  animation: fadeIn 0.4s ease;
+  background: $gray-50;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: $gray-800;
+  padding-bottom: 60px;
+  animation: bd-fade 0.3s ease;
+}
 
-  .modern-loader {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+// ── Loader ───────────────────────────────────────────────────────────────────
+.modern-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 20px;
+
+  .loader-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3.5px solid $gray-200;
+    border-top-color: $blue;
+    border-radius: 50%;
+    animation: bd-spin 0.8s linear infinite;
+  }
+  .loader-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: $blue;
+  }
+}
+
+// ── Error State ──────────────────────────────────────────────────────────────
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 16px;
+  text-align: center;
+
+  .error-icon {
+    font-size: 40px;
+  }
+  .error-message {
+    font-size: 16px;
+    font-weight: 700;
+    color: $danger;
+  }
+  .back-btn-error {
+    padding: 10px 20px;
+    background: $blue;
+    color: white;
+    border: none;
+    border-radius: $r-sm;
+    cursor: pointer;
+    font-weight: 600;
+  }
+}
+
+// ── Top Action Header ────────────────────────────────────────────────────────
+.bd-header {
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: $sh-sm;
+
+  .bd-back-btn {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid $gray-200;
+    border-radius: $r-sm;
+    background: $white;
+    color: $gray-600;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    z-index: 1000;
-
-    .loader-spinner {
-      width: 60px;
-      height: 60px;
-      border: 4px solid $primary-light;
-      border-top-color: $primary;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    .loader-text {
-      font-size: 16px;
-      color: $primary-dark;
-      font-weight: 600;
-      animation: pulse 1.5s ease-in-out infinite;
+    cursor: pointer;
+    transition: $trans;
+    &:hover {
+      border-color: $blue;
+      color: $blue;
+      background: $blue-light;
+      transform: translateX(-2px);
     }
   }
 
-  .error-state {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+  .bd-header-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 40px;
-    background: $card;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
-    .error-icon {
-      font-size: 48px;
-    }
-
-    .error-message {
+    gap: 1px;
+    .bd-title {
       font-size: 16px;
-      color: $danger;
-      font-weight: 600;
+      font-weight: 800;
+      color: $gray-900;
       margin: 0;
     }
-
-    .back-btn-error {
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba($primary, 0.3);
-      }
+    .bd-subtitle {
+      font-size: 12px;
+      color: $gray-500;
+      font-weight: 500;
+      margin: 0;
     }
   }
+}
 
-  .bd-header {
-    background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-    padding: 24px;
+// ── Main Content Grid ────────────────────────────────────────────────────────
+.bd-container {
+  max-width: 1100px;
+  margin: 28px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Section ──────────────────────────────────────────────────────────────────
+.bd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ── Premium Cards ────────────────────────────────────────────────────────────
+.bd-card {
+  background: $white;
+  border: 1.5px solid $gray-200;
+  border-radius: $r-lg;
+  padding: 24px;
+  box-shadow: $sh-sm;
+  overflow: hidden;
+
+  .bd-card-title {
     display: flex;
     align-items: center;
-    gap: 20px;
-    box-shadow: 0 4px 20px rgba($primary, 0.2);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    animation: slideDown 0.4s ease;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: $gray-800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $gray-100;
 
-    .bd-back-btn {
-      width: 44px;
-      height: 44px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      color: white;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateX(-4px);
-      }
+    .title-icon {
+      color: $blue;
+      font-size: 18px;
     }
+  }
+}
 
-    .bd-header-content {
-      flex: 1;
+// ── Invoice Number Header Card ───────────────────────────────────────────────
+.bd-invoice-header {
+  background: linear-gradient(135deg, $white 0%, $blue-pale 100%);
+  border: 1.5px solid $blue-mid;
 
-      .bd-title {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 800;
-        color: white;
+  .bd-invoice-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    .invoice-badge {
+      .invoice-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: $blue-dark;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .invoice-number {
+        font-size: 28px;
+        font-weight: 900;
+        color: $gray-900;
         letter-spacing: -0.5px;
       }
-
-      .bd-subtitle {
-        margin: 4px 0 0;
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.9);
-      }
-    }
-  }
-
-  .bd-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 32px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .bd-card {
-    background: $card;
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 2px 8px rgba($primary, 0.08);
-    border: 2px solid $border-light;
-    transition: all 0.3s ease;
-    animation: fadeIn 0.5s ease;
-
-    &:hover {
-      box-shadow: 0 4px 16px rgba($primary, 0.12);
     }
 
-    .bd-card-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 18px;
+    .status-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
       font-weight: 700;
-      color: $text;
-      margin: 0 0 20px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid $border-light;
-
-      .title-icon {
-        color: $primary;
-        font-size: 20px;
-      }
-    }
-  }
-
-  .bd-invoice-header {
-    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
-
-    .bd-invoice-info {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 24px;
+      gap: 6px;
 
-      .invoice-badge {
-        .invoice-label {
-          display: block;
-          font-size: 12px;
-          color: $text-muted;
-          font-weight: 600;
+      &::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      &.status-paid {
+        background: $success-soft;
+        color: darken($success, 10%);
+        border: 1px solid rgba($success, 0.2);
+      }
+      &.status-partial {
+        background: $warn-soft;
+        color: darken($warn, 15%);
+        border: 1px solid rgba($warn, 0.2);
+      }
+      &.status-pending {
+        background: $danger-soft;
+        color: $danger;
+        border: 1px solid rgba($danger, 0.2);
+      }
+    }
+  }
+
+  .bd-invoice-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba($white, 0.6);
+      border-radius: $r-md;
+      border: 1px solid rgba($blue-mid, 0.4);
+
+      .meta-icon {
+        color: $blue;
+        font-size: 18px;
+      }
+      .meta-content {
+        .meta-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: $gray-500;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 6px;
         }
-
-        .invoice-number {
-          margin: 0;
-          font-size: 32px;
-          font-weight: 900;
-          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          font-family: "Courier New", monospace;
-          letter-spacing: 1px;
-        }
-      }
-
-      .status-pill {
-        padding: 10px 20px;
-        border-radius: 24px;
-        font-size: 14px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        &.status-paid {
-          background: $success-light;
-          color: $success;
-        }
-
-        &.status-partial {
-          background: $primary-light;
-          color: $primary-dark;
-        }
-
-        &.status-pending {
-          background: #fee2e2;
-          color: $danger;
-        }
-      }
-    }
-
-    .bd-invoice-meta {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-
-      .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: white;
-        border-radius: 10px;
-        border: 1px solid $border-light;
-
-        .meta-icon {
-          color: $primary;
-          font-size: 20px;
-        }
-
-        .meta-content {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-
-          .meta-label {
-            font-size: 11px;
-            color: $text-muted;
-            font-weight: 600;
-            text-transform: uppercase;
-          }
-
-          .meta-value {
-            font-size: 14px;
-            color: $text;
-            font-weight: 600;
-          }
-        }
-      }
-    }
-  }
-
-  .bd-customer-card {
-    .customer-details {
-      .customer-header {
-        margin-bottom: 20px;
-
-        .customer-name {
-          margin: 0 0 4px;
-          font-size: 22px;
-          font-weight: 700;
-          color: $text;
-        }
-
-        .customer-business {
-          margin: 0;
-          font-size: 14px;
-          color: $text-light;
-        }
-      }
-
-      .customer-info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 16px;
-
-        .info-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          padding: 14px;
-          background: $bg;
-          border-radius: 10px;
-          border-left: 3px solid $primary;
-
-          &.full-width {
-            grid-column: 1 / -1;
-          }
-
-          .info-icon {
-            color: $primary;
-            font-size: 18px;
-            margin-top: 2px;
-            flex-shrink: 0;
-          }
-
-          .info-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-
-            .info-label {
-              font-size: 11px;
-              color: $text-muted;
-              font-weight: 600;
-              text-transform: uppercase;
-            }
-
-            .info-value {
-              font-size: 14px;
-              color: $text;
-              font-weight: 600;
-              word-break: break-word;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .bd-items-card {
-    .items-table-wrapper {
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 2px solid $border-light;
-      background: white;
-
-      .items-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 100%;
-
-        thead {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-
-          tr {
-            th {
-              padding: 16px 20px;
-              text-align: left;
-              font-size: 13px;
-              font-weight: 800;
-              color: $primary-dark;
-              text-transform: uppercase;
-              letter-spacing: 0.8px;
-              border-bottom: 3px solid $primary;
-              white-space: nowrap;
-
-              &:first-child {
-                border-top-left-radius: 10px;
-                width: 60px;
-                text-align: center;
-              }
-
-              &:nth-child(2) {
-                min-width: 200px;
-              }
-
-              &:nth-child(3),
-              &:nth-child(4) {
-                width: 100px;
-                text-align: center;
-              }
-
-              &:nth-child(5),
-              &:nth-child(6) {
-                width: 140px;
-                text-align: right;
-              }
-
-              &:last-child {
-                border-top-right-radius: 10px;
-              }
-            }
-          }
-        }
-
-        tbody {
-          tr {
-            border-bottom: 1px solid $border-light;
-            transition: all 0.2s ease;
-
-            &:hover {
-              background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            }
-
-            &:last-child {
-              border-bottom: none;
-
-              td:first-child {
-                border-bottom-left-radius: 10px;
-              }
-
-              td:last-child {
-                border-bottom-right-radius: 10px;
-              }
-            }
-
-            td {
-              padding: 18px 20px;
-              font-size: 14px;
-              color: $text;
-              vertical-align: middle;
-
-              &.item-number {
-                color: $text-muted;
-                font-weight: 800;
-                font-size: 15px;
-                text-align: center;
-                background: $bg;
-                border-right: 2px solid $border-light;
-              }
-
-              &.item-desc {
-                font-weight: 600;
-                color: $text;
-                line-height: 1.5;
-              }
-
-              &:nth-child(3),
-              &:nth-child(4) {
-                text-align: center;
-                font-weight: 600;
-                color: $text-light;
-              }
-
-              &.item-rate {
-                font-weight: 700;
-                text-align: right;
-                color: $text;
-                font-family: "Courier New", monospace;
-                background: linear-gradient(
-                  135deg,
-                  transparent 0%,
-                  #fffbeb 100%
-                );
-              }
-
-              &.item-amount {
-                font-weight: 800;
-                text-align: right;
-                color: $primary-dark;
-                font-size: 16px;
-                font-family: "Courier New", monospace;
-                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-                border-left: 3px solid $primary;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .bd-payment-card {
-    .payment-summary {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-
-      .summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px;
-        background: $bg;
-        border-radius: 8px;
-
-        .summary-label {
-          font-size: 14px;
-          color: $text-light;
-          font-weight: 600;
-        }
-
-        .summary-value {
-          font-size: 16px;
-          color: $text;
-          font-weight: 700;
-        }
-
-        &.summary-total {
-          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-          padding: 18px;
-          margin-top: 8px;
-
-          .summary-label,
-          .summary-value {
-            color: white;
-            font-size: 18px;
-          }
-        }
-
-        &.summary-paid {
-          background: $success-light;
-
-          .summary-value {
-            color: $success;
-          }
-        }
-
-        &.summary-pending {
-          background: #fee2e2;
-
-          .summary-value {
-            color: $danger;
-          }
-        }
-      }
-    }
-  }
-
-  .bd-terms-card {
-    .terms-text {
-      padding: 16px;
-      background: $bg;
-      border-radius: 10px;
-      border-left: 4px solid $primary;
-
-      p {
-        margin: 0;
-        color: $text;
-        line-height: 1.7;
-        font-size: 14px;
-        white-space: pre-wrap;
-      }
-    }
-
-    .terms-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-
-      .term-item {
-        display: flex;
-        gap: 14px;
-        align-items: flex-start;
-        padding: 14px;
-        background: $bg;
-        border-radius: 10px;
-        border-left: 4px solid $primary;
-        transition: all 0.3s ease;
-
-        &:hover {
-          background: $primary-light;
-          transform: translateX(4px);
-        }
-
-        .term-bullet {
-          width: 28px;
-          height: 28px;
-          background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .meta-value {
           font-size: 13px;
-          font-weight: 800;
-          flex-shrink: 0;
-        }
-
-        .term-text {
-          flex: 1;
-          color: $text;
-          line-height: 1.6;
-          font-size: 14px;
+          font-weight: 700;
+          color: $gray-800;
         }
       }
     }
   }
+}
 
-  .bd-signature-card {
-    .signature-wrapper {
-      display: flex;
-      justify-content: flex-end;
-      padding: 20px;
-      background: $bg;
-      border-radius: 10px;
-
-      .signature-img {
-        max-width: 220px;
-        max-height: 120px;
-        object-fit: contain;
-        border: 2px dashed $primary;
-        padding: 12px;
-        border-radius: 8px;
-        background: white;
-      }
-    }
-  }
-
-  .bd-note-card {
-    .note-text {
+// ── Customer Info Box ────────────────────────────────────────────────────────
+.customer-details {
+  .customer-header {
+    margin-bottom: 20px;
+    .customer-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: $gray-900;
       margin: 0;
-      padding: 16px;
-      background: $bg;
-      border-radius: 10px;
-      border-left: 4px solid $primary;
-      color: $text;
-      line-height: 1.7;
-      font-size: 14px;
+    }
+    .customer-business {
+      font-size: 13px;
+      color: $gray-500;
+      font-weight: 600;
+      margin: 2px 0 0;
     }
   }
 
-  .bd-actions {
+  .customer-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-top: 12px;
+    gap: 12px;
 
-    .bd-btn {
-      padding: 16px 24px;
-      font-size: 15px;
+    .info-item {
+      padding: 12px 14px;
+      background: $gray-50;
+      border-radius: $r-md;
+      border: 1px solid $gray-100;
+      display: flex;
+      gap: 12px;
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .info-icon {
+        color: $blue;
+        font-size: 16px;
+        margin-top: 2px;
+      }
+      .info-content {
+        .info-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: $gray-400;
+          text-transform: uppercase;
+        }
+        .info-value {
+          font-size: 13px;
+          font-weight: 600;
+          color: $gray-700;
+        }
+      }
+    }
+  }
+}
+
+// ── Table UI ─────────────────────────────────────────────────────────────────
+.items-table-wrapper {
+  margin: 0;
+  border-radius: $r-md;
+  overflow: hidden;
+  border: 1px solid $gray-200;
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead th {
+      background: $gray-100;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 800;
+      color: $gray-600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: $gray-700;
+      border-bottom: 1px solid $gray-100;
+
+      &.item-number {
+        color: $gray-400;
+        font-weight: 700;
+      }
+      &.item-desc {
+        font-weight: 600;
+        color: $gray-900;
+      }
+      &.item-rate,
+      &.item-amount {
+        font-weight: 700;
+        text-align: right;
+        font-family: "JetBrains Mono", "Courier New", monospace;
+      }
+      &.item-amount {
+        color: $blue-deep;
+        font-size: 14px;
+      }
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+    tbody tr:hover {
+      background: $gray-50;
+    }
+  }
+}
+
+// ── Sidebar: Payment Summary ─────────────────────────────────────────────────
+.bd-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed $gray-100;
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      font-size: 12.5px;
+      color: $gray-500;
+      font-weight: 500;
+    }
+    .summary-value {
+      font-size: 13px;
       font-weight: 700;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      color: $gray-800;
+    }
+
+    &.summary-total {
+      margin-top: 10px;
+      border-top: 1.5px solid $gray-200;
+      padding-top: 14px;
+      border-bottom: none;
+      .summary-label {
+        color: $gray-900;
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .summary-value {
+        color: $blue;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+      }
+    }
+
+    &.summary-paid {
+      .summary-value {
+        color: $success;
+      }
+    }
+    &.summary-pending {
+      .summary-value {
+        color: $danger;
+      }
+    }
+  }
+}
+
+// ── Terms / Notes ────────────────────────────────────────────────────────────
+.terms-text,
+.note-text {
+  font-size: 13px;
+  color: $gray-600;
+  line-height: 1.6;
+  background: $gray-50;
+  padding: 12px;
+  border-radius: $r-md;
+}
+
+.terms-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .term-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: $gray-700;
+    .term-bullet {
+      width: 20px;
+      height: 20px;
+      background: $blue-soft;
+      color: $blue;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      &.bd-btn-download {
-        background: white;
-        color: $primary;
-        border: 2px solid $primary;
-
-        &:hover:not(:disabled) {
-          background: $primary-light;
-        }
-      }
-
-      &.bd-btn-reminder {
-        background: white;
-        color: $text;
-        border: 2px solid $border;
-
-        &:hover:not(:disabled) {
-          background: $bg;
-          border-color: $text-light;
-        }
-      }
-
-      &.bd-btn-payment {
-        background: linear-gradient(135deg, #fbbf24 0%, $primary 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba($primary, 0.3);
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba($primary, 0.4);
-        }
-      }
+      font-size: 10px;
+      font-weight: 800;
+      flex-shrink: 0;
     }
   }
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+// ── Action Buttons ────────────────────────────────────────────────────────────
+.bd-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  .bd-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: $r-sm;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: $trans;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    font-family: "Inter", sans-serif;
 
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
+    &:disabled {
       opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.bd-btn-download {
+      background: $white;
+      border: 1.5px solid $gray-200;
+      color: $gray-700;
+      &:hover:not(:disabled) {
+        border-color: $blue;
+        color: $blue;
+        background: $blue-light;
+      }
+    }
+
+    &.bd-btn-reminder {
+      background: $white;
+      border: 1.5px solid $gray-200;
+      color: $gray-700;
+      &:hover:not(:disabled) {
+        border-color: $blue;
+        color: $blue;
+        background: $blue-light;
+      }
+    }
+
+    &.bd-btn-payment {
+      background: $blue;
+      color: $white;
+      box-shadow: $sh-blue;
+      &:hover:not(:disabled) {
+        background: $blue-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba($blue, 0.3);
+      }
     }
   }
+}
 
-  @media (max-width: 768px) {
-    .bd-container {
-      padding: 20px 16px;
-    }
-
-    .bd-card {
-      padding: 20px;
-    }
-
-    .bd-invoice-header {
-      .bd-invoice-info {
-        .invoice-badge {
-          .invoice-number {
-            font-size: 24px;
-          }
-        }
-      }
-    }
-
-    .items-table-wrapper {
-      .items-table {
-        font-size: 13px;
-
-        thead th,
-        tbody td {
-          padding: 12px 8px;
-        }
-      }
-    }
-
-    .bd-actions {
-      grid-template-columns: 1fr;
-    }
+// ── Animations ────────────────────────────────────────────────────────────────
+@keyframes bd-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes bd-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
