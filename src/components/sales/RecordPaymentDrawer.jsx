@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import accountService from "../../services/accountService";
 import paymentService from "../../services/paymentService";
 import salesDebitNoteService from "../../services/salesDebitNoteService";
+import CustomDatePicker from "../common/CustomDatePicker";
 import "./recordPaymentDrawer.scss";
 
 const RecordPaymentDrawer = ({
@@ -204,11 +205,10 @@ const RecordPaymentDrawer = ({
             <div className="form-section">
               <label>Date</label>
               <div className="input-wrapper">
-                <input
-                  type="date"
-                  name="date"
+                <CustomDatePicker
                   value={formData.date}
-                  onChange={handleInputChange}
+                  onChange={(v) => setFormData((f) => ({ ...f, date: v }))}
+                  placeholder="Select payment date"
                 />
               </div>
             </div>

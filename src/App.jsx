@@ -42,6 +42,20 @@ import Report from "./pages/Report";
 import SalesDebitNoteDetails from "./components/sales/SalesDebitNoteDetails";
 import CreditNoteDetails from "./components/sales/CreditNoteDetails";
 import Ledger from "./pages/Ledger";
+import ProductWiseSalesReport from "./components/reports/ProductWiseSalesReport";
+import ProductWisePurchaseReport from "./components/reports/ProductWisePurchaseReport";
+import PartyWiseSalesReport from "./components/reports/PartyWiseSalesReport";
+import PartyWisePurchaseReport from "./components/reports/PartyWisePurchaseReport";
+import GSTSalesReport from "./components/reports/GSTSalesReport";
+import GSTPurchaseReport from "./components/reports/GSTPurchaseReport";
+import InvoiceDetailsReport from "./components/reports/InvoiceDetailsReport";
+import PurchaseDetailsReport from "./components/reports/PurchaseDetailsReport";
+import CurrentStockReport from "./components/reports/CurrentStockReport";
+import DeliveryChallanReport from "./components/reports/DeliveryChallanReport";
+import ChallanDetailsReport from "./components/reports/ChallanDetailsReport";
+import AuditTrail from "./components/reports/AuditTrail";
+import BulkExport from "./components/reports/BulkExport";
+import BulkImport from "./components/reports/BulkImport";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("vendorToken");
@@ -298,6 +312,118 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Report />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/product-wise-sales"
+            element={
+              <ProtectedRoute>
+                <ProductWiseSalesReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/product-wise-purchase"
+            element={
+              <ProtectedRoute>
+                <ProductWisePurchaseReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/party-wise-sales"
+            element={
+              <ProtectedRoute>
+                <PartyWiseSalesReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/party-wise-purchase"
+            element={
+              <ProtectedRoute>
+                <PartyWisePurchaseReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/gst-sales"
+            element={
+              <ProtectedRoute>
+                <GSTSalesReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/gst-purchase"
+            element={
+              <ProtectedRoute>
+                <GSTPurchaseReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/invoice-details"
+            element={
+              <ProtectedRoute>
+                <InvoiceDetailsReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/purchase-details"
+            element={
+              <ProtectedRoute>
+                <PurchaseDetailsReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/current-stock"
+            element={
+              <ProtectedRoute>
+                <CurrentStockReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/delivery-challan"
+            element={
+              <ProtectedRoute>
+                <DeliveryChallanReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/challan-details"
+            element={
+              <ProtectedRoute>
+                <ChallanDetailsReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/audit-trail"
+            element={
+              <ProtectedRoute>
+                <AuditTrail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/bulk-export"
+            element={
+              <ProtectedRoute>
+                <BulkExport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports/bulk-import"
+            element={
+              <ProtectedRoute>
+                <BulkImport />
               </ProtectedRoute>
             }
           />

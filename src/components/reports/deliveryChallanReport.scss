@@ -1,0 +1,427 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+$bg: #f1f5f9;
+$card: #ffffff;
+$border: #e2e8f0;
+$text: #1a202c;
+$muted: #718096;
+$accent: #fcc419;
+$btn-dark: #1e293b;
+$primary-hover: #2d2d5e;
+$radius: 8px;
+
+// Delivery Challan — teal/truck palette
+$dcr-accent: #2c7a7b;
+$challan-no: #3182ce;
+$buyer-color: #553c9a;
+$igst-color: #553c9a;
+$total-color: #276749;
+
+.dcr-page {
+  background: $bg;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+  color: $text;
+
+  .dcr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-bottom: 1px solid $border;
+    padding: 14px 28px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    &__left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      .back-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1.5px solid $border;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: $muted;
+        transition: all 0.2s;
+        &:hover {
+          background: $accent;
+          border-color: $accent;
+          color: #1a1a2e;
+        }
+      }
+
+      .title-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .title-icon {
+          color: $dcr-accent;
+          font-size: 20px;
+        }
+
+        h1 {
+          font-size: 18px;
+          font-weight: 700;
+          color: $text;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .v-badge {
+            background: linear-gradient(135deg, $dcr-accent, #4fd1c5);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+          }
+        }
+      }
+    }
+
+    &__right .profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid $border;
+      border-radius: 50px;
+      padding: 6px 14px 6px 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #f0f4ff;
+      }
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $accent, #f59e0b);
+        color: #1a1a2e;
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      span {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text;
+      }
+      svg {
+        color: $muted;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .dcr-main {
+    padding: 28px;
+  }
+
+  .dcr-card {
+    background: $card;
+    border-radius: 12px;
+    border: 1px solid $border;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .dcr-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid $border;
+    flex-wrap: wrap;
+
+    .search-form .search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .si-icon {
+        position: absolute;
+        left: 12px;
+        color: $muted;
+        font-size: 15px;
+      }
+
+      input {
+        border: 1.5px solid $border;
+        background: #f8fafc;
+        border-radius: 50px;
+        padding: 8px 16px 8px 36px;
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+        width: 200px;
+        transition: all 0.2s;
+        &:focus {
+          border-color: $dcr-accent;
+          background: #fff;
+          box-shadow: 0 0 0 3px rgba(44, 122, 123, 0.1);
+        }
+      }
+    }
+
+    .date-filters {
+      display: flex;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+
+      .btn-generate {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        border: 1.5px solid $border;
+        border-radius: $radius;
+        background: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        color: $text;
+        cursor: pointer;
+        transition: all 0.2s;
+        &:hover {
+          background: #f8fafc;
+          border-color: $dcr-accent;
+        }
+      }
+
+      .btn-reports {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        border: none;
+        border-radius: $radius;
+        background: $btn-dark;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+        &:hover {
+          background: $primary-hover;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(30, 41, 59, 0.35);
+        }
+      }
+    }
+  }
+
+  .dcr-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    gap: 16px;
+    color: $muted;
+    font-size: 14px;
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: $dcr-accent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .dcr-table-wrap {
+    overflow-x: auto;
+  }
+
+  .dcr-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead tr {
+      background: #edf0f7;
+
+      th {
+        padding: 10px 10px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #4a5568;
+        text-align: center;
+        border-bottom: 2px solid $border;
+        border-right: 1px solid #dce3ee;
+        white-space: normal;
+        line-height: 1.3;
+        vertical-align: middle;
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #edf0f7;
+      transition: background 0.14s;
+      &:last-child {
+        border-bottom: none;
+      }
+      &:hover {
+        background: #f0fff9;
+      }
+
+      td {
+        padding: 11px 10px;
+        font-size: 13px;
+        color: $text;
+        border-right: 1px solid #edf0f7;
+        vertical-align: middle;
+        &:last-child {
+          border-right: none;
+        }
+
+        &.tc {
+          text-align: center;
+        }
+        &.tr {
+          text-align: right;
+        }
+        &.date-cell {
+          color: $muted;
+          font-size: 12px;
+          white-space: nowrap;
+        }
+        &.challan-no {
+          color: $challan-no;
+          font-weight: 700;
+        }
+        &.buyer-name {
+          text-align: left;
+          padding-left: 14px;
+        }
+        &.gstin-cell {
+          font-family: "Courier New", monospace;
+          font-size: 11.5px;
+          color: #4a5568;
+        }
+        &.igst-cell {
+          color: $igst-color;
+          font-weight: 600;
+        }
+        &.total-cell {
+          color: $total-color;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 40px 24px;
+      color: $muted;
+      font-size: 14px;
+      font-style: italic;
+    }
+  }
+
+  .dcr-pagination {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+    border-top: 1px solid $border;
+    flex-wrap: wrap;
+
+    .page-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: $muted;
+
+      select {
+        border: 1.5px solid $border;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-family: inherit;
+        font-size: 13px;
+        background: #f8fafc;
+        outline: none;
+        cursor: pointer;
+        &:focus {
+          border-color: $dcr-accent;
+        }
+      }
+    }
+
+    .page-info {
+      font-size: 13px;
+      color: $muted;
+      flex: 1;
+    }
+
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .page-btn {
+        min-width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1.5px solid $border;
+        background: #f8fafc;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: $text;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        padding: 0 8px;
+
+        &:hover:not(:disabled) {
+          background: $dcr-accent;
+          border-color: $dcr-accent;
+          color: #fff;
+        }
+        &.active {
+          background: $btn-dark;
+          border-color: $btn-dark;
+          color: #fff;
+        }
+        &:disabled {
+          opacity: 0.4;
+          cursor: default;
+        }
+      }
+    }
+  }
+}

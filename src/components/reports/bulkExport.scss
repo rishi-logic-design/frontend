@@ -1,0 +1,303 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+$bg: #f8fafc;
+$card: #ffffff;
+$border: #e2e8f0;
+$text: #1e293b;
+$muted: #64748b;
+$accent: #fcc419;
+$primary: #1e293b;
+$radius: 8px;
+
+.be-page {
+  background: #ebebeb;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+  color: $text;
+
+  .be-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: transparent;
+
+    &__left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      h1 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .back-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        &:hover {
+          background: #f0f0f0;
+        }
+      }
+    }
+
+    &__right {
+      .profile-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: $card;
+        padding: 6px 12px;
+        border-radius: 50px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+
+        .avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #fcc419;
+          color: #1a1a2e;
+          font-weight: 700;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        span {
+          font-size: 13px;
+          font-weight: 500;
+        }
+        svg {
+          color: $muted;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .be-main {
+    padding: 24px;
+  }
+
+  .be-card {
+    background: $card;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+  }
+
+  .be-generator {
+    margin-bottom: 32px;
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .generator-inputs {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        label {
+          font-size: 12px;
+          color: #666;
+          font-weight: 500;
+          margin-left: 10px;
+        }
+
+        .select-wrap {
+          position: relative;
+          select {
+            appearance: none;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px 32px 8px 12px;
+            font-size: 14px;
+            width: 280px;
+            outline: none;
+          }
+          .select-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            pointer-events: none;
+          }
+        }
+
+        &.date-input {
+          input {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 7px 12px;
+            font-size: 13px;
+            outline: none;
+          }
+        }
+      }
+
+      .btn-generate {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 9px 24px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        &:hover {
+          background: #000;
+        }
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .be-table-wrap {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .be-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      background: #e5e7eb;
+      th {
+        padding: 12px 16px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4b5563;
+        border-bottom: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #ccc;
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: 24px 16px;
+        font-size: 13px;
+        text-align: center;
+        border-right: 1px solid #ccc;
+        &:last-child {
+          border-right: none;
+        }
+      }
+
+      .doc-type-cell {
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+      .status-cell {
+        .status-badge {
+          &.generated {
+            color: #333;
+          }
+        }
+      }
+
+      .btn-download {
+        background: #fff;
+        border: 1px solid #333;
+        color: #333;
+        padding: 6px 16px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        &:hover {
+          background: #f8fafc;
+        }
+      }
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 48px;
+      color: #999;
+      font-style: italic;
+    }
+  }
+
+  .be-pagination {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+
+    .page-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      select {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 4px 8px;
+        background: #fff;
+      }
+    }
+
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      button {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ddd;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #666;
+        &.active {
+          background: #1e293b;
+          color: white;
+          border-color: #1e293b;
+        }
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}

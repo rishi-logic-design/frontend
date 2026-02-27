@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import customerService from "../../services/customerService";
 import productService from "../../services/productService";
+import CustomDatePicker from "../common/CustomDatePicker";
 import creditNoteService from "../../services/creditNoteService";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase";
@@ -372,10 +373,10 @@ const NewCreditNote = () => {
               </div>
               <div className="input-group">
                 <label>Credit Note Date</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={creditNoteDate}
-                  onChange={(e) => setCreditNoteDate(e.target.value)}
+                  onChange={(v) => setCreditNoteDate(v)}
+                  placeholder="Select date"
                 />
               </div>
             </div>

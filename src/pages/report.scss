@@ -117,17 +117,39 @@ $border-color: #e2e8f0;
         text-align: center;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
         border: 1px solid transparent;
+        position: relative;
 
-        &:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-          border-color: rgba($accent-yellow, 0.3);
+        &.clickable {
+          cursor: pointer;
+          &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: rgba($accent-yellow, 0.4);
 
-          .icon-wrapper {
-            transform: scale(1.1);
+            .icon-wrapper {
+              transform: scale(1.1);
+            }
           }
+        }
+
+        &.coming-soon {
+          cursor: default;
+          opacity: 0.75;
+        }
+
+        .soon-tag {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          background: #e2e8f0;
+          color: $text-muted;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 20px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .icon-wrapper {

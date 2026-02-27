@@ -13,6 +13,7 @@ import {
 import customerService from "../../services/customerService";
 import productService from "../../services/productService";
 import salesDebitNoteService from "../../services/salesDebitNoteService";
+import CustomDatePicker from "../common/CustomDatePicker";
 import { toast } from "react-toastify";
 import "./newSalesDebit.scss";
 
@@ -274,10 +275,10 @@ const NewSalesDebit = () => {
             </div>
             <div className="field-group date-field">
               <label>INVOICE DATE</label>
-              <input
-                type="date"
+              <CustomDatePicker
                 value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
+                onChange={(v) => setInvoiceDate(v)}
+                placeholder="Select date"
               />
             </div>
           </div>
